@@ -1,0 +1,32 @@
+services:
+  pgsql:
+    image: 'postgres:15'
+    ports:
+      - '${FORWARD_DB_PORT:-5432}:5432'
+    environment:
+      POSTGRES_DB: '${DB_DATABASE:-kasira}'
+      POSTGRES_USER: '${DB_USERNAME:-postgres}'
+      POSTGRES_PASSWORD: '${DB_PASSWORD:-postgres}'
+    volumes:
+      - 'kasira-pgsql-data:/var/lib/postgresql/data'
+    networks:
+      - sail
+    healthcheck:
+      test:
+        - CMD
+        - pg_isready
+        - '-q'
+        - '-d'
+        - '${DB_DATABASE:-kasira}'
+        - '-U'
+        - '${DB_USERNAME:-postgres}'
+      retries: 3
+      timeout: 5s
+
+networks:
+  sail:
+    driver: bridge
+
+volumes:
+  kasira-pgsql-data:
+    driver: local

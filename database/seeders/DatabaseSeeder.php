@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Payment;
+use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -51,5 +53,25 @@ class DatabaseSeeder extends Seeder
                 'role_id' => $roles[Role::CASHIER]->id,
             ],
         );
+
+        $products = [
+            ['name' => 'Espresso', 'sku' => 'ESP001', 'selling_price' => 15000],
+            ['name' => 'Americano', 'sku' => 'AME001', 'selling_price' => 20000],
+            ['name' => 'Cappuccino', 'sku' => 'CAP001', 'selling_price' => 25000],
+            ['name' => 'Latte', 'sku' => 'LAT001', 'selling_price' => 25000],
+            ['name' => 'Mocha', 'sku' => 'MOC001', 'selling_price' => 28000],
+            ['name' => 'Ice Tea', 'sku' => 'TEA001', 'selling_price' => 18000],
+            ['name' => 'Lemonade', 'sku' => 'LEM001', 'selling_price' => 20000],
+            ['name' => 'Croissant', 'sku' => 'CRO001', 'selling_price' => 22000],
+            ['name' => 'Blueberry Muffin', 'sku' => 'MUF001', 'selling_price' => 18000],
+            ['name' => 'Chocolate Cake Slice', 'sku' => 'CAK001', 'selling_price' => 25000],
+        ];
+
+        foreach ($products as $product) {
+            Product::query()->updateOrCreate(
+                ['sku' => $product['sku']],
+                $product
+            );
+        }
     }
 }
