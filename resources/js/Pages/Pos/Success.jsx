@@ -13,6 +13,7 @@ export default function Success({
     receiptChannels,
     receiptSettings,
     canSendDigitalReceipts,
+    canUseThermalPrinting,
 }) {
     const receiptForm = useForm({
         channel: receiptChannels[0] || 'print',
@@ -40,7 +41,7 @@ export default function Success({
                             onClick={() => window.print()}
                             className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white"
                         >
-                            Print now
+                            {canUseThermalPrinting ? 'Print now' : 'Print in browser'}
                         </button>
                     </div>
 
@@ -104,6 +105,11 @@ export default function Success({
                         <h3 className="text-lg font-semibold text-white">Receipt handoff</h3>
                         <p className="mt-1 text-sm text-outline">
                             Print, download, or share the receipt right after payment.
+                        </p>
+                        <p className="mt-2 text-xs text-outline">
+                            {canUseThermalPrinting
+                                ? 'Current plan is eligible for thermal printer handoff when paired hardware is configured.'
+                                : 'Browser printing is available now. Thermal printer handoff remains gated behind premium entitlements.'}
                         </p>
                     </div>
 

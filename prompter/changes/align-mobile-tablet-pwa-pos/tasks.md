@@ -16,9 +16,9 @@
 
 ## 4. Premium and Advanced Extensions
 - [x] 4.1 Update premium reporting to cover sales, product, inventory, payment, cashier, and profit-and-loss views with export support.
-- [ ] 4.2 Gate split payment, promotions, vouchers, cashier shifts, QRIS integration, thermal printing, and offline draft sync behind premium entitlements.
+- [x] 4.2 Gate split payment, promotions, vouchers, cashier shifts, QRIS integration, thermal printing, and offline draft sync behind premium entitlements.
 
 ## 5. Validation
 - [x] 5.1 Add or update Laravel feature tests for role redirects, access control, outlet scoping, and the renamed workflow routes.
-- [ ] 5.2 Add or update frontend verification for the mobile/tablet shell and POS layout behavior using the repo's existing test strategy.
+- [x] 5.2 Add or update frontend verification for the mobile/tablet shell and POS layout behavior using the repo's existing test strategy.
 - [x] 5.3 Run the relevant automated tests and `npm run build` before implementation is considered complete.

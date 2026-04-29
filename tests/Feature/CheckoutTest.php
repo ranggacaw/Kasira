@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase
@@ -18,13 +20,47 @@ class CheckoutTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_users_can_see_checkout_page(): void
+    public function test_authenticated_users_can_see_checkout_page_with_starter_plan_pos_flags(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user)
             ->get('/pos')
-            ->assertOk();
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Pos/Checkout')
+                ->where('receiptChannels', ['print'])
+                ->where('features.promotions', false)
+                ->where('features.vouchers', false)
+                ->where('features.cashierShifts', false)
+                ->where('features.splitPayment', false)
+                ->where('features.qrisIntegration', false)
+                ->where('features.offlineDraftSync', false)
+                ->where('features.thermalPrinting', false)
+                ->where('auth.user.abilities.checkout', true));
+    }
+
+    public function test_business_plan_exposes_premium_pos_flags_and_receipt_channels(): void
+    {
+        $user = User::factory()->create();
+
+        Subscription::current()
+            ->fill(Subscription::defaultsFor(Subscription::PLAN_BUSINESS))
+            ->save();
+
+        $this->actingAs($user)
+            ->get('/pos')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Pos/Checkout')
+                ->where('receiptChannels', ['print', 'email', 'whatsapp'])
+                ->where('features.promotions', true)
+                ->where('features.vouchers', true)
+                ->where('features.cashierShifts', true)
+                ->where('features.splitPayment', true)
+                ->where('features.qrisIntegration', true)
+                ->where('features.offlineDraftSync', true)
+                ->where('features.thermalPrinting', true));
     }
 
     public function test_checkout_shows_active_products(): void

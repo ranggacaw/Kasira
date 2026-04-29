@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
@@ -24,6 +25,13 @@ class DashboardTest extends TestCase
         $this->actingAs($user)
             ->get('/dashboard')
             ->assertOk()
-            ->assertSee(Role::CASHIER);
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Dashboard')
+                ->where('auth.user.role.name', Role::CASHIER)
+                ->where('auth.user.abilities.dashboard', true)
+                ->where('auth.user.abilities.checkout', true)
+                ->where('auth.user.abilities.reports', false)
+                ->has('filters')
+                ->has('metrics.paymentSummary'));
     }
 }

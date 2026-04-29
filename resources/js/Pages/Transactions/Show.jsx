@@ -14,6 +14,7 @@ export default function TransactionShow({
     receiptChannels,
     receiptSettings,
     canRefund,
+    canUseThermalPrinting,
 }) {
     const flash = usePage().props.flash || {};
     const receiptForm = useForm({
@@ -38,7 +39,7 @@ export default function TransactionShow({
                         onClick={() => window.print()}
                         className="rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
                     >
-                        Print receipt
+                        {canUseThermalPrinting ? 'Print receipt' : 'Print in browser'}
                     </button>
                 </div>
             }
@@ -163,6 +164,11 @@ export default function TransactionShow({
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-outline">
                                     Receipt delivery log
                                 </h3>
+                                <p className="mt-2 text-xs text-outline">
+                                    {canUseThermalPrinting
+                                        ? 'Current plan is eligible for thermal printer handoff when paired hardware is configured.'
+                                        : 'Browser printing is available now. Thermal printer handoff remains gated behind premium entitlements.'}
+                                </p>
                                 <div className="mt-4 flex flex-wrap gap-3">
                                     <Link
                                         href={route('transactions.download', transaction.id)}

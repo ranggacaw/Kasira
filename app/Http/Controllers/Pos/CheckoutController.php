@@ -32,6 +32,7 @@ class CheckoutController extends Controller
         abort_unless($request->user()->canUseCheckout(), 403);
 
         $subscription = Subscription::current();
+        $canSendDigitalReceipts = $subscription->allowsFeature('connected_receipts');
         $settings = AppSetting::current();
         $outlets = $this->availableOutletsFor($request->user());
         $currentOutlet = $this->resolveCurrentOutlet($request);
@@ -71,14 +72,20 @@ class CheckoutController extends Controller
                     ->orderBy('name')
                     ->get(['id', 'name', 'type', 'value', 'minimum_spend'])
                 : [],
-            'receiptChannels' => ReceiptDelivery::channels(),
+            'receiptChannels' => collect(ReceiptDelivery::channels())
+                ->filter(fn (string $channel) => $channel === ReceiptDelivery::CHANNEL_PRINT || $canSendDigitalReceipts)
+                ->values()
+                ->all(),
             'features' => [
                 'promotions' => $subscription->allowsFeature('promotions'),
                 'vouchers' => $subscription->allowsFeature('vouchers'),
                 'memberships' => $subscription->allowsFeature('memberships'),
                 'connectedReceipts' => $subscription->allowsFeature('connected_receipts'),
                 'cashierShifts' => $subscription->allowsFeature('cashier_shifts'),
+                'splitPayment' => $subscription->allowsFeature('split_payments'),
+                'qrisIntegration' => $subscription->allowsFeature('qris_integration'),
                 'offlineMode' => $subscription->allowsFeature('offline_mode'),
+                'offlineDraftSync' => $subscription->allowsFeature('offline_draft_sync'),
                 'thermalPrinting' => $subscription->allowsFeature('thermal_printing'),
             ],
             'currentShift' => $currentShift,
@@ -397,6 +404,8 @@ class CheckoutController extends Controller
     {
         abort_unless($request->user()->canUseCheckout(), 403);
 
+        $subscription = Subscription::current();
+
         $transaction->load([
             'cashier:id,name',
             'outlet:id,name,address',
@@ -407,12 +416,16 @@ class CheckoutController extends Controller
 
         return Inertia::render('Pos/Success', [
             'transaction' => $transaction,
-            'receiptChannels' => ReceiptDelivery::channels(),
+            'receiptChannels' => collect(ReceiptDelivery::channels())
+                ->filter(fn (string $channel) => $channel === ReceiptDelivery::CHANNEL_PRINT || $subscription->allowsFeature('connected_receipts'))
+                ->values()
+                ->all(),
             'receiptSettings' => [
                 'header' => AppSetting::current()->receipt_header,
                 'footer' => AppSetting::current()->receipt_footer,
             ],
-            'canSendDigitalReceipts' => Subscription::current()->allowsFeature('connected_receipts'),
+            'canSendDigitalReceipts' => $subscription->allowsFeature('connected_receipts'),
+            'canUseThermalPrinting' => $subscription->allowsFeature('thermal_printing'),
         ]);
     }
 

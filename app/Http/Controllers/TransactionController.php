@@ -71,6 +71,8 @@ class TransactionController extends Controller
     {
         abort_unless($request->user()->canViewTransactions(), 403);
 
+        $subscription = Subscription::current();
+
         $transaction->load([
             'cashier:id,name',
             'outlet:id,name',
@@ -84,10 +86,14 @@ class TransactionController extends Controller
 
         return Inertia::render('Transactions/Show', [
             'transaction' => $transaction,
-            'canSendDigitalReceipts' => Subscription::current()->allowsFeature('connected_receipts'),
-            'receiptChannels' => ReceiptDelivery::channels(),
+            'canSendDigitalReceipts' => $subscription->allowsFeature('connected_receipts'),
+            'receiptChannels' => collect(ReceiptDelivery::channels())
+                ->filter(fn (string $channel) => $channel === ReceiptDelivery::CHANNEL_PRINT || $subscription->allowsFeature('connected_receipts'))
+                ->values()
+                ->all(),
             'receiptSettings' => AppSetting::current(),
             'canRefund' => $transaction->status !== Transaction::STATUS_REFUNDED,
+            'canUseThermalPrinting' => $subscription->allowsFeature('thermal_printing'),
         ]);
     }
 

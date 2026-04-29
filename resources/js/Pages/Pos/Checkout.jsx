@@ -71,6 +71,36 @@ export default function Checkout({
     const normalizedPaidAmount = Number(paidAmount || 0);
     const changeDue =
         selectedPaymentMethod === 'Cash' ? Math.max(0, normalizedPaidAmount - total) : 0;
+    const premiumWorkflowStates = [
+        {
+            label: 'Split payment',
+            enabled: features.splitPayment,
+            description: features.splitPayment
+                ? 'Current plan is eligible when split tender capture is enabled.'
+                : 'Upgrade to Pro or Business to unlock split tender checkout.',
+        },
+        {
+            label: 'QRIS integration',
+            enabled: features.qrisIntegration,
+            description: features.qrisIntegration
+                ? 'Current plan is eligible for connected QRIS settlement flows.'
+                : 'QRIS stays manual on this plan until a premium integration is enabled.',
+        },
+        {
+            label: 'Offline draft sync',
+            enabled: features.offlineDraftSync,
+            description: features.offlineDraftSync
+                ? 'Business plan can sync eligible offline drafts once sync support is enabled.'
+                : 'Drafts require an active connection on this plan.',
+        },
+        {
+            label: 'Thermal printing',
+            enabled: features.thermalPrinting,
+            description: features.thermalPrinting
+                ? 'Current plan is eligible for paired thermal printer handoff.'
+                : 'Browser printing stays available; thermal printing needs a premium plan.',
+        },
+    ];
 
     const checkoutForm = useForm({
         outlet_id: selectedOutlet,
@@ -417,7 +447,7 @@ export default function Checkout({
                                 </button>
                             </div>
 
-                            <div className="mt-4 flex-1 space-y-4 overflow-y-auto pr-1">
+                                <div className="mt-4 flex-1 space-y-4 overflow-y-auto pr-1">
                                 {cart.map((item) => (
                                     <div
                                         key={item.product_id}
@@ -571,6 +601,11 @@ export default function Checkout({
                                             className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                         />
                                     )}
+                                    {selectedPaymentMethod === 'QRIS' && !features.qrisIntegration && (
+                                        <p className="text-xs text-amber-300">
+                                            QRIS is captured manually on this plan. Connected QRIS settlement is gated behind premium entitlements.
+                                        </p>
+                                    )}
                                     <input
                                         value={paymentReference}
                                         onChange={(event) => setPaymentReference(event.target.value)}
@@ -599,6 +634,43 @@ export default function Checkout({
                                             className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                         />
                                     )}
+                                </div>
+                            </div>
+
+                            <div className="mt-4 rounded-[2rem] border border-white/10 bg-surface-container-lowest/5 p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <h4 className="text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
+                                        Plan-aware extensions
+                                    </h4>
+                                    <span className="text-xs uppercase tracking-wide text-outline">
+                                        {auth.user?.role?.name}
+                                    </span>
+                                </div>
+                                <div className="mt-4 space-y-3">
+                                    {premiumWorkflowStates.map((state) => (
+                                        <div
+                                            key={state.label}
+                                            className="rounded-xl border border-white/10 bg-on-surface/30 p-3"
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <p className="text-sm font-medium text-white">
+                                                    {state.label}
+                                                </p>
+                                                <span
+                                                    className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+                                                        state.enabled
+                                                            ? 'bg-emerald-400/15 text-emerald-200'
+                                                            : 'bg-secondary-container text-on-secondary-container'
+                                                    }`}
+                                                >
+                                                    {state.enabled ? 'Eligible' : 'Upgrade required'}
+                                                </span>
+                                            </div>
+                                            <p className="mt-2 text-xs text-outline">
+                                                {state.description}
+                                            </p>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
