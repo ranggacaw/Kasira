@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesOutletContext;
+use App\Models\AppSetting;
 use App\Models\Payment;
+use App\Models\PosDraftOrder;
 use App\Models\ReceiptDelivery;
+use App\Models\StockMovement;
 use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Response as ResponseFactory;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,7 +33,12 @@ class TransactionController extends Controller
             'cashier_id' => ['nullable', 'exists:users,id'],
             'outlet_id' => ['nullable', 'exists:outlets,id'],
             'payment_method' => ['nullable', Rule::in(Payment::methods())],
+            'status' => ['nullable', Rule::in([Transaction::STATUS_COMPLETED, Transaction::STATUS_REFUNDED])],
         ]);
+
+        $currentOutlet = $this->resolveCurrentOutlet($request);
+
+        $filters['outlet_id'] ??= $currentOutlet?->id;
 
         $transactions = Transaction::query()
             ->with(['cashier:id,name', 'outlet:id,name', 'customer:id,name', 'payments:id,transaction_id,method,amount'])
@@ -37,6 +47,7 @@ class TransactionController extends Controller
             ->when($filters['cashier_id'] ?? null, fn ($query, $value) => $query->where('cashier_id', $value))
             ->when($filters['outlet_id'] ?? null, fn ($query, $value) => $query->where('outlet_id', $value))
             ->when($filters['payment_method'] ?? null, fn ($query, $value) => $query->whereHas('payments', fn ($paymentQuery) => $paymentQuery->where('method', $value)))
+            ->when($filters['status'] ?? null, fn ($query, $value) => $query->where('status', $value))
             ->latest('paid_at')
             ->limit(50)
             ->get();
@@ -47,6 +58,12 @@ class TransactionController extends Controller
             'outlets' => $this->availableOutletsFor($request->user()),
             'cashiers' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'paymentMethods' => Payment::methods(),
+            'draftOrders' => PosDraftOrder::query()
+                ->with(['outlet:id,name', 'customer:id,name'])
+                ->when($filters['outlet_id'] ?? null, fn ($query, $value) => $query->where('outlet_id', $value))
+                ->latest()
+                ->limit(12)
+                ->get(),
         ]);
     }
 
@@ -69,6 +86,8 @@ class TransactionController extends Controller
             'transaction' => $transaction,
             'canSendDigitalReceipts' => Subscription::current()->allowsFeature('connected_receipts'),
             'receiptChannels' => ReceiptDelivery::channels(),
+            'receiptSettings' => AppSetting::current(),
+            'canRefund' => $transaction->status !== Transaction::STATUS_REFUNDED,
         ]);
     }
 
@@ -99,5 +118,66 @@ class TransactionController extends Controller
         ]);
 
         return back()->with('success', 'Receipt action logged.');
+    }
+
+    public function downloadReceipt(Request $request, Transaction $transaction)
+    {
+        abort_unless($request->user()->canViewTransactions(), 403);
+
+        $transaction->load(['cashier:id,name', 'outlet:id,name,address', 'items.product:id,name', 'payments']);
+        $settings = AppSetting::current();
+
+        $content = view('receipts.download', [
+            'transaction' => $transaction,
+            'settings' => $settings,
+        ])->render();
+
+        return ResponseFactory::make($content, 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$transaction->invoice_number.'.html"',
+        ]);
+    }
+
+    public function refund(Request $request, Transaction $transaction): RedirectResponse
+    {
+        abort_unless($request->user()->canViewTransactions(), 403);
+
+        if ($transaction->status === Transaction::STATUS_REFUNDED) {
+            return back()->with('success', 'Transaction already refunded.');
+        }
+
+        $transaction->load('items.product');
+
+        DB::transaction(function () use ($request, $transaction): void {
+            foreach ($transaction->items as $item) {
+                $product = $item->product;
+
+                if (! $product || ! $product->track_stock) {
+                    continue;
+                }
+
+                $balanceAfter = $product->stock_quantity + $item->quantity;
+
+                $product->update([
+                    'stock_quantity' => $balanceAfter,
+                ]);
+
+                $product->stockMovements()->create([
+                    'outlet_id' => $transaction->outlet_id,
+                    'user_id' => $request->user()->id,
+                    'type' => StockMovement::TYPE_REFUND,
+                    'quantity' => $item->quantity,
+                    'balance_after' => $balanceAfter,
+                    'notes' => "Refunded from {$transaction->invoice_number}.",
+                ]);
+            }
+
+            $transaction->update([
+                'status' => Transaction::STATUS_REFUNDED,
+                'refunded_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Refund workflow completed.');
     }
 }

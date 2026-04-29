@@ -13,14 +13,26 @@ class Payment extends Model
     public const METHOD_CASH = 'Cash';
     public const METHOD_QRIS = 'QRIS';
     public const METHOD_BANK_TRANSFER = 'Bank Transfer';
+    public const METHOD_DEBIT_CARD = 'Debit Card';
+    public const METHOD_CREDIT_CARD = 'Credit Card';
+    public const METHOD_E_WALLET = 'E-Wallet';
 
-    public static function methods(?Subscription $subscription = null): array
+    public static function methods(?AppSetting $settings = null): array
     {
-        return [
+        $available = [
             self::METHOD_CASH,
             self::METHOD_QRIS,
             self::METHOD_BANK_TRANSFER,
+            self::METHOD_DEBIT_CARD,
+            self::METHOD_CREDIT_CARD,
+            self::METHOD_E_WALLET,
         ];
+
+        if (! $settings?->enabled_payment_methods) {
+            return $available;
+        }
+
+        return array_values(array_intersect($available, $settings->enabled_payment_methods));
     }
 
     protected $fillable = [

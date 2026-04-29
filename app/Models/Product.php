@@ -16,16 +16,20 @@ class Product extends Model
         static::creating(function (Product $product): void {
             $product->outlet_id ??= Outlet::query()->where('is_primary', true)->value('id')
                 ?? Outlet::query()->value('id');
+            $product->unit_id ??= Unit::query()->where('short_name', 'pcs')->value('id')
+                ?? Unit::query()->value('id');
             $product->stock_quantity ??= 100;
             $product->minimum_stock ??= 0;
             $product->cost_price ??= 0;
             $product->is_active ??= true;
+            $product->track_stock ??= true;
         });
     }
 
     protected $fillable = [
         'outlet_id',
         'category_id',
+        'unit_id',
         'name',
         'sku',
         'barcode',
@@ -35,6 +39,7 @@ class Product extends Model
         'minimum_stock',
         'image_path',
         'is_active',
+        'track_stock',
     ];
 
     protected function casts(): array
@@ -45,6 +50,7 @@ class Product extends Model
             'stock_quantity' => 'integer',
             'minimum_stock' => 'integer',
             'is_active' => 'boolean',
+            'track_stock' => 'boolean',
         ];
     }
 
@@ -56,6 +62,11 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function transactionItems(): HasMany

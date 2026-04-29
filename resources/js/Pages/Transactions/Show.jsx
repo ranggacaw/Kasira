@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -12,6 +12,8 @@ export default function TransactionShow({
     transaction,
     canSendDigitalReceipts,
     receiptChannels,
+    receiptSettings,
+    canRefund,
 }) {
     const flash = usePage().props.flash || {};
     const receiptForm = useForm({
@@ -69,6 +71,11 @@ export default function TransactionShow({
                             </div>
 
                             <div className="mt-4 space-y-3">
+                                {receiptSettings.receipt_header && (
+                                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                                        {receiptSettings.receipt_header}
+                                    </div>
+                                )}
                                 {transaction.items.map((item) => (
                                     <div
                                         key={item.id}
@@ -89,7 +96,7 @@ export default function TransactionShow({
                                 ))}
                             </div>
 
-                            <div className="mt-6 space-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
+                                <div className="mt-6 space-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
                                 <div className="flex justify-between">
                                     <span>Subtotal</span>
                                     <span>{formatCurrency(transaction.subtotal)}</span>
@@ -106,12 +113,18 @@ export default function TransactionShow({
                                     <span>Service fee</span>
                                     <span>{formatCurrency(transaction.service_fee_amount)}</span>
                                 </div>
-                                <div className="flex justify-between text-base font-semibold text-slate-900">
-                                    <span>Total</span>
-                                    <span>{formatCurrency(transaction.total)}</span>
+                                    <div className="flex justify-between text-base font-semibold text-slate-900">
+                                        <span>Total</span>
+                                        <span>{formatCurrency(transaction.total)}</span>
+                                    </div>
                                 </div>
+
+                                {receiptSettings.receipt_footer && (
+                                    <p className="mt-6 border-t border-dashed border-slate-200 pt-4 text-center text-sm text-slate-500">
+                                        {receiptSettings.receipt_footer}
+                                    </p>
+                                )}
                             </div>
-                        </div>
 
                         <div className="space-y-6">
                             <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
@@ -150,6 +163,39 @@ export default function TransactionShow({
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                                     Receipt delivery log
                                 </h3>
+                                <div className="mt-4 flex flex-wrap gap-3">
+                                    <Link
+                                        href={route('transactions.download', transaction.id)}
+                                        className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                                    >
+                                        Download receipt
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            if (navigator.share) {
+                                                await navigator.share({
+                                                    title: `Receipt ${transaction.invoice_number}`,
+                                                    url: route('transactions.show', transaction.id),
+                                                });
+                                            }
+                                        }}
+                                        className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                                    >
+                                        Share receipt
+                                    </button>
+                                    {canRefund && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.post(route('transactions.refund', transaction.id))
+                                            }
+                                            className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700"
+                                        >
+                                            Refund transaction
+                                        </button>
+                                    )}
+                                </div>
                                 <form
                                     className="mt-4 space-y-3"
                                     onSubmit={(event) => {

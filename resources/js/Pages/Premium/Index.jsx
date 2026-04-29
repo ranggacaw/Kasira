@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -13,11 +13,17 @@ export default function PremiumIndex({
     features,
     usage,
     profitability,
+    paymentBreakdown,
+    cashierPerformance,
+    topProducts,
+    lowStockAlerts,
     recentPromotions,
     recentVouchers,
     recentShifts,
     canManagePremium,
     outlets,
+    selectedOutletId,
+    filters,
 }) {
     const flash = usePage().props.flash || {};
 
@@ -56,15 +62,15 @@ export default function PremiumIndex({
             header={
                 <div>
                     <h2 className="text-xl font-semibold leading-tight text-slate-900">
-                        Premium extensions
+                        Reports and premium workflows
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                        Manage plan entitlements, reporting exports, promotions, vouchers, and shift visibility.
+                        Sales, products, payments, cashier performance, and gated premium commerce workflows.
                     </p>
                 </div>
             }
         >
-            <Head title="Premium" />
+            <Head title="Reports" />
 
             <div className="space-y-6 py-10">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
@@ -73,6 +79,58 @@ export default function PremiumIndex({
                             {flash.success}
                         </div>
                     )}
+
+                    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                        <div className="grid gap-3 md:grid-cols-4">
+                            <select
+                                value={selectedOutletId || ''}
+                                onChange={(event) =>
+                                    router.get(route('reports.index'), {
+                                        outlet: event.target.value,
+                                        date_from: filters.date_from,
+                                        date_to: filters.date_to,
+                                    })
+                                }
+                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            >
+                                {outlets.map((outlet) => (
+                                    <option key={outlet.id} value={outlet.id}>
+                                        {outlet.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <input
+                                type="date"
+                                value={filters.date_from}
+                                onChange={(event) =>
+                                    router.get(route('reports.index'), {
+                                        outlet: selectedOutletId,
+                                        date_from: event.target.value,
+                                        date_to: filters.date_to,
+                                    })
+                                }
+                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            />
+                            <input
+                                type="date"
+                                value={filters.date_to}
+                                onChange={(event) =>
+                                    router.get(route('reports.index'), {
+                                        outlet: selectedOutletId,
+                                        date_from: filters.date_from,
+                                        date_to: event.target.value,
+                                    })
+                                }
+                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            />
+                            <Link
+                                href={route('reports.export', { outlet: selectedOutletId })}
+                                className="rounded-full bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white"
+                            >
+                                Export current report
+                            </Link>
+                        </div>
+                    </div>
 
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                         {[
@@ -109,7 +167,7 @@ export default function PremiumIndex({
                                     </div>
                                     {features.includes('exports') ? (
                                         <Link
-                                            href={route('premium.reports.export')}
+                                            href={route('reports.export')}
                                             className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
                                         >
                                             Export CSV
@@ -136,6 +194,106 @@ export default function PremiumIndex({
                                             Starter plan active. Premium reporting and commerce workflows are gated.
                                         </p>
                                     )}
+                                </div>
+                            </div>
+
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                        Payment report
+                                    </h3>
+                                    <div className="mt-4 space-y-3 text-sm text-slate-600">
+                                        {paymentBreakdown.map((entry) => (
+                                            <div
+                                                key={entry.method}
+                                                className="rounded-2xl border border-slate-200 p-4"
+                                            >
+                                                <p className="font-medium text-slate-900">
+                                                    {entry.method}
+                                                </p>
+                                                <p className="mt-1 text-slate-500">
+                                                    {entry.transaction_count} transactions
+                                                </p>
+                                                <p className="mt-2 text-xs uppercase tracking-wide text-emerald-600">
+                                                    {formatCurrency(entry.total_amount)}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                        Cashier report
+                                    </h3>
+                                    <div className="mt-4 space-y-3 text-sm text-slate-600">
+                                        {cashierPerformance.map((entry) => (
+                                            <div
+                                                key={entry.id}
+                                                className="rounded-2xl border border-slate-200 p-4"
+                                            >
+                                                <p className="font-medium text-slate-900">
+                                                    {entry.name}
+                                                </p>
+                                                <p className="mt-1 text-slate-500">
+                                                    {entry.transaction_count} transactions
+                                                </p>
+                                                <p className="mt-2 text-xs uppercase tracking-wide text-emerald-600">
+                                                    {formatCurrency(entry.revenue)}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                        Product report
+                                    </h3>
+                                    <div className="mt-4 space-y-3 text-sm text-slate-600">
+                                        {topProducts.map((product) => (
+                                            <div
+                                                key={product.id}
+                                                className="rounded-2xl border border-slate-200 p-4"
+                                            >
+                                                <p className="font-medium text-slate-900">
+                                                    {product.name}
+                                                </p>
+                                                <p className="mt-1 text-slate-500">
+                                                    {product.quantity_sold} sold
+                                                </p>
+                                                <p className="mt-2 text-xs uppercase tracking-wide text-emerald-600">
+                                                    {formatCurrency(product.revenue)}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                        Inventory report
+                                    </h3>
+                                    <div className="mt-4 space-y-3 text-sm text-slate-600">
+                                        {lowStockAlerts.map((product) => (
+                                            <div
+                                                key={product.id}
+                                                className="rounded-2xl border border-amber-200 bg-amber-50 p-4"
+                                            >
+                                                <p className="font-medium text-slate-900">
+                                                    {product.name}
+                                                </p>
+                                                <p className="mt-1 text-slate-500">
+                                                    Stock {product.stock_quantity} / minimum {product.minimum_stock}
+                                                </p>
+                                                <p className="mt-2 text-xs uppercase tracking-wide text-amber-700">
+                                                    {product.outlet?.name}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
 

@@ -14,15 +14,17 @@ class CatalogInventoryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_only_owner_and_admin_can_access_catalog_management(): void
+    public function test_owner_admin_and_manager_can_access_product_management(): void
     {
         $owner = $this->createUserWithRole(Role::OWNER);
         $admin = $this->createUserWithRole(Role::ADMIN);
+        $manager = $this->createUserWithRole(Role::MANAGER);
         $cashier = $this->createUserWithRole(Role::CASHIER);
 
-        $this->actingAs($owner)->get('/catalog')->assertOk();
-        $this->actingAs($admin)->get('/catalog')->assertOk();
-        $this->actingAs($cashier)->get('/catalog')->assertForbidden();
+        $this->actingAs($owner)->get('/products')->assertOk();
+        $this->actingAs($admin)->get('/products')->assertOk();
+        $this->actingAs($manager)->get('/products')->assertOk();
+        $this->actingAs($cashier)->get('/products')->assertForbidden();
     }
 
     public function test_admin_can_create_catalog_records_and_record_stock_movements(): void
@@ -30,14 +32,17 @@ class CatalogInventoryTest extends TestCase
         $admin = $this->createUserWithRole(Role::ADMIN);
         $outlet = Outlet::query()->first();
 
-        $this->actingAs($admin)->post('/catalog/categories', [
+        $this->actingAs($admin)->post('/categories', [
             'name' => 'Beverages',
             'description' => 'Drink menu',
+            'color' => '#0f766e',
+            'sort_order' => 1,
+            'is_active' => true,
         ])->assertRedirect();
 
         $categoryId = (int) Category::query()->value('id');
 
-        $this->actingAs($admin)->post('/catalog/products', [
+        $this->actingAs($admin)->post('/products', [
             'outlet_id' => $outlet->id,
             'category_id' => $categoryId,
             'name' => 'Cold Brew',
@@ -49,6 +54,7 @@ class CatalogInventoryTest extends TestCase
             'minimum_stock' => 4,
             'image_path' => 'https://example.test/cold-brew.png',
             'is_active' => true,
+            'track_stock' => true,
         ])->assertRedirect();
 
         $product = Product::query()->where('sku', 'CB001')->firstOrFail();

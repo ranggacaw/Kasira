@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,7 +14,7 @@ class CheckoutTest extends TestCase
 
     public function test_guests_are_redirected_from_checkout(): void
     {
-        $this->get('/pos/checkout')
+        $this->get('/pos')
             ->assertRedirect(route('login'));
     }
 
@@ -22,7 +23,7 @@ class CheckoutTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->get('/pos/checkout')
+            ->get('/pos')
             ->assertOk();
     }
 
@@ -42,7 +43,7 @@ class CheckoutTest extends TestCase
             'is_active' => false,
         ]);
 
-        $response = $this->actingAs($user)->get('/pos/checkout');
+        $response = $this->actingAs($user)->get('/pos');
 
         $response->assertOk();
         $response->assertSee('Espresso');
@@ -118,8 +119,9 @@ class CheckoutTest extends TestCase
             'payment_method' => 'Cash',
         ]);
 
-        $response->assertRedirect(route('pos.checkout'));
-        $response->assertSessionHas('success');
+        $transaction = Transaction::query()->firstOrFail();
+
+        $response->assertRedirect(route('pos.success', $transaction));
 
         $this->assertDatabaseHas('transactions', [
             'cashier_id' => $user->id,

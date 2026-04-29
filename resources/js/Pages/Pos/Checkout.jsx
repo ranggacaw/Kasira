@@ -1,5 +1,5 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import PosLayout from '@/Layouts/PosLayout';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 const formatCurrency = (value) =>
@@ -14,127 +14,65 @@ export default function Checkout({
     paymentMethods,
     outlets,
     selectedOutletId,
+    categories,
     customers,
     promotions,
     receiptChannels,
     features,
     currentShift,
+    draftOrders,
 }) {
     const { auth } = usePage().props;
-    const flash = usePage().props?.flash || {};
-
+    const [activeCategoryId, setActiveCategoryId] = useState('all');
+    const [isCartOpen, setIsCartOpen] = useState(false);
     const [cart, setCart] = useState([]);
     const [discountType, setDiscountType] = useState('percentage');
     const [discountValue, setDiscountValue] = useState(0);
     const [taxRate, setTaxRate] = useState(0);
     const [serviceFeeRate, setServiceFeeRate] = useState(0);
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(paymentMethods[0] || '');
-    const [paymentReference, setPaymentReference] = useState('');
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(paymentMethods[0] || 'Cash');
     const [selectedOutlet, setSelectedOutlet] = useState(selectedOutletId || outlets[0]?.id || '');
     const [selectedCustomer, setSelectedCustomer] = useState('');
     const [selectedPromotion, setSelectedPromotion] = useState('');
-    const [voucherCode, setVoucherCode] = useState('');
+    const [paymentReference, setPaymentReference] = useState('');
     const [receiptChannel, setReceiptChannel] = useState('');
     const [receiptRecipient, setReceiptRecipient] = useState('');
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [lastTransaction, setLastTransaction] = useState(null);
+    const [voucherCode, setVoucherCode] = useState('');
+    const [paidAmount, setPaidAmount] = useState('');
+    const [activeDraftId, setActiveDraftId] = useState(null);
 
-    useEffect(() => {
-        if (flash?.success) {
-            setShowSuccess(true);
-            setLastTransaction(flash.success);
-            setTimeout(() => setShowSuccess(false), 5000);
-        }
-    }, [flash]);
-
-    useEffect(() => {
-        setSelectedOutlet(selectedOutletId || outlets[0]?.id || '');
-        setCart([]);
-    }, [selectedOutletId, outlets, products]);
-
-    const selectedCustomerRecord = useMemo(
-        () => customers.find((customer) => customer.id === Number(selectedCustomer)),
-        [customers, selectedCustomer],
+    const filteredProducts = useMemo(
+        () =>
+            products.filter((product) =>
+                activeCategoryId === 'all' ? true : product.category?.id === activeCategoryId,
+            ),
+        [activeCategoryId, products],
     );
 
-    const addToCart = (product) => {
-        const existing = cart.find((item) => item.product_id === product.id);
-        if (existing) {
-            setCart(
-                cart.map((item) =>
-                    item.product_id === product.id
-                        ? {
-                              ...item,
-                              quantity: item.quantity + 1,
-                              subtotal: (item.quantity + 1) * item.unit_price,
-                          }
-                        : item
-                ),
-            );
-        } else {
-            setCart([
-                ...cart,
-                {
-                    product_id: product.id,
-                    name: product.name,
-                    quantity: 1,
-                    unit_price: product.selling_price,
-                    subtotal: product.selling_price,
-                },
-            ]);
-        }
-    };
-
-    const updateQuantity = (productId, quantity) => {
-        if (quantity < 1) {
-            setCart(cart.filter((item) => item.product_id !== productId));
-        } else {
-            setCart(
-                cart.map((item) =>
-                    item.product_id === productId
-                        ? { ...item, quantity, subtotal: quantity * item.unit_price }
-                        : item
-                ),
-            );
-        }
-    };
-
-    const removeFromCart = (productId) => {
-        setCart(cart.filter((item) => item.product_id !== productId));
-    };
-
-    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-
+    const subtotal = useMemo(
+        () => cart.reduce((sum, item) => sum + item.subtotal, 0),
+        [cart],
+    );
     const manualDiscountAmount =
         discountType === 'percentage' ? (subtotal * discountValue) / 100 : discountValue;
-
     const promotionRecord = promotions.find(
         (promotion) => promotion.id === Number(selectedPromotion),
     );
-
     const promotionDiscountAmount = promotionRecord
         ? promotionRecord.type === 'percentage'
             ? ((subtotal - manualDiscountAmount) * promotionRecord.value) / 100
             : promotionRecord.value
         : 0;
+    const discountAmount = Math.max(0, manualDiscountAmount + promotionDiscountAmount);
+    const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+    const taxAmount = (discountedSubtotal * taxRate) / 100;
+    const serviceFeeAmount = (discountedSubtotal * serviceFeeRate) / 100;
+    const total = discountedSubtotal + taxAmount + serviceFeeAmount;
+    const normalizedPaidAmount = Number(paidAmount || 0);
+    const changeDue =
+        selectedPaymentMethod === 'Cash' ? Math.max(0, normalizedPaidAmount - total) : 0;
 
-    const membershipDiscountAmount =
-        features.memberships && selectedCustomerRecord
-            ? ((subtotal - manualDiscountAmount - promotionDiscountAmount) *
-                  (selectedCustomerRecord.membership_discount_rate || 0)) /
-              100
-            : 0;
-
-    const discountAmount = Math.max(
-        0,
-        manualDiscountAmount + promotionDiscountAmount + membershipDiscountAmount,
-    );
-    const afterDiscount = Math.max(0, subtotal - discountAmount);
-    const taxAmount = (afterDiscount * taxRate) / 100;
-    const serviceFeeAmount = (afterDiscount * serviceFeeRate) / 100;
-    const total = afterDiscount + taxAmount + serviceFeeAmount;
-
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const checkoutForm = useForm({
         outlet_id: selectedOutlet,
         items: cart,
         customer_id: selectedCustomer,
@@ -146,12 +84,14 @@ export default function Checkout({
         service_fee_rate: serviceFeeRate,
         payment_method: selectedPaymentMethod,
         payment_reference: paymentReference,
+        paid_amount: normalizedPaidAmount || '',
         receipt_channel: receiptChannel,
         receipt_recipient: receiptRecipient,
+        draft_order_id: activeDraftId,
     });
 
     useEffect(() => {
-        setData({
+        checkoutForm.setData({
             outlet_id: selectedOutlet,
             items: cart,
             customer_id: selectedCustomer,
@@ -163,13 +103,17 @@ export default function Checkout({
             service_fee_rate: serviceFeeRate,
             payment_method: selectedPaymentMethod,
             payment_reference: paymentReference,
+            paid_amount: normalizedPaidAmount || '',
             receipt_channel: receiptChannel,
             receipt_recipient: receiptRecipient,
+            draft_order_id: activeDraftId,
         });
     }, [
+        activeDraftId,
         cart,
         discountType,
         discountValue,
+        normalizedPaidAmount,
         paymentReference,
         receiptChannel,
         receiptRecipient,
@@ -182,236 +126,228 @@ export default function Checkout({
         voucherCode,
     ]);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        post(route('pos.checkout.store'), {
-            onSuccess: () => {
-                setCart([]);
-                setSelectedCustomer('');
-                setSelectedPromotion('');
-                setVoucherCode('');
-                setDiscountValue(0);
-                setTaxRate(0);
-                setServiceFeeRate(0);
-                setPaymentReference('');
-                setReceiptChannel('');
-                setReceiptRecipient('');
-                reset();
+    const addToCart = (product) => {
+        const existing = cart.find((item) => item.product_id === product.id);
+        if (existing) {
+            setCart(
+                cart.map((item) =>
+                    item.product_id === product.id
+                        ? {
+                              ...item,
+                              quantity: item.quantity + 1,
+                              subtotal: (item.quantity + 1) * item.unit_price,
+                          }
+                        : item,
+                ),
+            );
+            return;
+        }
+
+        setCart([
+            ...cart,
+            {
+                product_id: product.id,
+                name: product.name,
+                quantity: 1,
+                unit_price: Number(product.selling_price),
+                subtotal: Number(product.selling_price),
             },
-        });
+        ]);
     };
 
-    const changeOutlet = (event) => {
-        const outlet = event.target.value;
-        setSelectedOutlet(outlet);
-        router.get(route('pos.checkout'), { outlet }, { preserveScroll: true, replace: true });
+    const updateQuantity = (productId, quantity) => {
+        if (quantity < 1) {
+            setCart((current) => current.filter((item) => item.product_id !== productId));
+            return;
+        }
+
+        setCart(
+            cart.map((item) =>
+                item.product_id === productId
+                    ? { ...item, quantity, subtotal: quantity * item.unit_price }
+                    : item,
+            ),
+        );
     };
 
-    const startNewSale = () => {
+    const resetSale = () => {
         setCart([]);
         setSelectedCustomer('');
         setSelectedPromotion('');
         setVoucherCode('');
+        setDiscountType('percentage');
         setDiscountValue(0);
         setTaxRate(0);
         setServiceFeeRate(0);
         setPaymentReference('');
         setReceiptChannel('');
         setReceiptRecipient('');
-        setShowSuccess(false);
+        setPaidAmount('');
+        setActiveDraftId(null);
+    };
+
+    const saveDraft = () => {
+        const name = window.prompt('Draft order name', `Draft ${new Date().toLocaleTimeString()}`);
+        if (!name || cart.length === 0) {
+            return;
+        }
+
+        router.post(route('pos.drafts.store'), {
+            outlet_id: selectedOutlet,
+            customer_id: selectedCustomer || null,
+            name,
+            cart,
+            adjustments: {
+                discount_type: discountType,
+                discount_value: discountValue,
+                tax_rate: taxRate,
+                service_fee_rate: serviceFeeRate,
+                promotion_id: selectedPromotion || null,
+                voucher_code: voucherCode || null,
+            },
+        });
+    };
+
+    const resumeDraft = (draft) => {
+        setActiveDraftId(draft.id);
+        setCart(draft.cart || []);
+        setSelectedCustomer(draft.customer_id || '');
+        setDiscountType(draft.adjustments?.discount_type || 'percentage');
+        setDiscountValue(draft.adjustments?.discount_value || 0);
+        setTaxRate(draft.adjustments?.tax_rate || 0);
+        setServiceFeeRate(draft.adjustments?.service_fee_rate || 0);
+        setSelectedPromotion(draft.adjustments?.promotion_id || '');
+        setVoucherCode(draft.adjustments?.voucher_code || '');
+        setIsCartOpen(true);
+    };
+
+    const submitCheckout = (event) => {
+        event.preventDefault();
+        checkoutForm.post(route('pos.store'));
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-xl font-semibold leading-tight text-slate-900">
-                            POS Checkout
-                        </h2>
-                        <p className="mt-1 text-sm text-slate-500">
-                            Create a new sale transaction
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <select
-                            value={selectedOutlet}
-                            onChange={changeOutlet}
-                            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
-                        >
-                            {outlets.map((outlet) => (
-                                <option key={outlet.id} value={outlet.id}>
-                                    {outlet.name}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                            {auth.user?.role?.name}
-                        </div>
-                    </div>
+        <PosLayout
+            title="Checkout workspace"
+            subtitle="Touch-first product browsing, floating mobile cart access, and draft order resume."
+            actions={
+                <div className="flex flex-wrap items-center gap-3">
+                    <select
+                        value={selectedOutlet}
+                        onChange={(event) => {
+                            const outlet = event.target.value;
+                            setSelectedOutlet(outlet);
+                            router.get(route('pos.index'), { outlet }, { preserveState: true });
+                        }}
+                        className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white"
+                    >
+                        {outlets.map((outlet) => (
+                            <option key={outlet.id} value={outlet.id} className="text-slate-900">
+                                {outlet.name}
+                            </option>
+                        ))}
+                    </select>
+                    {features.cashierShifts && (
+                        currentShift ? (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    router.patch(route('premium.shifts.close', currentShift.id), {
+                                        closing_balance: total,
+                                    })
+                                }
+                                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white"
+                            >
+                                Close shift
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    router.post(route('premium.shifts.open'), {
+                                        outlet_id: selectedOutlet,
+                                        opening_balance: 0,
+                                    })
+                                }
+                                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white"
+                            >
+                                Open shift
+                            </button>
+                        )
+                    )}
                 </div>
             }
         >
-            <Head title="POS Checkout" />
+            <Head title="POS" />
 
-                    {showSuccess && (
-                        <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-                            {lastTransaction}
-                        </div>
-                    )}
-
-                    {features.cashierShifts && (
-                        <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                            <div className="flex flex-wrap items-center justify-between gap-4">
-                                <div>
-                                    <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                                        Cashier shift
-                                    </p>
-                                    {currentShift ? (
-                                        <p className="mt-2 text-sm text-slate-600">
-                                            Open since {currentShift.opened_at} with balance{' '}
-                                            {formatCurrency(currentShift.opening_balance)}
-                                        </p>
-                                    ) : (
-                                        <p className="mt-2 text-sm text-slate-600">
-                                            No shift is currently open for this outlet.
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="flex gap-3">
-                                    {!currentShift ? (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                router.post(route('premium.shifts.open'), {
-                                                    outlet_id: selectedOutlet,
-                                                    opening_balance: 0,
-                                                })
-                                            }
-                                            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
-                                        >
-                                            Open shift
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                router.patch(
-                                                    route('premium.shifts.close', currentShift.id),
-                                                    { closing_balance: total },
-                                                )
-                                            }
-                                            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
-                                        >
-                                            Close shift
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-                        <div className="space-y-6">
-                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                            Products
-                        </h3>
-                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    {products.map((product) => (
-                                        <button
-                                            key={product.id}
-                                            onClick={() => addToCart(product)}
-                                    className="flex flex-col items-start rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-emerald-300 hover:bg-emerald-50"
+            <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
+                <section className="space-y-4">
+                    <div className="overflow-x-auto rounded-[2rem] border border-white/10 bg-white/5 p-3 backdrop-blur">
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setActiveCategoryId('all')}
+                                className={`rounded-full px-4 py-2 text-sm font-medium ${
+                                    activeCategoryId === 'all'
+                                        ? 'bg-white text-slate-950'
+                                        : 'bg-white/5 text-slate-300'
+                                }`}
+                            >
+                                All products
+                            </button>
+                            {categories.map((category) => (
+                                <button
+                                    key={category.id}
+                                    type="button"
+                                    onClick={() => setActiveCategoryId(category.id)}
+                                    className={`rounded-full px-4 py-2 text-sm font-medium ${
+                                        activeCategoryId === category.id
+                                            ? 'bg-white text-slate-950'
+                                            : 'bg-white/5 text-slate-300'
+                                    }`}
                                 >
-                                    <span className="font-medium text-slate-900">
-                                        {product.name}
-                                    </span>
-                                            <span className="mt-1 text-sm font-semibold text-emerald-600">
-                                                {formatCurrency(product.selling_price)}
-                                            </span>
-                                            <span className="mt-2 text-xs text-slate-400">
-                                                Stock {product.stock_quantity}
-                                            </span>
-                                            {product.sku && (
-                                                <span className="mt-1 text-xs text-slate-400">
-                                                    {product.sku}
-                                                </span>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
+                                    {category.name}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    {cart.length > 0 && (
-                        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                                Cart ({cart.length} items)
-                            </h3>
-                            <div className="space-y-3">
-                                {cart.map((item) => (
+                    {draftOrders.length > 0 && (
+                        <div className="rounded-[2rem] border border-white/10 bg-white/5 p-4 backdrop-blur">
+                            <div className="flex items-center justify-between gap-3">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
+                                    Draft orders
+                                </h3>
+                                <span className="text-xs uppercase tracking-wide text-slate-500">
+                                    {draftOrders.length} saved
+                                </span>
+                            </div>
+                            <div className="mt-4 flex flex-wrap gap-3">
+                                {draftOrders.map((draft) => (
                                     <div
-                                        key={item.product_id}
-                                        className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3"
+                                        key={draft.id}
+                                        className="rounded-2xl border border-white/10 bg-slate-900/50 p-4"
                                     >
-                                        <div className="flex-1">
-                                            <div className="font-medium text-slate-900">
-                                                {item.name}
-                                            </div>
-                                            <div className="text-sm text-slate-500">
-                                                {formatCurrency(item.unit_price)} each
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() =>
-                                                        updateQuantity(
-                                                            item.product_id,
-                                                            item.quantity - 1
-                                                        )
-                                                    }
-                                                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100"
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="w-8 text-center font-medium">
-                                                    {item.quantity}
-                                                </span>
-                                                <button
-                                                    onClick={() =>
-                                                        updateQuantity(
-                                                            item.product_id,
-                                                            item.quantity + 1
-                                                        )
-                                                    }
-                                                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                            <div className="w-24 text-right font-medium text-slate-900">
-                                                {formatCurrency(item.subtotal)}
-                                            </div>
+                                        <p className="font-medium text-white">{draft.name}</p>
+                                        <p className="mt-1 text-sm text-slate-400">
+                                            {draft.customer?.name || 'Walk-in'}
+                                        </p>
+                                        <div className="mt-3 flex gap-2">
                                             <button
-                                                onClick={() =>
-                                                    removeFromCart(item.product_id)
-                                                }
-                                                className="text-red-500 transition hover:text-red-700"
+                                                type="button"
+                                                onClick={() => resumeDraft(draft)}
+                                                className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-950"
                                             >
-                                                <svg
-                                                    className="h-5 w-5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M6 18L18 6M6 6l12 12"
-                                                    />
-                                                </svg>
+                                                Resume
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    router.delete(route('pos.drafts.destroy', draft.id))
+                                                }
+                                                className="rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300"
+                                            >
+                                                Delete
                                             </button>
                                         </div>
                                     </div>
@@ -419,24 +355,138 @@ export default function Checkout({
                             </div>
                         </div>
                     )}
-                </div>
 
-                <div className="space-y-6">
-                    <form onSubmit={handleSubmit}>
-                        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                                Totals
-                            </h3>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {filteredProducts.map((product) => (
+                            <button
+                                key={product.id}
+                                type="button"
+                                onClick={() => addToCart(product)}
+                                className="rounded-[2rem] border border-white/10 bg-white/5 p-5 text-left backdrop-blur transition hover:border-emerald-300/40 hover:bg-white/10"
+                            >
+                                <p className="text-lg font-semibold text-white">{product.name}</p>
+                                <p className="mt-1 text-sm text-slate-400">
+                                    {product.category?.name || 'Uncategorized'}
+                                </p>
+                                <p className="mt-4 text-lg font-semibold text-emerald-300">
+                                    {formatCurrency(product.selling_price)}
+                                </p>
+                                <p className="mt-3 text-xs uppercase tracking-wide text-slate-500">
+                                    Stock {product.stock_quantity}
+                                </p>
+                            </button>
+                        ))}
+                    </div>
+                </section>
 
-                            <div className="space-y-4">
+                <>
+                    <button
+                        type="button"
+                        onClick={() => setIsCartOpen(true)}
+                        className="fixed bottom-4 right-4 z-30 rounded-full bg-emerald-400 px-5 py-4 text-sm font-semibold text-slate-950 shadow-xl shadow-emerald-400/30 lg:hidden"
+                    >
+                        Cart {cart.length > 0 ? `(${cart.length})` : ''}
+                    </button>
+
+                    <div
+                        className={`fixed inset-0 z-40 bg-slate-950/50 transition lg:hidden ${
+                            isCartOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+                        }`}
+                        onClick={() => setIsCartOpen(false)}
+                    />
+
+                    <section
+                        className={`fixed bottom-0 left-0 right-0 z-50 max-h-[88vh] rounded-t-[2rem] border border-white/10 bg-slate-900 p-4 shadow-2xl transition-transform lg:static lg:max-h-none lg:rounded-[2rem] lg:border lg:bg-white/5 lg:p-5 lg:backdrop-blur ${
+                            isCartOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'
+                        }`}
+                    >
+                        <form onSubmit={submitCheckout} className="flex h-full flex-col">
+                            <div className="flex items-center justify-between gap-3">
                                 <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                                        Customer
-                                    </label>
+                                    <h3 className="text-lg font-semibold text-white">Cart summary</h3>
+                                    <p className="mt-1 text-sm text-slate-400">
+                                        {activeDraftId ? 'Draft resumed' : 'Ready for payment'}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCartOpen(false)}
+                                    className="rounded-full border border-white/10 px-3 py-2 text-sm text-slate-300 lg:hidden"
+                                >
+                                    Close
+                                </button>
+                            </div>
+
+                            <div className="mt-4 flex-1 space-y-4 overflow-y-auto pr-1">
+                                {cart.map((item) => (
+                                    <div
+                                        key={item.product_id}
+                                        className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p className="font-medium text-white">{item.name}</p>
+                                                <p className="mt-1 text-sm text-slate-400">
+                                                    {formatCurrency(item.unit_price)} each
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setCart((current) =>
+                                                        current.filter(
+                                                            (currentItem) =>
+                                                                currentItem.product_id !== item.product_id,
+                                                        ),
+                                                    )
+                                                }
+                                                className="text-sm text-rose-300"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                        <div className="mt-4 flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateQuantity(item.product_id, item.quantity - 1)
+                                                    }
+                                                    className="h-8 w-8 rounded-full bg-white/10 text-white"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="w-8 text-center text-sm font-semibold text-white">
+                                                    {item.quantity}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateQuantity(item.product_id, item.quantity + 1)
+                                                    }
+                                                    className="h-8 w-8 rounded-full bg-white text-slate-950"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                            <p className="font-semibold text-white">
+                                                {formatCurrency(item.subtotal)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {cart.length === 0 && (
+                                    <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-slate-400">
+                                        Add products to start a sale or resume a saved draft.
+                                    </div>
+                                )}
+
+                                <div className="space-y-3 rounded-[2rem] border border-white/10 bg-white/5 p-4">
                                     <select
                                         value={selectedCustomer}
                                         onChange={(event) => setSelectedCustomer(event.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
                                     >
                                         <option value="">Walk-in customer</option>
                                         {customers.map((customer) => (
@@ -445,54 +495,29 @@ export default function Checkout({
                                             </option>
                                         ))}
                                     </select>
-                                    {selectedCustomerRecord && (
-                                        <p className="mt-2 text-xs text-slate-500">
-                                            {selectedCustomerRecord.membership_tier || 'Standard'}
-                                            {features.memberships &&
-                                                selectedCustomerRecord.membership_discount_rate > 0 &&
-                                                ` • ${selectedCustomerRecord.membership_discount_rate}% membership benefit`}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                                        Discount
-                                    </label>
-                                    <div className="flex gap-2">
+                                    <div className="grid gap-3 sm:grid-cols-2">
                                         <select
                                             value={discountType}
-                                            onChange={(e) =>
-                                                setDiscountType(e.target.value)
-                                            }
-                                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                            onChange={(event) => setDiscountType(event.target.value)}
+                                            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
                                         >
-                                            <option value="percentage">%</option>
-                                            <option value="fixed">Fixed</option>
+                                            <option value="percentage">Discount %</option>
+                                            <option value="fixed">Discount nominal</option>
                                         </select>
                                         <input
                                             type="number"
                                             value={discountValue}
-                                            onChange={(e) =>
-                                                setDiscountValue(
-                                                    parseFloat(e.target.value) || 0
-                                                )
+                                            onChange={(event) =>
+                                                setDiscountValue(Number(event.target.value || 0))
                                             }
-                                            min="0"
-                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
                                         />
                                     </div>
-                                </div>
-
-                                {features.promotions && (
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium text-slate-700">
-                                            Promotion
-                                        </label>
+                                    {features.promotions && (
                                         <select
                                             value={selectedPromotion}
                                             onChange={(event) => setSelectedPromotion(event.target.value)}
-                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
                                         >
                                             <option value="">No promotion</option>
                                             {promotions.map((promotion) => (
@@ -501,205 +526,147 @@ export default function Checkout({
                                                 </option>
                                             ))}
                                         </select>
-                                    </div>
-                                )}
-
-                                {features.vouchers && (
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium text-slate-700">
-                                            Voucher code
-                                        </label>
+                                    )}
+                                    <input
+                                        value={voucherCode}
+                                        onChange={(event) => setVoucherCode(event.target.value)}
+                                        placeholder="Voucher code"
+                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                    />
+                                    <div className="grid gap-3 sm:grid-cols-2">
                                         <input
-                                            type="text"
-                                            value={voucherCode}
-                                            onChange={(event) => setVoucherCode(event.target.value)}
-                                            placeholder="Voucher code"
-                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                            type="number"
+                                            value={taxRate}
+                                            onChange={(event) => setTaxRate(Number(event.target.value || 0))}
+                                            placeholder="Tax %"
+                                            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                        />
+                                        <input
+                                            type="number"
+                                            value={serviceFeeRate}
+                                            onChange={(event) =>
+                                                setServiceFeeRate(Number(event.target.value || 0))
+                                            }
+                                            placeholder="Service fee %"
+                                            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
                                         />
                                     </div>
-                                )}
-
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                                        Tax Rate (%)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={taxRate}
-                                        onChange={(e) =>
-                                            setTaxRate(parseFloat(e.target.value) || 0)
-                                        }
-                                        min="0"
-                                        max="100"
-                                        step="0.1"
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                                        Service Fee (%)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={serviceFeeRate}
-                                        onChange={(e) =>
-                                            setServiceFeeRate(
-                                                parseFloat(e.target.value) || 0
-                                            )
-                                        }
-                                        min="0"
-                                        max="100"
-                                        step="0.1"
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-                                    />
-                                </div>
-
-                                <div className="border-t border-slate-200 pt-4">
-                                    <div className="flex justify-between text-sm text-slate-600">
-                                        <span>Subtotal</span>
-                                        <span>{formatCurrency(subtotal)}</span>
-                                    </div>
-                                    {discountAmount > 0 && (
-                                        <div className="mt-2 flex justify-between text-sm text-red-600">
-                                            <span>Discount</span>
-                                            <span>-{formatCurrency(discountAmount)}</span>
-                                        </div>
-                                    )}
-                                    {taxAmount > 0 && (
-                                        <div className="mt-2 flex justify-between text-sm text-slate-600">
-                                            <span>Tax</span>
-                                            <span>{formatCurrency(taxAmount)}</span>
-                                        </div>
-                                    )}
-                                    {serviceFeeAmount > 0 && (
-                                        <div className="mt-2 flex justify-between text-sm text-slate-600">
-                                            <span>Service Fee</span>
-                                            <span>
-                                                {formatCurrency(serviceFeeAmount)}
-                                            </span>
-                                        </div>
-                                    )}
-                                    <div className="mt-4 flex justify-between text-lg font-semibold text-slate-900">
-                                        <span>Total</span>
-                                        <span>{formatCurrency(total)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                                Payment
-                            </h3>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                                        Payment Method
-                                    </label>
-                                    <div className="grid gap-2">
+                                    <select
+                                        value={selectedPaymentMethod}
+                                        onChange={(event) => setSelectedPaymentMethod(event.target.value)}
+                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                    >
                                         {paymentMethods.map((method) => (
-                                            <button
-                                                key={method}
-                                                type="button"
-                                                onClick={() =>
-                                                    setSelectedPaymentMethod(method)
-                                                }
-                                                className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${
-                                                    selectedPaymentMethod === method
-                                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                                                        : 'border-slate-200 text-slate-700 hover:border-slate-300'
-                                                }`}
-                                            >
+                                            <option key={method} value={method}>
                                                 {method}
-                                            </button>
+                                            </option>
                                         ))}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                                        Reference (Optional)
-                                    </label>
+                                    </select>
+                                    {selectedPaymentMethod === 'Cash' && (
+                                        <input
+                                            type="number"
+                                            value={paidAmount}
+                                            onChange={(event) => setPaidAmount(event.target.value)}
+                                            placeholder="Paid amount"
+                                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                        />
+                                    )}
                                     <input
-                                        type="text"
                                         value={paymentReference}
-                                        onChange={(e) =>
-                                            setPaymentReference(e.target.value)
-                                        }
-                                        placeholder="Transaction reference"
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                        onChange={(event) => setPaymentReference(event.target.value)}
+                                        placeholder="Payment reference"
+                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
                                     />
-                                </div>
-
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                                        Receipt action
-                                    </label>
                                     <select
                                         value={receiptChannel}
                                         onChange={(event) => setReceiptChannel(event.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
                                     >
-                                        <option value="">No receipt action</option>
+                                        <option value="">Receipt handoff later</option>
                                         {receiptChannels.map((channel) => (
                                             <option key={channel} value={channel}>
                                                 {channel}
                                             </option>
                                         ))}
                                     </select>
-                                </div>
-
-                                {receiptChannel && receiptChannel !== 'print' && (
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium text-slate-700">
-                                            Receipt recipient
-                                        </label>
+                                    {receiptChannel && receiptChannel !== 'print' && (
                                         <input
-                                            type="text"
                                             value={receiptRecipient}
                                             onChange={(event) =>
                                                 setReceiptRecipient(event.target.value)
                                             }
-                                            placeholder="Email or WhatsApp number"
-                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                            placeholder="Email or WhatsApp recipient"
+                                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
                                         />
-                                        {!features.connectedReceipts && (
-                                            <p className="mt-2 text-xs text-amber-600">
-                                                Connected receipts require the Business plan.
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
+                                    )}
+                                </div>
+                            </div>
 
-                                {(errors.items || errors.voucher_code || errors.promotion_id) && (
-                                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                                        {errors.items || errors.voucher_code || errors.promotion_id}
+                            <div className="mt-4 rounded-[2rem] border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-100">
+                                <div className="flex items-center justify-between">
+                                    <span>Subtotal</span>
+                                    <span>{formatCurrency(subtotal)}</span>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between">
+                                    <span>Discount</span>
+                                    <span>-{formatCurrency(discountAmount)}</span>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between">
+                                    <span>Tax</span>
+                                    <span>{formatCurrency(taxAmount)}</span>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between">
+                                    <span>Service fee</span>
+                                    <span>{formatCurrency(serviceFeeAmount)}</span>
+                                </div>
+                                <div className="mt-3 flex items-center justify-between border-t border-emerald-300/20 pt-3 text-base font-semibold text-white">
+                                    <span>Total</span>
+                                    <span>{formatCurrency(total)}</span>
+                                </div>
+                                {selectedPaymentMethod === 'Cash' && (
+                                    <div className="mt-2 flex items-center justify-between text-xs uppercase tracking-wide text-emerald-200">
+                                        <span>Change due</span>
+                                        <span>{formatCurrency(changeDue)}</span>
                                     </div>
                                 )}
                             </div>
-                        </div>
 
-                        <div className="mt-6 flex gap-3">
-                            <button
-                                type="button"
-                                onClick={startNewSale}
-                                className="flex-1 rounded-full border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                            >
-                                Clear
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={cart.length === 0 || processing}
-                                className="flex-1 rounded-full bg-emerald-300 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {processing ? 'Processing...' : 'Complete Sale'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                            <div className="mt-4 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={saveDraft}
+                                    className="flex-1 rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-white"
+                                >
+                                    Save draft
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={checkoutForm.processing || cart.length === 0}
+                                    className="flex-1 rounded-full bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 disabled:opacity-50"
+                                >
+                                    Charge sale
+                                </button>
+                            </div>
+
+                            <div className="mt-3 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={resetSale}
+                                    className="flex-1 rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300"
+                                >
+                                    Start new
+                                </button>
+                                <Link
+                                    href={route('transactions.index')}
+                                    className="flex flex-1 items-center justify-center rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300"
+                                >
+                                    View receipts
+                                </Link>
+                            </div>
+                        </form>
+                    </section>
+                </>
             </div>
-        </AuthenticatedLayout>
+        </PosLayout>
     );
 }

@@ -14,6 +14,7 @@ export default function TransactionsIndex({
     outlets,
     cashiers,
     paymentMethods,
+    draftOrders,
 }) {
     const flash = usePage().props.flash || {};
     const filterForm = useForm({
@@ -22,6 +23,7 @@ export default function TransactionsIndex({
         cashier_id: filters.cashier_id || '',
         outlet_id: filters.outlet_id || '',
         payment_method: filters.payment_method || '',
+        status: filters.status || '',
     });
 
     return (
@@ -113,10 +115,56 @@ export default function TransactionsIndex({
                                     </option>
                                 ))}
                             </select>
+                            <select
+                                value={filterForm.data.status}
+                                onChange={(event) =>
+                                    filterForm.setData('status', event.target.value)
+                                }
+                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            >
+                                <option value="">All statuses</option>
+                                <option value="completed">Completed</option>
+                                <option value="refunded">Refunded</option>
+                            </select>
                             <button className="rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white md:col-span-5 xl:col-span-1">
                                 Apply filters
                             </button>
                         </form>
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                        <div className="flex items-center justify-between gap-3">
+                            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                Draft orders
+                            </h3>
+                            <span className="text-xs uppercase tracking-wide text-slate-400">
+                                {draftOrders.length} drafts
+                            </span>
+                        </div>
+                        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            {draftOrders.map((draft) => (
+                                <div
+                                    key={draft.id}
+                                    className="rounded-2xl border border-slate-200 p-4"
+                                >
+                                    <p className="font-medium text-slate-900">{draft.name}</p>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        {draft.outlet?.name || 'Outlet'}
+                                    </p>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        {draft.customer?.name || 'Walk-in customer'}
+                                    </p>
+                                    <p className="mt-2 text-xs uppercase tracking-wide text-slate-400">
+                                        Saved draft
+                                    </p>
+                                </div>
+                            ))}
+                            {draftOrders.length === 0 && (
+                                <p className="text-sm text-slate-500">
+                                    No saved drafts match this outlet filter.
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
@@ -130,6 +178,7 @@ export default function TransactionsIndex({
                                         <th className="pb-3">Outlet</th>
                                         <th className="pb-3">Payment</th>
                                         <th className="pb-3">Customer</th>
+                                        <th className="pb-3">Status</th>
                                         <th className="pb-3">Total</th>
                                         <th className="pb-3 text-right">Receipt</th>
                                     </tr>
@@ -154,6 +203,17 @@ export default function TransactionsIndex({
                                             </td>
                                             <td className="py-3">
                                                 {transaction.customer?.name || 'Walk-in'}
+                                            </td>
+                                            <td className="py-3">
+                                                <span
+                                                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                                        transaction.status === 'refunded'
+                                                            ? 'bg-rose-50 text-rose-700'
+                                                            : 'bg-emerald-50 text-emerald-700'
+                                                    }`}
+                                                >
+                                                    {transaction.status}
+                                                </span>
                                             </td>
                                             <td className="py-3 font-medium text-slate-900">
                                                 {formatCurrency(transaction.total)}

@@ -17,7 +17,7 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_cashiers_are_redirected_to_pos_after_login(): void
     {
         $user = User::factory()->create();
 
@@ -27,6 +27,22 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
+        $response->assertRedirect(route('pos.index', absolute: false));
+    }
+
+    public function test_managers_are_redirected_to_dashboard_after_login(): void
+    {
+        $user = User::factory()->create([
+            'role_id' => \App\Models\Role::query()->firstOrCreate([
+                'name' => \App\Models\Role::MANAGER,
+            ])->id,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 

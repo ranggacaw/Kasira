@@ -33,6 +33,7 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user()?->loadMissing('role');
         $subscription = Schema::hasTable('subscriptions') ? Subscription::current() : null;
+        $settings = Schema::hasTable('app_settings') ? \App\Models\AppSetting::current() : null;
 
         return [
             ...parent::share($request),
@@ -54,11 +55,12 @@ class HandleInertiaRequests extends Middleware
                         'transactions' => $user->canViewTransactions(),
                         'operations' => $user->canManageOperations(),
                         'customers' => $user->canManageCustomers(),
-                        'reports' => $user->canViewReports(),
-                        'premium' => $user->canManagePremium(),
-                    ],
-                ] : null,
-            ],
+                     'reports' => $user->canViewReports(),
+                     'premium' => $user->canManagePremium(),
+                     'settings' => $user->canManageSettings(),
+                 ],
+             ] : null,
+         ],
             'subscription' => [
                 'plan' => $subscription?->plan,
                 'status' => $subscription?->status,
@@ -67,7 +69,12 @@ class HandleInertiaRequests extends Middleware
                 'user_limit' => $subscription?->user_limit,
             ],
             'flash' => [
-                'success' => $request->session()->get('success'),
+             'success' => $request->session()->get('success'),
+            ],
+            'settings' => [
+                'businessName' => $settings?->business_name,
+                'themeColor' => $settings?->pwa_theme_color,
+                'receiptFooter' => $settings?->receipt_footer,
             ],
         ];
     }

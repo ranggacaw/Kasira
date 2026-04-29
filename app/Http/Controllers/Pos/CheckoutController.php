@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Concerns\ResolvesOutletContext;
+use App\Models\AppSetting;
 use App\Models\CashierShift;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\PosDraftOrder;
 use App\Models\Product;
 use App\Models\Promotion;
 use App\Models\ReceiptDelivery;
@@ -25,20 +27,25 @@ class CheckoutController extends Controller
 {
     use ResolvesOutletContext;
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $subscription = Subscription::current();
-        $outlets = $this->availableOutletsFor(request()->user());
-        $currentOutlet = $this->resolveCurrentOutlet(request());
+        abort_unless($request->user()->canUseCheckout(), 403);
 
-        $products = Product::where('is_active', true)
+        $subscription = Subscription::current();
+        $settings = AppSetting::current();
+        $outlets = $this->availableOutletsFor($request->user());
+        $currentOutlet = $this->resolveCurrentOutlet($request);
+
+        $products = Product::query()
+            ->with(['category:id,name,color', 'unit:id,name,short_name'])
+            ->where('is_active', true)
             ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
             ->orderBy('name')
             ->get();
 
         $currentShift = $subscription->allowsFeature('cashier_shifts')
             ? CashierShift::query()
-                ->where('user_id', request()->user()->id)
+                ->where('user_id', $request->user()->id)
                 ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
                 ->where('status', 'open')
                 ->latest('opened_at')
@@ -47,9 +54,15 @@ class CheckoutController extends Controller
 
         return Inertia::render('Pos/Checkout', [
             'products' => $products,
-            'paymentMethods' => Payment::methods($subscription),
+            'paymentMethods' => Payment::methods($settings),
             'outlets' => $outlets,
             'selectedOutletId' => $currentOutlet?->id,
+            'categories' => $products
+                ->pluck('category')
+                ->filter()
+                ->unique('id')
+                ->sortBy('name')
+                ->values(),
             'customers' => Customer::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'membership_tier', 'membership_discount_rate']),
             'promotions' => $subscription->allowsFeature('promotions')
                 ? Promotion::query()
@@ -65,8 +78,20 @@ class CheckoutController extends Controller
                 'memberships' => $subscription->allowsFeature('memberships'),
                 'connectedReceipts' => $subscription->allowsFeature('connected_receipts'),
                 'cashierShifts' => $subscription->allowsFeature('cashier_shifts'),
+                'offlineMode' => $subscription->allowsFeature('offline_mode'),
+                'thermalPrinting' => $subscription->allowsFeature('thermal_printing'),
             ],
             'currentShift' => $currentShift,
+            'draftOrders' => PosDraftOrder::query()
+                ->with('customer:id,name')
+                ->where('user_id', $request->user()->id)
+                ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
+                ->latest()
+                ->get(),
+            'receiptSettings' => [
+                'header' => $settings->receipt_header,
+                'footer' => $settings->receipt_footer,
+            ],
         ]);
     }
 
@@ -86,11 +111,22 @@ class CheckoutController extends Controller
             'service_fee_rate' => 'required|numeric|min:0|max:100',
             'payment_method' => ['required', Rule::in(Payment::methods())],
             'payment_reference' => 'nullable|string|max:255',
+            'paid_amount' => 'nullable|numeric|min:0',
             'receipt_channel' => ['nullable', Rule::in(ReceiptDelivery::channels())],
             'receipt_recipient' => 'nullable|string|max:255',
+            'draft_order_id' => 'nullable|integer|exists:pos_draft_orders,id',
         ]);
 
         $subscription = Subscription::current();
+        $settings = AppSetting::current();
+
+        $validated['payment_method'] = (string) $validated['payment_method'];
+
+        if (! in_array($validated['payment_method'], Payment::methods($settings), true)) {
+            throw ValidationException::withMessages([
+                'payment_method' => 'The selected payment method is not enabled in settings.',
+            ]);
+        }
 
         if ($validated['discount_type'] === 'percentage' && $validated['discount_value'] > 100) {
             throw ValidationException::withMessages([
@@ -140,7 +176,7 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            if ($item['quantity'] > $product->stock_quantity) {
+            if ($product->track_stock && $item['quantity'] > $product->stock_quantity) {
                 throw ValidationException::withMessages([
                     'items' => "Insufficient stock for {$product->name}.",
                 ]);
@@ -243,6 +279,13 @@ class CheckoutController extends Controller
         $taxAmount = round($discountedSubtotal * ($validated['tax_rate'] / 100), 2);
         $serviceFeeAmount = round($discountedSubtotal * ($validated['service_fee_rate'] / 100), 2);
         $total = round($discountedSubtotal + $taxAmount + $serviceFeeAmount, 2);
+        $paidAmount = $validated['paid_amount'] ?? $total;
+
+        if ($validated['payment_method'] === Payment::METHOD_CASH && $paidAmount < $total) {
+            throw ValidationException::withMessages([
+                'paid_amount' => 'Cash payments must cover the full total.',
+            ]);
+        }
 
         $cashierShift = $subscription->allowsFeature('cashier_shifts')
             ? CashierShift::query()
@@ -261,6 +304,7 @@ class CheckoutController extends Controller
             $taxAmount,
             $serviceFeeAmount,
             $total,
+            $paidAmount,
             $validated,
             $customer,
             $promotion,
@@ -281,6 +325,8 @@ class CheckoutController extends Controller
                 'tax_amount' => $taxAmount,
                 'service_fee_amount' => $serviceFeeAmount,
                 'total' => $total,
+                'status' => Transaction::STATUS_COMPLETED,
+                'paid_amount' => $paidAmount,
                 'paid_at' => now(),
             ]);
 
@@ -297,22 +343,24 @@ class CheckoutController extends Controller
                 $remainingStock = $product->stock_quantity - $item['quantity'];
 
                 $product->update([
-                    'stock_quantity' => $remainingStock,
+                    'stock_quantity' => $product->track_stock ? $remainingStock : $product->stock_quantity,
                 ]);
 
-                $product->stockMovements()->create([
-                    'outlet_id' => $product->outlet_id,
-                    'user_id' => $request->user()->id,
-                    'type' => 'sale',
-                    'quantity' => $item['quantity'],
-                    'balance_after' => $remainingStock,
-                    'notes' => "Sold via {$transaction->invoice_number}.",
-                ]);
+                if ($product->track_stock) {
+                    $product->stockMovements()->create([
+                        'outlet_id' => $product->outlet_id,
+                        'user_id' => $request->user()->id,
+                        'type' => 'sale',
+                        'quantity' => $item['quantity'],
+                        'balance_after' => $remainingStock,
+                        'notes' => "Sold via {$transaction->invoice_number}.",
+                    ]);
+                }
             }
 
             $transaction->payments()->create([
                 'method' => $validated['payment_method'],
-                'amount' => $total,
+                'amount' => $paidAmount,
                 'reference' => $validated['payment_reference'] ?? null,
             ]);
 
@@ -332,10 +380,70 @@ class CheckoutController extends Controller
                 ]);
             }
 
+            if (! empty($validated['draft_order_id'])) {
+                PosDraftOrder::query()
+                    ->whereKey($validated['draft_order_id'])
+                    ->where('user_id', $request->user()->id)
+                    ->delete();
+            }
+
             return $transaction;
         });
 
-        return redirect()->route('pos.checkout')->with('success', "Transaction {$transaction->invoice_number} completed successfully.");
+        return redirect()->route('pos.success', $transaction);
+    }
+
+    public function success(Request $request, Transaction $transaction): Response
+    {
+        abort_unless($request->user()->canUseCheckout(), 403);
+
+        $transaction->load([
+            'cashier:id,name',
+            'outlet:id,name,address',
+            'items.product:id,name',
+            'payments',
+            'receiptDeliveries',
+        ]);
+
+        return Inertia::render('Pos/Success', [
+            'transaction' => $transaction,
+            'receiptChannels' => ReceiptDelivery::channels(),
+            'receiptSettings' => [
+                'header' => AppSetting::current()->receipt_header,
+                'footer' => AppSetting::current()->receipt_footer,
+            ],
+            'canSendDigitalReceipts' => Subscription::current()->allowsFeature('connected_receipts'),
+        ]);
+    }
+
+    public function storeDraft(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->canUseCheckout(), 403);
+
+        $validated = $request->validate([
+            'outlet_id' => ['required', 'exists:outlets,id'],
+            'customer_id' => ['nullable', 'exists:customers,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'cart' => ['required', 'array', 'min:1'],
+            'adjustments' => ['nullable', 'array'],
+        ]);
+
+        PosDraftOrder::query()->create([
+            ...$validated,
+            'user_id' => $request->user()->id,
+        ]);
+
+        return back()->with('success', 'Draft order saved.');
+    }
+
+    public function destroyDraft(Request $request, PosDraftOrder $draftOrder): RedirectResponse
+    {
+        abort_unless($request->user()->canUseCheckout(), 403);
+        abort_unless($draftOrder->user_id === $request->user()->id, 403);
+
+        $draftOrder->delete();
+
+        return back()->with('success', 'Draft order removed.');
     }
 
     protected function resolveReductionAmount(float $amount, string $type, float $value): float

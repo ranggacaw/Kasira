@@ -71,7 +71,7 @@ class User extends Authenticatable
 
     public function canManageCatalog(): bool
     {
-        return $this->is_active && $this->hasRole([Role::OWNER, Role::ADMIN]);
+        return $this->is_active && $this->hasRole([Role::OWNER, Role::ADMIN, Role::MANAGER]);
     }
 
     public function canUseCheckout(): bool
@@ -96,7 +96,7 @@ class User extends Authenticatable
 
     public function canManageCustomers(): bool
     {
-        return $this->is_active && $this->hasRole(Role::names());
+        return $this->is_active && $this->hasRole([Role::OWNER, Role::ADMIN, Role::MANAGER]);
     }
 
     public function canViewReports(): bool
@@ -105,6 +105,11 @@ class User extends Authenticatable
     }
 
     public function canManagePremium(): bool
+    {
+        return $this->is_active && $this->hasRole([Role::OWNER, Role::ADMIN]);
+    }
+
+    public function canManageSettings(): bool
     {
         return $this->is_active && $this->hasRole([Role::OWNER, Role::ADMIN]);
     }

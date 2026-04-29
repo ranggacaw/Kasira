@@ -11,6 +11,9 @@ class Transaction extends Model
 {
     use HasFactory;
 
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_REFUNDED = 'refunded';
+
     protected $fillable = [
         'invoice_number',
         'cashier_id',
@@ -24,7 +27,10 @@ class Transaction extends Model
         'tax_amount',
         'service_fee_amount',
         'total',
+        'status',
+        'paid_amount',
         'paid_at',
+        'refunded_at',
     ];
 
     protected function casts(): array
@@ -35,7 +41,9 @@ class Transaction extends Model
             'tax_amount' => 'decimal:2',
             'service_fee_amount' => 'decimal:2',
             'total' => 'decimal:2',
+            'paid_amount' => 'decimal:2',
             'paid_at' => 'datetime',
+            'refunded_at' => 'datetime',
         ];
     }
 

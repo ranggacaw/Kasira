@@ -57,9 +57,10 @@ class OperationsAdministrationTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_staff_can_create_customers_and_associate_them_to_sales(): void
+    public function test_managers_can_create_customers_and_cashiers_can_associate_them_to_sales(): void
     {
         $cashier = $this->createUserWithRole(Role::CASHIER);
+        $manager = $this->createUserWithRole(Role::MANAGER);
         $product = Product::query()->create([
             'name' => 'Sandwich',
             'sku' => 'SND001',
@@ -69,7 +70,7 @@ class OperationsAdministrationTest extends TestCase
             'outlet_id' => $cashier->outlet_id,
         ]);
 
-        $this->actingAs($cashier)->post('/operations/customers', [
+        $this->actingAs($manager)->post('/operations/customers', [
             'name' => 'Maya Customer',
             'email' => 'maya@example.test',
             'phone' => '08123456789',

@@ -1,9 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import Dropdown from '@/Components/Dropdown';
-import NavLink from '@/Components/NavLink';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const { auth, subscription } = usePage().props;
@@ -11,219 +8,230 @@ export default function AuthenticatedLayout({ header, children }) {
     const roleName = user?.role?.name ?? 'Unassigned';
     const navItems = [
         user?.abilities?.checkout && {
-            label: 'Checkout',
-            routeName: 'pos.checkout',
+            label: 'POS',
+            routeName: 'pos.index',
+            matches: ['pos.index', 'pos.success'],
         },
         user?.abilities?.dashboard && {
             label: 'Dashboard',
             routeName: 'dashboard',
+            matches: ['dashboard'],
         },
         user?.abilities?.catalog && {
-            label: 'Catalog',
-            routeName: 'catalog.index',
+            label: 'Products',
+            routeName: 'products.index',
+            matches: ['products.index'],
+        },
+        user?.abilities?.catalog && {
+            label: 'Categories',
+            routeName: 'categories.index',
+            matches: ['categories.index'],
+        },
+        user?.abilities?.catalog && {
+            label: 'Inventory',
+            routeName: 'inventory.index',
+            matches: ['inventory.index'],
         },
         user?.abilities?.transactions && {
             label: 'Transactions',
             routeName: 'transactions.index',
-        },
-        (user?.abilities?.operations || user?.abilities?.customers) && {
-            label: 'Operations',
-            routeName: 'operations.index',
+            matches: ['transactions.index', 'transactions.show'],
         },
         user?.abilities?.reports && {
-            label: 'Premium',
-            routeName: 'premium.index',
+            label: 'Reports',
+            routeName: 'reports.index',
+            matches: ['reports.index'],
+        },
+        user?.abilities?.settings && {
+            label: 'Settings',
+            routeName: 'settings.index',
+            matches: ['settings.index'],
         },
     ].filter(Boolean);
 
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isOnline, setIsOnline] = useState(true);
+    const [isDesktop, setIsDesktop] = useState(false);
+
+    useEffect(() => {
+        setIsOnline(window.navigator.onLine);
+        setIsDesktop(window.innerWidth >= 768);
+
+        const setOnline = () => setIsOnline(true);
+        const setOffline = () => setIsOnline(false);
+        const updateViewport = () => setIsDesktop(window.innerWidth >= 768);
+
+        window.addEventListener('online', setOnline);
+        window.addEventListener('offline', setOffline);
+        window.addEventListener('resize', updateViewport);
+
+        return () => {
+            window.removeEventListener('online', setOnline);
+            window.removeEventListener('offline', setOffline);
+            window.removeEventListener('resize', updateViewport);
+        };
+    }, []);
+
+    const activeRoute = useMemo(
+        () =>
+            navItems.find((item) =>
+                item.matches.some((pattern) => route().current(pattern)),
+            )?.label,
+        [navItems],
+    );
+
+    const renderNavItems = (compact = false) =>
+        navItems.map((item) => {
+            const active = item.matches.some((pattern) => route().current(pattern));
+
+            return (
+                <Link
+                    key={item.routeName}
+                    href={route(item.routeName)}
+                    onClick={() => setIsDrawerOpen(false)}
+                    className={`flex items-center rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        active
+                            ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20'
+                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    } ${compact ? 'justify-center px-2' : ''}`}
+                >
+                    <span className={compact ? 'sr-only' : ''}>{item.label}</span>
+                    {compact && <span>{item.label.slice(0, 1)}</span>}
+                </Link>
+            );
+        });
 
     return (
         <div className="min-h-screen bg-slate-100">
-            <nav className="border-b border-slate-200 bg-white/95 backdrop-blur">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
-                        <div className="flex">
-                            <div className="flex shrink-0 items-center">
-                                <Link href="/" className="flex items-center gap-3">
-                                    <ApplicationLogo className="block h-9 w-9 text-slate-900" />
-                                    <div>
-                                        <div className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-900">
-                                            Kasira
-                                        </div>
-                                        <div className="text-xs text-slate-500">
-                                            POS foundation
-                                        </div>
-                                    </div>
-                                </Link>
-                            </div>
-
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                {navItems.map((item) => (
-                                    <NavLink
-                                        key={item.routeName}
-                                        href={route(item.routeName)}
-                                        active={route().current(item.routeName)}
-                                    >
-                                        {item.label}
-                                    </NavLink>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center sm:gap-4">
-                            <div className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700">
-                                {subscription?.plan}
-                            </div>
-                            <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                                {roleName}
-                            </div>
-
-                            <div className="relative ms-1">
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-slate-500 transition duration-150 ease-in-out hover:text-slate-700 focus:outline-none"
-                                            >
-                                                {user.name}
-
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </Dropdown.Trigger>
-
-                                    <Dropdown.Content>
-                                        <Dropdown.Link href={route('profile.edit')}>
-                                            Profile
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route('logout')}
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </Dropdown.Link>
-                                    </Dropdown.Content>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <div className="-me-2 flex items-center sm:hidden">
-                            <button
-                                onClick={() =>
-                                    setShowingNavigationDropdown(
-                                        (previousState) => !previousState,
-                                    )
-                                }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-slate-400 transition duration-150 ease-in-out hover:bg-slate-100 hover:text-slate-500 focus:bg-slate-100 focus:text-slate-500 focus:outline-none"
-                            >
-                                <svg
-                                    className="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        className={
-                                            !showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        className={
-                                            showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
+            <div className="flex min-h-screen">
                 <div
-                    className={
-                        (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
-                    }
+                    className={`fixed inset-0 z-40 bg-slate-950/40 transition md:hidden ${
+                        isDrawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+                    }`}
+                    onClick={() => setIsDrawerOpen(false)}
+                />
+
+                <aside
+                    className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-200 bg-white px-4 py-4 shadow-2xl transition-transform md:sticky md:translate-x-0 ${
+                        isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+                    } ${isSidebarCollapsed ? 'md:w-24' : 'md:w-72'}`}
                 >
-                    <div className="space-y-1 pb-3 pt-2">
-                        {navItems.map((item) => (
-                            <ResponsiveNavLink
-                                key={item.routeName}
-                                href={route(item.routeName)}
-                                active={route().current(item.routeName)}
-                            >
-                                {item.label}
-                            </ResponsiveNavLink>
-                        ))}
+                    <div className="flex items-center justify-between gap-3">
+                        <Link href={route('dashboard')} className="flex items-center gap-3">
+                            <ApplicationLogo className="h-10 w-10 text-slate-900" />
+                            {!isSidebarCollapsed && (
+                                <div>
+                                    <div className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-900">
+                                        Kasira
+                                    </div>
+                                    <div className="text-xs text-slate-500">
+                                        Mobile back office
+                                    </div>
+                                </div>
+                            )}
+                        </Link>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                isDesktop
+                                    ? setIsSidebarCollapsed((value) => !value)
+                                    : setIsDrawerOpen(false)
+                            }
+                            className="rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                        >
+                            {isDesktop ? 'Collapse' : 'Close'}
+                        </button>
                     </div>
 
-                    <div className="border-t border-slate-200 pb-1 pt-4">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-slate-800">
-                                {user.name}
-                            </div>
-                            <div className="text-sm font-medium text-slate-500">
-                                {user.email}
-                            </div>
-                            <div className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <div className="mt-6 rounded-[1.75rem] bg-slate-950 px-4 py-4 text-white">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
+                            Signed in
+                        </p>
+                        {!isSidebarCollapsed && (
+                            <>
+                                <h2 className="mt-2 text-lg font-semibold">{user.name}</h2>
+                                <p className="mt-1 text-sm text-slate-300">{user.email}</p>
+                            </>
+                        )}
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white">
                                 {roleName}
-                            </div>
-                            <div className="mt-1 text-xs font-medium uppercase tracking-wide text-violet-500">
-                                {subscription?.plan} plan
-                            </div>
+                            </span>
+                            {!isSidebarCollapsed && (
+                                <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                                    {subscription?.plan}
+                                </span>
+                            )}
                         </div>
+                    </div>
 
-                        <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                method="post"
-                                href={route('logout')}
-                                as="button"
+                    <nav className="mt-6 flex-1 space-y-2 overflow-y-auto">
+                        {renderNavItems(isSidebarCollapsed)}
+                    </nav>
+
+                    <div className="space-y-2 border-t border-slate-200 pt-4">
+                        <Link
+                            href={route('profile.edit')}
+                            className="flex rounded-2xl px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                        >
+                            {isSidebarCollapsed ? 'P' : 'Profile'}
+                        </Link>
+                        <Link
+                            href={route('logout')}
+                            method="post"
+                            as="button"
+                            className="flex w-full rounded-2xl px-4 py-3 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+                        >
+                            {isSidebarCollapsed ? 'O' : 'Log out'}
+                        </Link>
+                    </div>
+                </aside>
+
+                <div className="min-w-0 flex-1">
+                    {!isOnline && (
+                        <div className="bg-amber-100 px-4 py-3 text-sm font-medium text-amber-900">
+                            Offline mode: cached pages stay available, but sync and network actions wait for reconnection.
+                        </div>
+                    )}
+
+                    <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+                        <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDrawerOpen(true)}
+                                    className="rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-500 md:hidden"
+                                >
+                                    Menu
+                                </button>
+                                <div>
+                                    <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
+                                        Back office
+                                    </p>
+                                    <p className="text-sm font-semibold text-slate-900">
+                                        {activeRoute || 'Workspace'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <Link
+                                href={route('pos.index')}
+                                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                             >
-                                Log Out
-                            </ResponsiveNavLink>
+                                Open POS
+                            </Link>
                         </div>
                     </div>
+
+                    {header && (
+                        <header className="px-4 py-6 sm:px-6 lg:px-8">{header}</header>
+                    )}
+
+                    <main className="px-4 pb-10 sm:px-6 lg:px-8">{children}</main>
                 </div>
-            </nav>
-
-            {header && (
-                <header className="bg-white shadow-sm">
-                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                        {header}
-                    </div>
-                </header>
-            )}
-
-            <main>{children}</main>
+            </div>
         </div>
     );
 }

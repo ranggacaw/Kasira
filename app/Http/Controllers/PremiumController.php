@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesOutletContext;
 use App\Models\CashierShift;
+use App\Models\Product;
 use App\Models\Outlet;
+use App\Models\Payment;
 use App\Models\Promotion;
 use App\Models\Subscription;
 use App\Models\Transaction;
@@ -28,14 +30,19 @@ class PremiumController extends Controller
 
         $subscription = Subscription::current();
         $currentOutlet = $this->resolveCurrentOutlet($request);
+        $dateFrom = $request->date('date_from') ?? now()->subDays(29)->startOfDay();
+        $dateTo = $request->date('date_to') ?? now()->endOfDay();
 
-        $revenue = Transaction::query()
+        $transactionQuery = Transaction::query()
             ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
-            ->sum('total');
+            ->whereBetween('paid_at', [$dateFrom, $dateTo]);
+
+        $revenue = (clone $transactionQuery)->sum('total');
 
         $cogs = TransactionItem::query()
             ->join('transactions', 'transactions.id', '=', 'transaction_items.transaction_id')
             ->when($currentOutlet, fn ($query) => $query->where('transactions.outlet_id', $currentOutlet->id))
+            ->whereBetween('transactions.paid_at', [$dateFrom, $dateTo])
             ->selectRaw('COALESCE(SUM(transaction_items.quantity * transaction_items.unit_cost), 0) as total_cogs')
             ->value('total_cogs');
 
@@ -48,11 +55,51 @@ class PremiumController extends Controller
             ],
             'outlets' => $this->availableOutletsFor($request->user()),
             'selectedOutletId' => $currentOutlet?->id,
+            'filters' => [
+                'date_from' => $dateFrom->toDateString(),
+                'date_to' => $dateTo->toDateString(),
+            ],
             'profitability' => [
                 'revenue' => (float) $revenue,
                 'cogs' => (float) $cogs,
                 'profit' => (float) $revenue - (float) $cogs,
             ],
+            'paymentBreakdown' => Payment::query()
+                ->selectRaw('method, SUM(amount) as total_amount, COUNT(*) as transaction_count')
+                ->join('transactions', 'transactions.id', '=', 'payments.transaction_id')
+                ->when($currentOutlet, fn ($query) => $query->where('transactions.outlet_id', $currentOutlet->id))
+                ->whereBetween('transactions.paid_at', [$dateFrom, $dateTo])
+                ->groupBy('method')
+                ->orderByDesc('total_amount')
+                ->get(),
+            'cashierPerformance' => Transaction::query()
+                ->selectRaw('users.id, users.name, COUNT(transactions.id) as transaction_count, SUM(transactions.total) as revenue')
+                ->join('users', 'users.id', '=', 'transactions.cashier_id')
+                ->when($currentOutlet, fn ($query) => $query->where('transactions.outlet_id', $currentOutlet->id))
+                ->whereBetween('transactions.paid_at', [$dateFrom, $dateTo])
+                ->groupBy('users.id', 'users.name')
+                ->orderByDesc('revenue')
+                ->limit(5)
+                ->get(),
+            'topProducts' => TransactionItem::query()
+                ->selectRaw('products.id, products.name, SUM(transaction_items.quantity) as quantity_sold, SUM(transaction_items.subtotal) as revenue')
+                ->join('transactions', 'transactions.id', '=', 'transaction_items.transaction_id')
+                ->join('products', 'products.id', '=', 'transaction_items.product_id')
+                ->when($currentOutlet, fn ($query) => $query->where('transactions.outlet_id', $currentOutlet->id))
+                ->whereBetween('transactions.paid_at', [$dateFrom, $dateTo])
+                ->groupBy('products.id', 'products.name')
+                ->orderByDesc('revenue')
+                ->limit(5)
+                ->get(),
+            'lowStockAlerts' => Product::query()
+                ->with(['outlet:id,name'])
+                ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
+                ->where('track_stock', true)
+                ->where('minimum_stock', '>', 0)
+                ->whereColumn('stock_quantity', '<', 'minimum_stock')
+                ->orderBy('stock_quantity')
+                ->limit(5)
+                ->get(),
             'recentPromotions' => Promotion::query()->with('outlet:id,name')->latest()->limit(5)->get(),
             'recentVouchers' => Voucher::query()->with('outlet:id,name')->latest()->limit(5)->get(),
             'recentShifts' => CashierShift::query()->with(['user:id,name', 'outlet:id,name'])->latest('opened_at')->limit(5)->get(),
@@ -65,8 +112,11 @@ class PremiumController extends Controller
         abort_unless($request->user()->canViewReports(), 403);
         abort_unless(Subscription::current()->allowsFeature('exports'), 403);
 
+        $currentOutlet = $this->resolveCurrentOutlet($request);
+
         $transactions = Transaction::query()
             ->with(['cashier:id,name', 'outlet:id,name', 'payments:id,transaction_id,method'])
+            ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
             ->latest('paid_at')
             ->get();
 

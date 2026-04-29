@@ -8,15 +8,25 @@ const formatCurrency = (value) =>
         minimumFractionDigits: 0,
     }).format(value || 0);
 
-export default function Dashboard({ outlets, selectedOutletId, metrics, salesTrend }) {
+export default function Dashboard({
+    outlets,
+    selectedOutletId,
+    filters,
+    metrics,
+    salesTrend,
+}) {
     const { auth } = usePage().props;
     const user = auth.user;
     const role = user.role?.name ?? 'Unassigned';
 
-    const changeOutlet = (event) => {
+    const updateFilters = (nextFilters) => {
         router.get(
             route('dashboard'),
-            { outlet: event.target.value || undefined },
+            {
+                outlet: nextFilters.outlet ?? selectedOutletId ?? undefined,
+                date_from: nextFilters.date_from ?? filters.date_from,
+                date_to: nextFilters.date_to ?? filters.date_to,
+            },
             { preserveState: true, replace: true },
         );
     };
@@ -26,26 +36,44 @@ export default function Dashboard({ outlets, selectedOutletId, metrics, salesTre
             header={
                 <div className="flex items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-xl font-semibold leading-tight text-slate-900">
-                            Operations dashboard
+                        <h2 className="text-2xl font-semibold leading-tight text-slate-900">
+                            Mobile operations dashboard
                         </h2>
                         <p className="mt-1 text-sm text-slate-500">
-                            Daily operating metrics across sales, stock, and
-                            outlet activity.
+                            Outlet-level performance, payment mix, best sellers,
+                            and stock alerts for the selected trading period.
                         </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                         <select
                             value={selectedOutletId || ''}
-                            onChange={changeOutlet}
+                            onChange={(event) =>
+                                updateFilters({ outlet: event.target.value || undefined })
+                            }
                             className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
                         >
                             {outlets.map((outlet) => (
                                 <option key={outlet.id} value={outlet.id}>
-                                    {outlet.name}
+                                {outlet.name}
                                 </option>
                             ))}
                         </select>
+                        <input
+                            type="date"
+                            value={filters.date_from || ''}
+                            onChange={(event) =>
+                                updateFilters({ date_from: event.target.value })
+                            }
+                            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                        />
+                        <input
+                            type="date"
+                            value={filters.date_to || ''}
+                            onChange={(event) =>
+                                updateFilters({ date_to: event.target.value })
+                            }
+                            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                        />
                         <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
                             {role}
                         </div>
@@ -57,7 +85,7 @@ export default function Dashboard({ outlets, selectedOutletId, metrics, salesTre
 
             <div className="py-10">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+                    <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
                         <div className="space-y-6">
                             <div className="overflow-hidden rounded-2xl bg-slate-900 p-8 text-white shadow-sm">
                                 <p className="text-sm uppercase tracking-[0.24em] text-slate-300">
@@ -77,19 +105,19 @@ export default function Dashboard({ outlets, selectedOutletId, metrics, salesTre
                                             'Daily Revenue',
                                             formatCurrency(metrics.dailyRevenue),
                                         ],
-                                        [
-                                            'Transactions Today',
-                                            metrics.dailyTransactions,
-                                        ],
-                                        [
-                                            'Top Products',
-                                            metrics.topProducts.length,
-                                        ],
-                                        [
-                                            'Low-Stock Alerts',
-                                            metrics.lowStockAlerts.length,
-                                        ],
-                                    ].map(([label, value]) => (
+                                         [
+                                             'Transactions Today',
+                                             metrics.dailyTransactions,
+                                         ],
+                                         [
+                                             'Average Order',
+                                             formatCurrency(metrics.averageOrderValue),
+                                         ],
+                                         [
+                                             'Top Products',
+                                             metrics.topProducts.length,
+                                         ],
+                                     ].map(([label, value]) => (
                                         <div
                                             key={label}
                                             className="rounded-2xl border border-white/10 bg-white/5 p-4"
@@ -138,6 +166,36 @@ export default function Dashboard({ outlets, selectedOutletId, metrics, salesTre
                                     ) : (
                                         <p className="text-sm text-slate-500">
                                             No sales trend data is available yet.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                    Payment summary
+                                </h3>
+                                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                    {metrics.paymentSummary.length > 0 ? (
+                                        metrics.paymentSummary.map((entry) => (
+                                            <div
+                                                key={entry.method}
+                                                className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                                            >
+                                                <p className="text-sm font-medium text-slate-900">
+                                                    {entry.method}
+                                                </p>
+                                                <p className="mt-2 text-lg font-semibold text-emerald-700">
+                                                    {formatCurrency(entry.total_amount)}
+                                                </p>
+                                                <p className="mt-1 text-sm text-slate-500">
+                                                    {entry.payment_count} payments
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-slate-500">
+                                            No payment activity is available for this period.
                                         </p>
                                     )}
                                 </div>

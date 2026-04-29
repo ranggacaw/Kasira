@@ -13,7 +13,18 @@ class Category extends Model
     protected $fillable = [
         'name',
         'description',
+        'color',
+        'sort_order',
+        'is_active',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'sort_order' => 'integer',
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function products(): HasMany
     {
