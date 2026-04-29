@@ -55,15 +55,15 @@ class CheckoutTest extends TestCase
 
         $response = $this->actingAs($user)->post('/pos/checkout', [
             'items' => [],
-            'subtotal' => 0,
-            'discount_amount' => 0,
-            'tax_amount' => 0,
-            'service_fee_amount' => 0,
-            'total' => 0,
+            'discount_type' => 'fixed',
+            'discount_value' => 0,
+            'tax_rate' => 0,
+            'service_fee_rate' => 0,
             'payment_method' => 'Cash',
         ]);
 
         $response->assertSessionHasErrors('items');
+        $this->assertDatabaseCount('transactions', 0);
     }
 
     public function test_checkout_requires_valid_payment_method(): void
@@ -81,19 +81,17 @@ class CheckoutTest extends TestCase
                 [
                     'product_id' => $product->id,
                     'quantity' => 1,
-                    'unit_price' => 15000,
-                    'subtotal' => 15000,
                 ],
             ],
-            'subtotal' => 15000,
-            'discount_amount' => 0,
-            'tax_amount' => 0,
-            'service_fee_amount' => 0,
-            'total' => 15000,
+            'discount_type' => 'fixed',
+            'discount_value' => 0,
+            'tax_rate' => 0,
+            'service_fee_rate' => 0,
             'payment_method' => 'InvalidMethod',
         ]);
 
         $response->assertSessionHasErrors('payment_method');
+        $this->assertDatabaseCount('transactions', 0);
     }
 
     public function test_valid_checkout_creates_transaction(): void
@@ -111,15 +109,12 @@ class CheckoutTest extends TestCase
                 [
                     'product_id' => $product->id,
                     'quantity' => 2,
-                    'unit_price' => 15000,
-                    'subtotal' => 30000,
                 ],
             ],
-            'subtotal' => 30000,
-            'discount_amount' => 0,
-            'tax_amount' => 0,
-            'service_fee_amount' => 0,
-            'total' => 30000,
+            'discount_type' => 'fixed',
+            'discount_value' => 0,
+            'tax_rate' => 0,
+            'service_fee_rate' => 0,
             'payment_method' => 'Cash',
         ]);
 
@@ -159,15 +154,12 @@ class CheckoutTest extends TestCase
                 [
                     'product_id' => $product->id,
                     'quantity' => 1,
-                    'unit_price' => 10000,
-                    'subtotal' => 10000,
                 ],
             ],
-            'subtotal' => 10000,
-            'discount_amount' => 1000,
-            'tax_amount' => 900,
-            'service_fee_amount' => 0,
-            'total' => 9900,
+            'discount_type' => 'percentage',
+            'discount_value' => 10,
+            'tax_rate' => 10,
+            'service_fee_rate' => 0,
             'payment_method' => 'QRIS',
         ]);
 
@@ -176,6 +168,45 @@ class CheckoutTest extends TestCase
             'discount_amount' => 1000,
             'tax_amount' => 900,
             'total' => 9900,
+        ]);
+    }
+
+    public function test_checkout_recalculates_authoritative_totals_server_side(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::query()->create([
+            'name' => 'Latte',
+            'sku' => 'LAT001',
+            'selling_price' => 25000,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)->post('/pos/checkout', [
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 2,
+                ],
+            ],
+            'discount_type' => 'fixed',
+            'discount_value' => 5000,
+            'tax_rate' => 10,
+            'service_fee_rate' => 5,
+            'payment_method' => 'Bank Transfer',
+        ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'cashier_id' => $user->id,
+            'subtotal' => 50000,
+            'discount_amount' => 5000,
+            'tax_amount' => 4500,
+            'service_fee_amount' => 2250,
+            'total' => 51750,
+        ]);
+
+        $this->assertDatabaseHas('payments', [
+            'method' => 'Bank Transfer',
+            'amount' => 51750,
         ]);
     }
 }

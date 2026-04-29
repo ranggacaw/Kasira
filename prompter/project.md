@@ -1,7 +1,7 @@
 # Project Context
 
 ## Purpose
-Kasira is a modern web-based POS application for small to medium businesses such as cafes, retail stores, food stalls, and similar shops. The current codebase is establishing the MVP foundation before checkout, inventory, and reporting modules are layered in.
+Kasira is a modern web-based POS application for small to medium businesses such as cafes, retail stores, food stalls, and similar shops. The current codebase now includes the MVP checkout flow, with inventory and reporting still to be layered in next.
 
 ## Tech Stack
 - Laravel 12
@@ -19,6 +19,7 @@ Kasira is a modern web-based POS application for small to medium businesses such
 
 ### Architecture Patterns
 - Server-rendered routes return Inertia pages from `resources/js/Pages`.
+- The POS checkout workspace lives in `resources/js/Pages/Pos`, and final transaction totals must be recalculated on the server before persistence.
 - Shared authenticated user context is provided through `app/Http/Middleware/HandleInertiaRequests.php`.
 - Initial access control uses a simple `roles` table plus a `role_id` relation on users.
 
@@ -32,12 +33,12 @@ Kasira is a modern web-based POS application for small to medium businesses such
 
 ## Domain Context
 - MVP roles are Owner, Admin, and Cashier.
-- The next major product slices are checkout, inventory management, and reporting.
+- Checkout is the first protected POS workflow, and the next major product slices are inventory management and reporting.
 
 ## Important Constraints
 - PostgreSQL is the primary runtime target for application environments.
 - Avoid introducing heavy permission packages until the simple role model is no longer sufficient.
-- The current foundation does not yet include checkout, inventory CRUD, or reporting logic.
+- Inventory CRUD and reporting are still out of scope for the current foundation.
 
 ## External Dependencies
 - No third-party payment gateways or SaaS integrations are part of the current baseline.

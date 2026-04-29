@@ -20,4 +20,5 @@ Use `@/prompter/AGENTS.md` to learn:
 
 - The application baseline uses Laravel 12, Inertia.js, React, Tailwind CSS, and PostgreSQL.
 - Protected app pages should live in `resources/js/Pages` and receive auth context from `app/Http/Middleware/HandleInertiaRequests.php`.
+- The POS checkout workspace lives under `resources/js/Pages/Pos`, while transaction totals remain authoritative on the server before sales are persisted.
 - The initial authorization model is role-based with `Owner`, `Admin`, and `Cashier` stored in the `roles` table.

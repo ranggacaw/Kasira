@@ -78,11 +78,10 @@ export default function Checkout({ products, paymentMethods }) {
 
     const { data, setData, post, processing, errors, reset } = useForm({
         items: cart,
-        subtotal,
-        discount_amount: discountAmount,
-        tax_amount: taxAmount,
-        service_fee_amount: serviceFeeAmount,
-        total,
+        discount_type: discountType,
+        discount_value: discountValue,
+        tax_rate: taxRate,
+        service_fee_rate: serviceFeeRate,
         payment_method: selectedPaymentMethod,
         payment_reference: paymentReference,
     });
@@ -90,15 +89,14 @@ export default function Checkout({ products, paymentMethods }) {
     useEffect(() => {
         setData({
             items: cart,
-            subtotal,
-            discount_amount: discountAmount,
-            tax_amount: taxAmount,
-            service_fee_amount: serviceFeeAmount,
-            total,
+            discount_type: discountType,
+            discount_value: discountValue,
+            tax_rate: taxRate,
+            service_fee_rate: serviceFeeRate,
             payment_method: selectedPaymentMethod,
             payment_reference: paymentReference,
         });
-    }, [cart, subtotal, discountAmount, taxAmount, serviceFeeAmount, total, selectedPaymentMethod, paymentReference]);
+    }, [cart, discountType, discountValue, taxRate, serviceFeeRate, selectedPaymentMethod, paymentReference]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

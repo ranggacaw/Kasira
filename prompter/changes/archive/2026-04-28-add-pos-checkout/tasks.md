@@ -10,5 +10,5 @@
 - [x] 2.2 Verify completed sales persist transaction headers, items, and payment method records correctly
 
 ## Post-Implementation
-- [ ] Update `AGENTS.md` in the project root if the checkout change introduces lasting architecture or workflow expectations
-- [ ] Update `prompter/project.md` if the project conventions materially change
+- [x] Update `AGENTS.md` in the project root if the checkout change introduces lasting architecture or workflow expectations
+- [x] Update `prompter/project.md` if the project conventions materially change
