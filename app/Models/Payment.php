@@ -14,7 +14,7 @@ class Payment extends Model
     public const METHOD_QRIS = 'QRIS';
     public const METHOD_BANK_TRANSFER = 'Bank Transfer';
 
-    public static function methods(): array
+    public static function methods(?Subscription $subscription = null): array
     {
         return [
             self::METHOD_CASH,

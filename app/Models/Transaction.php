@@ -14,6 +14,11 @@ class Transaction extends Model
     protected $fillable = [
         'invoice_number',
         'cashier_id',
+        'outlet_id',
+        'customer_id',
+        'promotion_id',
+        'voucher_id',
+        'cashier_shift_id',
         'subtotal',
         'discount_amount',
         'tax_amount',
@@ -39,6 +44,31 @@ class Transaction extends Model
         return $this->belongsTo(User::class, 'cashier_id');
     }
 
+    public function outlet(): BelongsTo
+    {
+        return $this->belongsTo(Outlet::class);
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function promotion(): BelongsTo
+    {
+        return $this->belongsTo(Promotion::class);
+    }
+
+    public function voucher(): BelongsTo
+    {
+        return $this->belongsTo(Voucher::class);
+    }
+
+    public function cashierShift(): BelongsTo
+    {
+        return $this->belongsTo(CashierShift::class);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
@@ -47,6 +77,11 @@ class Transaction extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function receiptDeliveries(): HasMany
+    {
+        return $this->hasMany(ReceiptDelivery::class);
     }
 
     public static function generateInvoiceNumber(): string

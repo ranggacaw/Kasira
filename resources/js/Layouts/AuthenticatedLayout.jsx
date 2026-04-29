@@ -6,8 +6,35 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { auth, subscription } = usePage().props;
+    const user = auth.user;
     const roleName = user?.role?.name ?? 'Unassigned';
+    const navItems = [
+        user?.abilities?.checkout && {
+            label: 'Checkout',
+            routeName: 'pos.checkout',
+        },
+        user?.abilities?.dashboard && {
+            label: 'Dashboard',
+            routeName: 'dashboard',
+        },
+        user?.abilities?.catalog && {
+            label: 'Catalog',
+            routeName: 'catalog.index',
+        },
+        user?.abilities?.transactions && {
+            label: 'Transactions',
+            routeName: 'transactions.index',
+        },
+        (user?.abilities?.operations || user?.abilities?.customers) && {
+            label: 'Operations',
+            routeName: 'operations.index',
+        },
+        user?.abilities?.reports && {
+            label: 'Premium',
+            routeName: 'premium.index',
+        },
+    ].filter(Boolean);
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -33,22 +60,22 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
 
                             <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('pos.checkout')}
-                                    active={route().current('pos.checkout')}
-                                >
-                                    Checkout
-                                </NavLink>
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
+                                {navItems.map((item) => (
+                                    <NavLink
+                                        key={item.routeName}
+                                        href={route(item.routeName)}
+                                        active={route().current(item.routeName)}
+                                    >
+                                        {item.label}
+                                    </NavLink>
+                                ))}
                             </div>
                         </div>
 
                         <div className="hidden sm:ms-6 sm:flex sm:items-center sm:gap-4">
+                            <div className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700">
+                                {subscription?.plan}
+                            </div>
                             <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
                                 {roleName}
                             </div>
@@ -145,12 +172,15 @@ export default function AuthenticatedLayout({ header, children }) {
                     }
                 >
                     <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
+                        {navItems.map((item) => (
+                            <ResponsiveNavLink
+                                key={item.routeName}
+                                href={route(item.routeName)}
+                                active={route().current(item.routeName)}
+                            >
+                                {item.label}
+                            </ResponsiveNavLink>
+                        ))}
                     </div>
 
                     <div className="border-t border-slate-200 pb-1 pt-4">
@@ -163,6 +193,9 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
                             <div className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
                                 {roleName}
+                            </div>
+                            <div className="mt-1 text-xs font-medium uppercase tracking-wide text-violet-500">
+                                {subscription?.plan} plan
                             </div>
                         </div>
 

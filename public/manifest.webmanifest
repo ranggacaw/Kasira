@@ -1,0 +1,16 @@
+{
+    "name": "Kasira POS",
+    "short_name": "Kasira",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0f172a",
+    "description": "Kasira business operations and POS workspace.",
+    "icons": [
+        {
+            "src": "/favicon.ico",
+            "sizes": "48x48",
+            "type": "image/x-icon"
+        }
+    ]
+}

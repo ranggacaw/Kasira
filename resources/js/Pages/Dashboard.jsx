@@ -1,10 +1,25 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 
-export default function Dashboard() {
+const formatCurrency = (value) =>
+    new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(value || 0);
+
+export default function Dashboard({ outlets, selectedOutletId, metrics, salesTrend }) {
     const { auth } = usePage().props;
     const user = auth.user;
     const role = user.role?.name ?? 'Unassigned';
+
+    const changeOutlet = (event) => {
+        router.get(
+            route('dashboard'),
+            { outlet: event.target.value || undefined },
+            { preserveState: true, replace: true },
+        );
+    };
 
     return (
         <AuthenticatedLayout
@@ -15,12 +30,25 @@ export default function Dashboard() {
                             Operations dashboard
                         </h2>
                         <p className="mt-1 text-sm text-slate-500">
-                            The Kasira foundation is ready for checkout,
-                            inventory, and reporting modules.
+                            Daily operating metrics across sales, stock, and
+                            outlet activity.
                         </p>
                     </div>
-                    <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                        {role}
+                    <div className="flex items-center gap-3">
+                        <select
+                            value={selectedOutletId || ''}
+                            onChange={changeOutlet}
+                            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                        >
+                            {outlets.map((outlet) => (
+                                <option key={outlet.id} value={outlet.id}>
+                                    {outlet.name}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                            {role}
+                        </div>
                     </div>
                 </div>
             }
@@ -29,76 +57,152 @@ export default function Dashboard() {
 
             <div className="py-10">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-                        <div className="overflow-hidden rounded-2xl bg-slate-900 p-8 text-white shadow-sm">
-                            <p className="text-sm uppercase tracking-[0.24em] text-slate-300">
-                                Welcome back
-                            </p>
-                            <h3 className="mt-4 text-3xl font-semibold">
-                                {user.name}
-                            </h3>
-                            <p className="mt-3 max-w-2xl text-sm text-slate-300">
-                                You are signed in as {role}. This protected area
-                                now has the auth and role context needed to gate
-                                future POS workflows.
-                            </p>
-                            <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                                {[
-                                    ['Checkout', 'Ready for POS flow'],
-                                    ['Inventory', 'Ready for catalog work'],
-                                    ['Reports', 'Ready for daily insights'],
-                                ].map(([label, value]) => (
-                                    <div
-                                        key={label}
-                                        className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                                    >
-                                        <p className="text-xs uppercase tracking-wide text-slate-400">
-                                            {label}
-                                        </p>
-                                        <p className="mt-2 text-sm font-medium text-white">
-                                            {value}
+                    <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+                        <div className="space-y-6">
+                            <div className="overflow-hidden rounded-2xl bg-slate-900 p-8 text-white shadow-sm">
+                                <p className="text-sm uppercase tracking-[0.24em] text-slate-300">
+                                    Welcome back
+                                </p>
+                                <h3 className="mt-4 text-3xl font-semibold">
+                                    {user.name}
+                                </h3>
+                                <p className="mt-3 max-w-2xl text-sm text-slate-300">
+                                    You are signed in as {role}. Revenue, sales
+                                    volume, best sellers, and replenishment alerts
+                                    are now served from recorded business data.
+                                </p>
+                                <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                                    {[
+                                        [
+                                            'Daily Revenue',
+                                            formatCurrency(metrics.dailyRevenue),
+                                        ],
+                                        [
+                                            'Transactions Today',
+                                            metrics.dailyTransactions,
+                                        ],
+                                        [
+                                            'Top Products',
+                                            metrics.topProducts.length,
+                                        ],
+                                        [
+                                            'Low-Stock Alerts',
+                                            metrics.lowStockAlerts.length,
+                                        ],
+                                    ].map(([label, value]) => (
+                                        <div
+                                            key={label}
+                                            className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                                        >
+                                            <p className="text-xs uppercase tracking-wide text-slate-400">
+                                                {label}
+                                            </p>
+                                            <p className="mt-2 text-lg font-semibold text-white">
+                                                {value}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                            Sales trend
+                                        </h3>
+                                        <p className="mt-1 text-sm text-slate-500">
+                                            Revenue and transaction volume for the last seven days.
                                         </p>
                                     </div>
-                                ))}
+                                </div>
+
+                                <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                    {salesTrend.length > 0 ? (
+                                        salesTrend.map((point) => (
+                                            <div
+                                                key={point.date}
+                                                className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                                            >
+                                                <p className="text-xs uppercase tracking-wide text-slate-400">
+                                                    {point.date}
+                                                </p>
+                                                <p className="mt-2 text-lg font-semibold text-slate-900">
+                                                    {formatCurrency(point.revenue)}
+                                                </p>
+                                                <p className="mt-1 text-sm text-slate-500">
+                                                    {point.transactions} transactions
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-slate-500">
+                                            No sales trend data is available yet.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
                         <div className="space-y-4">
                             <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                                    Account context
+                                    Top-selling products
                                 </h3>
-                                <dl className="mt-4 space-y-4 text-sm text-slate-600">
-                                    <div>
-                                        <dt className="text-slate-400">Name</dt>
-                                        <dd className="mt-1 font-medium text-slate-900">
-                                            {user.name}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt className="text-slate-400">Email</dt>
-                                        <dd className="mt-1 font-medium text-slate-900">
-                                            {user.email}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt className="text-slate-400">Role</dt>
-                                        <dd className="mt-1 font-medium text-slate-900">
-                                            {role}
-                                        </dd>
-                                    </div>
-                                </dl>
+                                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                                    {metrics.topProducts.length > 0 ? (
+                                        metrics.topProducts.map((product) => (
+                                            <div
+                                                key={product.id}
+                                                className="rounded-2xl border border-slate-200 p-4"
+                                            >
+                                                <p className="font-medium text-slate-900">
+                                                    {product.name}
+                                                </p>
+                                                <p className="mt-1 text-slate-500">
+                                                    {product.quantity_sold} sold
+                                                </p>
+                                                <p className="mt-2 text-xs uppercase tracking-wide text-emerald-600">
+                                                    {formatCurrency(product.revenue)}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-slate-500">
+                                            No sales have been recorded yet.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                                    Next implementation slices
+                                    Low-stock alerts
                                 </h3>
-                                <ul className="mt-4 space-y-3 text-sm text-slate-600">
-                                    <li>Cart, tax, discounts, and payment capture</li>
-                                    <li>Product, category, and stock movement CRUD</li>
-                                    <li>Transaction history and daily dashboard metrics</li>
-                                </ul>
+                                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                                    {metrics.lowStockAlerts.length > 0 ? (
+                                        metrics.lowStockAlerts.map((product) => (
+                                            <div
+                                                key={product.id}
+                                                className="rounded-2xl border border-amber-200 bg-amber-50 p-4"
+                                            >
+                                                <p className="font-medium text-slate-900">
+                                                    {product.name}
+                                                </p>
+                                                <p className="mt-1 text-slate-600">
+                                                    Stock {product.stock_quantity} / minimum {product.minimum_stock}
+                                                </p>
+                                                <p className="mt-1 text-xs uppercase tracking-wide text-amber-700">
+                                                    {product.outlet?.name}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-slate-500">
+                                            All tracked products are above their minimum threshold.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

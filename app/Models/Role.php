@@ -12,6 +12,7 @@ class Role extends Model
 
     public const OWNER = 'Owner';
     public const ADMIN = 'Admin';
+    public const MANAGER = 'Manager';
     public const CASHIER = 'Cashier';
 
     /**
@@ -29,6 +30,7 @@ class Role extends Model
         return [
             self::OWNER,
             self::ADMIN,
+            self::MANAGER,
             self::CASHIER,
         ];
     }

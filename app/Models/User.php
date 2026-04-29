@@ -23,7 +23,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'is_active',
         'role_id',
+        'outlet_id',
     ];
 
     /**
@@ -46,11 +48,64 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function outlet(): BelongsTo
+    {
+        return $this->belongsTo(Outlet::class);
+    }
+
+    public function hasRole(string|array $roles): bool
+    {
+        $roles = is_array($roles) ? $roles : [$roles];
+
+        return in_array($this->role?->name, $roles, true);
+    }
+
+    public function canManageCatalog(): bool
+    {
+        return $this->is_active && $this->hasRole([Role::OWNER, Role::ADMIN]);
+    }
+
+    public function canUseCheckout(): bool
+    {
+        return $this->is_active && $this->hasRole(Role::names());
+    }
+
+    public function canViewDashboard(): bool
+    {
+        return $this->is_active && $this->hasRole(Role::names());
+    }
+
+    public function canViewTransactions(): bool
+    {
+        return $this->is_active && $this->hasRole(Role::names());
+    }
+
+    public function canManageOperations(): bool
+    {
+        return $this->is_active && $this->hasRole([Role::OWNER, Role::ADMIN]);
+    }
+
+    public function canManageCustomers(): bool
+    {
+        return $this->is_active && $this->hasRole(Role::names());
+    }
+
+    public function canViewReports(): bool
+    {
+        return $this->is_active && $this->hasRole([Role::OWNER, Role::ADMIN, Role::MANAGER]);
+    }
+
+    public function canManagePremium(): bool
+    {
+        return $this->is_active && $this->hasRole([Role::OWNER, Role::ADMIN]);
     }
 }

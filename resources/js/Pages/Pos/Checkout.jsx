@@ -1,8 +1,25 @@
-import { Head, usePage, useForm } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 
-export default function Checkout({ products, paymentMethods }) {
+const formatCurrency = (value) =>
+    new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(value || 0);
+
+export default function Checkout({
+    products,
+    paymentMethods,
+    outlets,
+    selectedOutletId,
+    customers,
+    promotions,
+    receiptChannels,
+    features,
+    currentShift,
+}) {
     const { auth } = usePage().props;
     const flash = usePage().props?.flash || {};
 
@@ -13,6 +30,12 @@ export default function Checkout({ products, paymentMethods }) {
     const [serviceFeeRate, setServiceFeeRate] = useState(0);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(paymentMethods[0] || '');
     const [paymentReference, setPaymentReference] = useState('');
+    const [selectedOutlet, setSelectedOutlet] = useState(selectedOutletId || outlets[0]?.id || '');
+    const [selectedCustomer, setSelectedCustomer] = useState('');
+    const [selectedPromotion, setSelectedPromotion] = useState('');
+    const [voucherCode, setVoucherCode] = useState('');
+    const [receiptChannel, setReceiptChannel] = useState('');
+    const [receiptRecipient, setReceiptRecipient] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
     const [lastTransaction, setLastTransaction] = useState(null);
 
@@ -24,15 +47,29 @@ export default function Checkout({ products, paymentMethods }) {
         }
     }, [flash]);
 
+    useEffect(() => {
+        setSelectedOutlet(selectedOutletId || outlets[0]?.id || '');
+        setCart([]);
+    }, [selectedOutletId, outlets, products]);
+
+    const selectedCustomerRecord = useMemo(
+        () => customers.find((customer) => customer.id === Number(selectedCustomer)),
+        [customers, selectedCustomer],
+    );
+
     const addToCart = (product) => {
         const existing = cart.find((item) => item.product_id === product.id);
         if (existing) {
             setCart(
                 cart.map((item) =>
                     item.product_id === product.id
-                        ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * item.unit_price }
+                        ? {
+                              ...item,
+                              quantity: item.quantity + 1,
+                              subtotal: (item.quantity + 1) * item.unit_price,
+                          }
                         : item
-                )
+                ),
             );
         } else {
             setCart([
@@ -57,7 +94,7 @@ export default function Checkout({ products, paymentMethods }) {
                     item.product_id === productId
                         ? { ...item, quantity, subtotal: quantity * item.unit_price }
                         : item
-                )
+                ),
             );
         }
     };
@@ -68,65 +105,120 @@ export default function Checkout({ products, paymentMethods }) {
 
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
-    const discountAmount =
+    const manualDiscountAmount =
         discountType === 'percentage' ? (subtotal * discountValue) / 100 : discountValue;
 
-    const afterDiscount = subtotal - discountAmount;
+    const promotionRecord = promotions.find(
+        (promotion) => promotion.id === Number(selectedPromotion),
+    );
+
+    const promotionDiscountAmount = promotionRecord
+        ? promotionRecord.type === 'percentage'
+            ? ((subtotal - manualDiscountAmount) * promotionRecord.value) / 100
+            : promotionRecord.value
+        : 0;
+
+    const membershipDiscountAmount =
+        features.memberships && selectedCustomerRecord
+            ? ((subtotal - manualDiscountAmount - promotionDiscountAmount) *
+                  (selectedCustomerRecord.membership_discount_rate || 0)) /
+              100
+            : 0;
+
+    const discountAmount = Math.max(
+        0,
+        manualDiscountAmount + promotionDiscountAmount + membershipDiscountAmount,
+    );
+    const afterDiscount = Math.max(0, subtotal - discountAmount);
     const taxAmount = (afterDiscount * taxRate) / 100;
     const serviceFeeAmount = (afterDiscount * serviceFeeRate) / 100;
     const total = afterDiscount + taxAmount + serviceFeeAmount;
 
     const { data, setData, post, processing, errors, reset } = useForm({
+        outlet_id: selectedOutlet,
         items: cart,
+        customer_id: selectedCustomer,
+        promotion_id: selectedPromotion,
+        voucher_code: voucherCode,
         discount_type: discountType,
         discount_value: discountValue,
         tax_rate: taxRate,
         service_fee_rate: serviceFeeRate,
         payment_method: selectedPaymentMethod,
         payment_reference: paymentReference,
+        receipt_channel: receiptChannel,
+        receipt_recipient: receiptRecipient,
     });
 
     useEffect(() => {
         setData({
+            outlet_id: selectedOutlet,
             items: cart,
+            customer_id: selectedCustomer,
+            promotion_id: selectedPromotion,
+            voucher_code: voucherCode,
             discount_type: discountType,
             discount_value: discountValue,
             tax_rate: taxRate,
             service_fee_rate: serviceFeeRate,
             payment_method: selectedPaymentMethod,
             payment_reference: paymentReference,
+            receipt_channel: receiptChannel,
+            receipt_recipient: receiptRecipient,
         });
-    }, [cart, discountType, discountValue, taxRate, serviceFeeRate, selectedPaymentMethod, paymentReference]);
+    }, [
+        cart,
+        discountType,
+        discountValue,
+        paymentReference,
+        receiptChannel,
+        receiptRecipient,
+        selectedCustomer,
+        selectedOutlet,
+        selectedPaymentMethod,
+        selectedPromotion,
+        serviceFeeRate,
+        taxRate,
+        voucherCode,
+    ]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route('pos.checkout.store'), {
             onSuccess: () => {
                 setCart([]);
+                setSelectedCustomer('');
+                setSelectedPromotion('');
+                setVoucherCode('');
                 setDiscountValue(0);
                 setTaxRate(0);
                 setServiceFeeRate(0);
                 setPaymentReference('');
+                setReceiptChannel('');
+                setReceiptRecipient('');
                 reset();
             },
         });
     };
 
+    const changeOutlet = (event) => {
+        const outlet = event.target.value;
+        setSelectedOutlet(outlet);
+        router.get(route('pos.checkout'), { outlet }, { preserveScroll: true, replace: true });
+    };
+
     const startNewSale = () => {
         setCart([]);
+        setSelectedCustomer('');
+        setSelectedPromotion('');
+        setVoucherCode('');
         setDiscountValue(0);
         setTaxRate(0);
         setServiceFeeRate(0);
         setPaymentReference('');
+        setReceiptChannel('');
+        setReceiptRecipient('');
         setShowSuccess(false);
-    };
-
-    const formatCurrency = (value) => {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0,
-        }).format(value);
     };
 
     return (
@@ -141,47 +233,114 @@ export default function Checkout({ products, paymentMethods }) {
                             Create a new sale transaction
                         </p>
                     </div>
-                    <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                        {auth.user?.role?.name}
+                    <div className="flex items-center gap-3">
+                        <select
+                            value={selectedOutlet}
+                            onChange={changeOutlet}
+                            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                        >
+                            {outlets.map((outlet) => (
+                                <option key={outlet.id} value={outlet.id}>
+                                    {outlet.name}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                            {auth.user?.role?.name}
+                        </div>
                     </div>
                 </div>
             }
         >
             <Head title="POS Checkout" />
 
-            {showSuccess && (
-                <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-                    {lastTransaction}
-                </div>
-            )}
+                    {showSuccess && (
+                        <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+                            {lastTransaction}
+                        </div>
+                    )}
 
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-                <div className="space-y-6">
-                    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                    {features.cashierShifts && (
+                        <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                        Cashier shift
+                                    </p>
+                                    {currentShift ? (
+                                        <p className="mt-2 text-sm text-slate-600">
+                                            Open since {currentShift.opened_at} with balance{' '}
+                                            {formatCurrency(currentShift.opening_balance)}
+                                        </p>
+                                    ) : (
+                                        <p className="mt-2 text-sm text-slate-600">
+                                            No shift is currently open for this outlet.
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex gap-3">
+                                    {!currentShift ? (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.post(route('premium.shifts.open'), {
+                                                    outlet_id: selectedOutlet,
+                                                    opening_balance: 0,
+                                                })
+                                            }
+                                            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                                        >
+                                            Open shift
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.patch(
+                                                    route('premium.shifts.close', currentShift.id),
+                                                    { closing_balance: total },
+                                                )
+                                            }
+                                            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                                        >
+                                            Close shift
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+                        <div className="space-y-6">
+                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
                             Products
                         </h3>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {products.map((product) => (
-                                <button
-                                    key={product.id}
-                                    onClick={() => addToCart(product)}
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {products.map((product) => (
+                                        <button
+                                            key={product.id}
+                                            onClick={() => addToCart(product)}
                                     className="flex flex-col items-start rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-emerald-300 hover:bg-emerald-50"
                                 >
                                     <span className="font-medium text-slate-900">
                                         {product.name}
                                     </span>
-                                    <span className="mt-1 text-sm font-semibold text-emerald-600">
-                                        {formatCurrency(product.selling_price)}
-                                    </span>
-                                    {product.sku && (
-                                        <span className="mt-2 text-xs text-slate-400">
-                                            {product.sku}
-                                        </span>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
+                                            <span className="mt-1 text-sm font-semibold text-emerald-600">
+                                                {formatCurrency(product.selling_price)}
+                                            </span>
+                                            <span className="mt-2 text-xs text-slate-400">
+                                                Stock {product.stock_quantity}
+                                            </span>
+                                            {product.sku && (
+                                                <span className="mt-1 text-xs text-slate-400">
+                                                    {product.sku}
+                                                </span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
                     </div>
 
                     {cart.length > 0 && (
@@ -272,6 +431,32 @@ export default function Checkout({ products, paymentMethods }) {
                             <div className="space-y-4">
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700">
+                                        Customer
+                                    </label>
+                                    <select
+                                        value={selectedCustomer}
+                                        onChange={(event) => setSelectedCustomer(event.target.value)}
+                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                    >
+                                        <option value="">Walk-in customer</option>
+                                        {customers.map((customer) => (
+                                            <option key={customer.id} value={customer.id}>
+                                                {customer.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {selectedCustomerRecord && (
+                                        <p className="mt-2 text-xs text-slate-500">
+                                            {selectedCustomerRecord.membership_tier || 'Standard'}
+                                            {features.memberships &&
+                                                selectedCustomerRecord.membership_discount_rate > 0 &&
+                                                ` • ${selectedCustomerRecord.membership_discount_rate}% membership benefit`}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">
                                         Discount
                                     </label>
                                     <div className="flex gap-2">
@@ -298,6 +483,41 @@ export default function Checkout({ products, paymentMethods }) {
                                         />
                                     </div>
                                 </div>
+
+                                {features.promotions && (
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                                            Promotion
+                                        </label>
+                                        <select
+                                            value={selectedPromotion}
+                                            onChange={(event) => setSelectedPromotion(event.target.value)}
+                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                        >
+                                            <option value="">No promotion</option>
+                                            {promotions.map((promotion) => (
+                                                <option key={promotion.id} value={promotion.id}>
+                                                    {promotion.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {features.vouchers && (
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                                            Voucher code
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={voucherCode}
+                                            onChange={(event) => setVoucherCode(event.target.value)}
+                                            placeholder="Voucher code"
+                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                        />
+                                    </div>
+                                )}
 
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -412,6 +632,52 @@ export default function Checkout({ products, paymentMethods }) {
                                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
                                     />
                                 </div>
+
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                                        Receipt action
+                                    </label>
+                                    <select
+                                        value={receiptChannel}
+                                        onChange={(event) => setReceiptChannel(event.target.value)}
+                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                    >
+                                        <option value="">No receipt action</option>
+                                        {receiptChannels.map((channel) => (
+                                            <option key={channel} value={channel}>
+                                                {channel}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {receiptChannel && receiptChannel !== 'print' && (
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                                            Receipt recipient
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={receiptRecipient}
+                                            onChange={(event) =>
+                                                setReceiptRecipient(event.target.value)
+                                            }
+                                            placeholder="Email or WhatsApp number"
+                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                                        />
+                                        {!features.connectedReceipts && (
+                                            <p className="mt-2 text-xs text-amber-600">
+                                                Connected receipts require the Business plan.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {(errors.items || errors.voucher_code || errors.promotion_id) && (
+                                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                        {errors.items || errors.voucher_code || errors.promotion_id}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
