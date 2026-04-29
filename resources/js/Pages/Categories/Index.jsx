@@ -47,10 +47,10 @@ export default function CategoriesIndex({ categories, units }) {
         <AuthenticatedLayout
             header={
                 <div>
-                    <h2 className="text-2xl font-semibold text-slate-900">
+                    <h2 className="text-2xl font-semibold text-on-surface">
                         Categories and units
                     </h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-outline">
                         Organize POS browsing with active categories, sort order, and shared sellable units.
                     </p>
                 </div>
@@ -60,15 +60,15 @@ export default function CategoriesIndex({ categories, units }) {
 
             <div className="space-y-6 pb-24">
                 {flash.success && (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    <div className="rounded-xl border border-tertiary-fixed-dim bg-tertiary-container px-4 py-3 text-sm text-emerald-800">
                         {flash.success}
                     </div>
                 )}
 
                 <div className="grid gap-6 xl:grid-cols-2">
-                    <div className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                    <div className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant">
                         <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-lg font-semibold text-slate-900">
+                            <h3 className="text-lg font-semibold text-on-surface">
                                 {editingCategory ? 'Edit category' : 'New category'}
                             </h3>
                             {editingCategory && (
@@ -78,7 +78,7 @@ export default function CategoriesIndex({ categories, units }) {
                                         setEditingCategory(null);
                                         categoryForm.setData(emptyCategory);
                                     }}
-                                    className="rounded-full border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
+                                    className="rounded-full border border-outline px-3 py-2 text-sm font-medium text-on-surface-variant"
                                 >
                                     Clear
                                 </button>
@@ -104,7 +104,7 @@ export default function CategoriesIndex({ categories, units }) {
                                     categoryForm.setData('name', event.target.value)
                                 }
                                 placeholder="Category name"
-                                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                             />
                             <textarea
                                 value={categoryForm.data.description}
@@ -112,7 +112,7 @@ export default function CategoriesIndex({ categories, units }) {
                                     categoryForm.setData('description', event.target.value)
                                 }
                                 placeholder="Description"
-                                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                             />
                             <div className="grid gap-3 sm:grid-cols-3">
                                 <input
@@ -121,7 +121,7 @@ export default function CategoriesIndex({ categories, units }) {
                                         categoryForm.setData('color', event.target.value)
                                     }
                                     placeholder="#0f766e"
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
                                 <input
                                     type="number"
@@ -130,9 +130,9 @@ export default function CategoriesIndex({ categories, units }) {
                                         categoryForm.setData('sort_order', event.target.value)
                                     }
                                     placeholder="Sort order"
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
-                                <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
+                                <label className="flex items-center gap-3 rounded-xl border border-outline-variant px-4 py-3 text-sm text-on-surface-variant">
                                     <input
                                         type="checkbox"
                                         checked={categoryForm.data.is_active}
@@ -143,7 +143,7 @@ export default function CategoriesIndex({ categories, units }) {
                                     Active
                                 </label>
                             </div>
-                            <button className="w-full rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white">
+                            <button className="w-full rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white">
                                 {editingCategory ? 'Save category' : 'Add category'}
                             </button>
                         </form>
@@ -154,7 +154,7 @@ export default function CategoriesIndex({ categories, units }) {
                                     key={category.id}
                                     type="button"
                                     onClick={() => startCategoryEdit(category)}
-                                    className="flex w-full items-center justify-between rounded-2xl border border-slate-200 p-4 text-left"
+                                    className="flex w-full items-center justify-between rounded-xl border border-outline-variant p-4 text-left"
                                 >
                                     <div className="flex items-center gap-3">
                                         <span
@@ -162,15 +162,15 @@ export default function CategoriesIndex({ categories, units }) {
                                             style={{ backgroundColor: category.color }}
                                         />
                                         <div>
-                                            <p className="font-medium text-slate-900">
+                                            <p className="font-medium text-on-surface">
                                                 {category.name}
                                             </p>
-                                            <p className="text-sm text-slate-500">
+                                            <p className="text-sm text-outline">
                                                 {category.products_count} products
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="text-xs uppercase tracking-wide text-slate-400">
+                                    <span className="text-xs uppercase tracking-wide text-outline">
                                         {category.is_active ? 'Active' : 'Hidden'}
                                     </span>
                                 </button>
@@ -178,9 +178,9 @@ export default function CategoriesIndex({ categories, units }) {
                         </div>
                     </div>
 
-                    <div className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                    <div className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant">
                         <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-lg font-semibold text-slate-900">
+                            <h3 className="text-lg font-semibold text-on-surface">
                                 {editingUnit ? 'Edit unit' : 'New unit'}
                             </h3>
                             {editingUnit && (
@@ -190,7 +190,7 @@ export default function CategoriesIndex({ categories, units }) {
                                         setEditingUnit(null);
                                         unitForm.setData(emptyUnit);
                                     }}
-                                    className="rounded-full border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
+                                    className="rounded-full border border-outline px-3 py-2 text-sm font-medium text-on-surface-variant"
                                 >
                                     Clear
                                 </button>
@@ -212,7 +212,7 @@ export default function CategoriesIndex({ categories, units }) {
                                 value={unitForm.data.name}
                                 onChange={(event) => unitForm.setData('name', event.target.value)}
                                 placeholder="Unit name"
-                                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                             />
                             <input
                                 value={unitForm.data.short_name}
@@ -220,7 +220,7 @@ export default function CategoriesIndex({ categories, units }) {
                                     unitForm.setData('short_name', event.target.value)
                                 }
                                 placeholder="Short name"
-                                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                             />
                             <textarea
                                 value={unitForm.data.description}
@@ -228,9 +228,9 @@ export default function CategoriesIndex({ categories, units }) {
                                     unitForm.setData('description', event.target.value)
                                 }
                                 placeholder="Description"
-                                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                             />
-                            <button className="w-full rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white">
+                            <button className="w-full rounded-full bg-tertiary px-4 py-3 text-sm font-semibold text-white">
                                 {editingUnit ? 'Save unit' : 'Add unit'}
                             </button>
                         </form>
@@ -241,17 +241,17 @@ export default function CategoriesIndex({ categories, units }) {
                                     key={unit.id}
                                     type="button"
                                     onClick={() => startUnitEdit(unit)}
-                                    className="flex w-full items-center justify-between rounded-2xl border border-slate-200 p-4 text-left"
+                                    className="flex w-full items-center justify-between rounded-xl border border-outline-variant p-4 text-left"
                                 >
                                     <div>
-                                        <p className="font-medium text-slate-900">
+                                        <p className="font-medium text-on-surface">
                                             {unit.name}
                                         </p>
-                                        <p className="text-sm text-slate-500">
+                                        <p className="text-sm text-outline">
                                             {unit.short_name}
                                         </p>
                                     </div>
-                                    <span className="text-xs uppercase tracking-wide text-slate-400">
+                                    <span className="text-xs uppercase tracking-wide text-outline">
                                         Tap to edit
                                     </span>
                                 </button>

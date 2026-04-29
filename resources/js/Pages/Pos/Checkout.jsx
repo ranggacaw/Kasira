@@ -239,10 +239,10 @@ export default function Checkout({
                             setSelectedOutlet(outlet);
                             router.get(route('pos.index'), { outlet }, { preserveState: true });
                         }}
-                        className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white"
+                        className="rounded-full border border-white/10 bg-surface-container-lowest/5 px-4 py-2 text-sm text-white"
                     >
                         {outlets.map((outlet) => (
-                            <option key={outlet.id} value={outlet.id} className="text-slate-900">
+                            <option key={outlet.id} value={outlet.id} className="text-on-surface">
                                 {outlet.name}
                             </option>
                         ))}
@@ -256,7 +256,7 @@ export default function Checkout({
                                         closing_balance: total,
                                     })
                                 }
-                                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white"
+                                className="rounded-full border border-white/10 bg-surface-container-lowest/5 px-4 py-2 text-sm font-medium text-white"
                             >
                                 Close shift
                             </button>
@@ -269,7 +269,7 @@ export default function Checkout({
                                         opening_balance: 0,
                                     })
                                 }
-                                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white"
+                                className="rounded-full border border-white/10 bg-surface-container-lowest/5 px-4 py-2 text-sm font-medium text-white"
                             >
                                 Open shift
                             </button>
@@ -282,15 +282,15 @@ export default function Checkout({
 
             <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
                 <section className="space-y-4">
-                    <div className="overflow-x-auto rounded-[2rem] border border-white/10 bg-white/5 p-3 backdrop-blur">
+                    <div className="overflow-x-auto rounded-[2rem] border border-white/10 bg-surface-container-lowest/5 p-3 backdrop-blur">
                         <div className="flex gap-2">
                             <button
                                 type="button"
                                 onClick={() => setActiveCategoryId('all')}
                                 className={`rounded-full px-4 py-2 text-sm font-medium ${
                                     activeCategoryId === 'all'
-                                        ? 'bg-white text-slate-950'
-                                        : 'bg-white/5 text-slate-300'
+                                        ? 'bg-surface-container-lowest text-on-surface-variant'
+                                        : 'bg-surface-container-lowest/5 text-on-surface-variant'
                                 }`}
                             >
                                 All products
@@ -302,8 +302,8 @@ export default function Checkout({
                                     onClick={() => setActiveCategoryId(category.id)}
                                     className={`rounded-full px-4 py-2 text-sm font-medium ${
                                         activeCategoryId === category.id
-                                            ? 'bg-white text-slate-950'
-                                            : 'bg-white/5 text-slate-300'
+                                            ? 'bg-surface-container-lowest text-on-surface-variant'
+                                            : 'bg-surface-container-lowest/5 text-on-surface-variant'
                                     }`}
                                 >
                                     {category.name}
@@ -313,12 +313,12 @@ export default function Checkout({
                     </div>
 
                     {draftOrders.length > 0 && (
-                        <div className="rounded-[2rem] border border-white/10 bg-white/5 p-4 backdrop-blur">
+                        <div className="rounded-[2rem] border border-white/10 bg-surface-container-lowest/5 p-4 backdrop-blur">
                             <div className="flex items-center justify-between gap-3">
-                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
                                     Draft orders
                                 </h3>
-                                <span className="text-xs uppercase tracking-wide text-slate-500">
+                                <span className="text-xs uppercase tracking-wide text-outline">
                                     {draftOrders.length} saved
                                 </span>
                             </div>
@@ -326,17 +326,17 @@ export default function Checkout({
                                 {draftOrders.map((draft) => (
                                     <div
                                         key={draft.id}
-                                        className="rounded-2xl border border-white/10 bg-slate-900/50 p-4"
+                                        className="rounded-xl border border-white/10 bg-on-surface/50 p-4"
                                     >
                                         <p className="font-medium text-white">{draft.name}</p>
-                                        <p className="mt-1 text-sm text-slate-400">
+                                        <p className="mt-1 text-sm text-outline">
                                             {draft.customer?.name || 'Walk-in'}
                                         </p>
                                         <div className="mt-3 flex gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => resumeDraft(draft)}
-                                                className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-950"
+                                                className="rounded-full bg-surface-container-lowest px-3 py-2 text-xs font-semibold text-on-surface-variant"
                                             >
                                                 Resume
                                             </button>
@@ -345,7 +345,7 @@ export default function Checkout({
                                                 onClick={() =>
                                                     router.delete(route('pos.drafts.destroy', draft.id))
                                                 }
-                                                className="rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300"
+                                                className="rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-on-surface-variant"
                                             >
                                                 Delete
                                             </button>
@@ -362,16 +362,16 @@ export default function Checkout({
                                 key={product.id}
                                 type="button"
                                 onClick={() => addToCart(product)}
-                                className="rounded-[2rem] border border-white/10 bg-white/5 p-5 text-left backdrop-blur transition hover:border-emerald-300/40 hover:bg-white/10"
+                                className="rounded-[2rem] border border-white/10 bg-surface-container-lowest/5 p-5 text-left backdrop-blur transition hover:border-emerald-300/40 hover:bg-surface-container-lowest/10"
                             >
                                 <p className="text-lg font-semibold text-white">{product.name}</p>
-                                <p className="mt-1 text-sm text-slate-400">
+                                <p className="mt-1 text-sm text-outline">
                                     {product.category?.name || 'Uncategorized'}
                                 </p>
                                 <p className="mt-4 text-lg font-semibold text-emerald-300">
                                     {formatCurrency(product.selling_price)}
                                 </p>
-                                <p className="mt-3 text-xs uppercase tracking-wide text-slate-500">
+                                <p className="mt-3 text-xs uppercase tracking-wide text-outline">
                                     Stock {product.stock_quantity}
                                 </p>
                             </button>
@@ -383,20 +383,20 @@ export default function Checkout({
                     <button
                         type="button"
                         onClick={() => setIsCartOpen(true)}
-                        className="fixed bottom-4 right-4 z-30 rounded-full bg-emerald-400 px-5 py-4 text-sm font-semibold text-slate-950 shadow-xl shadow-emerald-400/30 lg:hidden"
+                        className="fixed bottom-4 right-4 z-30 rounded-full bg-emerald-400 px-5 py-4 text-sm font-semibold text-on-surface-variant shadow-xl shadow-emerald-400/30 lg:hidden"
                     >
                         Cart {cart.length > 0 ? `(${cart.length})` : ''}
                     </button>
 
                     <div
-                        className={`fixed inset-0 z-40 bg-slate-950/50 transition lg:hidden ${
+                        className={`fixed inset-0 z-40 bg-surface-container/50 transition lg:hidden ${
                             isCartOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
                         }`}
                         onClick={() => setIsCartOpen(false)}
                     />
 
                     <section
-                        className={`fixed bottom-0 left-0 right-0 z-50 max-h-[88vh] rounded-t-[2rem] border border-white/10 bg-slate-900 p-4 shadow-2xl transition-transform lg:static lg:max-h-none lg:rounded-[2rem] lg:border lg:bg-white/5 lg:p-5 lg:backdrop-blur ${
+                        className={`fixed bottom-0 left-0 right-0 z-50 max-h-[88vh] rounded-t-[2rem] border border-white/10 bg-on-surface p-4 shadow-2xl transition-transform lg:static lg:max-h-none lg:rounded-[2rem] lg:border lg:bg-surface-container-lowest/5 lg:p-5 lg:backdrop-blur ${
                             isCartOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'
                         }`}
                     >
@@ -404,14 +404,14 @@ export default function Checkout({
                             <div className="flex items-center justify-between gap-3">
                                 <div>
                                     <h3 className="text-lg font-semibold text-white">Cart summary</h3>
-                                    <p className="mt-1 text-sm text-slate-400">
+                                    <p className="mt-1 text-sm text-outline">
                                         {activeDraftId ? 'Draft resumed' : 'Ready for payment'}
                                     </p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setIsCartOpen(false)}
-                                    className="rounded-full border border-white/10 px-3 py-2 text-sm text-slate-300 lg:hidden"
+                                    className="rounded-full border border-white/10 px-3 py-2 text-sm text-on-surface-variant lg:hidden"
                                 >
                                     Close
                                 </button>
@@ -421,12 +421,12 @@ export default function Checkout({
                                 {cart.map((item) => (
                                     <div
                                         key={item.product_id}
-                                        className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                                        className="rounded-xl border border-white/10 bg-surface-container-lowest/5 p-4"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
                                                 <p className="font-medium text-white">{item.name}</p>
-                                                <p className="mt-1 text-sm text-slate-400">
+                                                <p className="mt-1 text-sm text-outline">
                                                     {formatCurrency(item.unit_price)} each
                                                 </p>
                                             </div>
@@ -446,13 +446,13 @@ export default function Checkout({
                                             </button>
                                         </div>
                                         <div className="mt-4 flex items-center justify-between gap-3">
-                                            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-2">
+                                            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-surface-container-lowest/5 px-2 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={() =>
                                                         updateQuantity(item.product_id, item.quantity - 1)
                                                     }
-                                                    className="h-8 w-8 rounded-full bg-white/10 text-white"
+                                                    className="h-8 w-8 rounded-full bg-surface-container-lowest/10 text-white"
                                                 >
                                                     -
                                                 </button>
@@ -464,7 +464,7 @@ export default function Checkout({
                                                     onClick={() =>
                                                         updateQuantity(item.product_id, item.quantity + 1)
                                                     }
-                                                    className="h-8 w-8 rounded-full bg-white text-slate-950"
+                                                    className="h-8 w-8 rounded-full bg-surface-container-lowest text-on-surface-variant"
                                                 >
                                                     +
                                                 </button>
@@ -477,16 +477,16 @@ export default function Checkout({
                                 ))}
 
                                 {cart.length === 0 && (
-                                    <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-slate-400">
+                                    <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-sm text-outline">
                                         Add products to start a sale or resume a saved draft.
                                     </div>
                                 )}
 
-                                <div className="space-y-3 rounded-[2rem] border border-white/10 bg-white/5 p-4">
+                                <div className="space-y-3 rounded-[2rem] border border-white/10 bg-surface-container-lowest/5 p-4">
                                     <select
                                         value={selectedCustomer}
                                         onChange={(event) => setSelectedCustomer(event.target.value)}
-                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                        className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                     >
                                         <option value="">Walk-in customer</option>
                                         {customers.map((customer) => (
@@ -499,7 +499,7 @@ export default function Checkout({
                                         <select
                                             value={discountType}
                                             onChange={(event) => setDiscountType(event.target.value)}
-                                            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                            className="rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                         >
                                             <option value="percentage">Discount %</option>
                                             <option value="fixed">Discount nominal</option>
@@ -510,14 +510,14 @@ export default function Checkout({
                                             onChange={(event) =>
                                                 setDiscountValue(Number(event.target.value || 0))
                                             }
-                                            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                            className="rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                         />
                                     </div>
                                     {features.promotions && (
                                         <select
                                             value={selectedPromotion}
                                             onChange={(event) => setSelectedPromotion(event.target.value)}
-                                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                            className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                         >
                                             <option value="">No promotion</option>
                                             {promotions.map((promotion) => (
@@ -531,7 +531,7 @@ export default function Checkout({
                                         value={voucherCode}
                                         onChange={(event) => setVoucherCode(event.target.value)}
                                         placeholder="Voucher code"
-                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                        className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                     />
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <input
@@ -539,7 +539,7 @@ export default function Checkout({
                                             value={taxRate}
                                             onChange={(event) => setTaxRate(Number(event.target.value || 0))}
                                             placeholder="Tax %"
-                                            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                            className="rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                         />
                                         <input
                                             type="number"
@@ -548,13 +548,13 @@ export default function Checkout({
                                                 setServiceFeeRate(Number(event.target.value || 0))
                                             }
                                             placeholder="Service fee %"
-                                            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                            className="rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                         />
                                     </div>
                                     <select
                                         value={selectedPaymentMethod}
                                         onChange={(event) => setSelectedPaymentMethod(event.target.value)}
-                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                        className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                     >
                                         {paymentMethods.map((method) => (
                                             <option key={method} value={method}>
@@ -568,19 +568,19 @@ export default function Checkout({
                                             value={paidAmount}
                                             onChange={(event) => setPaidAmount(event.target.value)}
                                             placeholder="Paid amount"
-                                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                            className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                         />
                                     )}
                                     <input
                                         value={paymentReference}
                                         onChange={(event) => setPaymentReference(event.target.value)}
                                         placeholder="Payment reference"
-                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                        className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                     />
                                     <select
                                         value={receiptChannel}
                                         onChange={(event) => setReceiptChannel(event.target.value)}
-                                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                        className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                     >
                                         <option value="">Receipt handoff later</option>
                                         {receiptChannels.map((channel) => (
@@ -596,7 +596,7 @@ export default function Checkout({
                                                 setReceiptRecipient(event.target.value)
                                             }
                                             placeholder="Email or WhatsApp recipient"
-                                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                                            className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                                         />
                                     )}
                                 </div>
@@ -624,7 +624,7 @@ export default function Checkout({
                                     <span>{formatCurrency(total)}</span>
                                 </div>
                                 {selectedPaymentMethod === 'Cash' && (
-                                    <div className="mt-2 flex items-center justify-between text-xs uppercase tracking-wide text-emerald-200">
+                                    <div className="mt-2 flex items-center justify-between text-xs uppercase tracking-wide text-on-tertiary-container">
                                         <span>Change due</span>
                                         <span>{formatCurrency(changeDue)}</span>
                                     </div>
@@ -642,7 +642,7 @@ export default function Checkout({
                                 <button
                                     type="submit"
                                     disabled={checkoutForm.processing || cart.length === 0}
-                                    className="flex-1 rounded-full bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 disabled:opacity-50"
+                                    className="flex-1 rounded-full bg-emerald-400 px-4 py-3 text-sm font-semibold text-on-surface-variant disabled:opacity-50"
                                 >
                                     Charge sale
                                 </button>
@@ -652,13 +652,13 @@ export default function Checkout({
                                 <button
                                     type="button"
                                     onClick={resetSale}
-                                    className="flex-1 rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300"
+                                    className="flex-1 rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-on-surface-variant"
                                 >
                                     Start new
                                 </button>
                                 <Link
                                     href={route('transactions.index')}
-                                    className="flex flex-1 items-center justify-center rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300"
+                                    className="flex flex-1 items-center justify-center rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-on-surface-variant"
                                 >
                                     View receipts
                                 </Link>

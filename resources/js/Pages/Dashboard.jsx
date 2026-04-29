@@ -36,10 +36,10 @@ export default function Dashboard({
             header={
                 <div className="flex items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-2xl font-semibold leading-tight text-slate-900">
+                        <h2 className="text-headline-md leading-tight text-on-surface">
                             Mobile operations dashboard
                         </h2>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-body-md text-on-surface-variant">
                             Outlet-level performance, payment mix, best sellers,
                             and stock alerts for the selected trading period.
                         </p>
@@ -50,7 +50,7 @@ export default function Dashboard({
                             onChange={(event) =>
                                 updateFilters({ outlet: event.target.value || undefined })
                             }
-                            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                            className="rounded-full border border-outline px-4 py-2 text-body-md text-on-surface-variant"
                         >
                             {outlets.map((outlet) => (
                                 <option key={outlet.id} value={outlet.id}>
@@ -64,7 +64,7 @@ export default function Dashboard({
                             onChange={(event) =>
                                 updateFilters({ date_from: event.target.value })
                             }
-                            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                            className="rounded-full border border-outline px-4 py-2 text-body-md text-on-surface-variant"
                         />
                         <input
                             type="date"
@@ -72,9 +72,9 @@ export default function Dashboard({
                             onChange={(event) =>
                                 updateFilters({ date_to: event.target.value })
                             }
-                            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                            className="rounded-full border border-outline px-4 py-2 text-body-md text-on-surface-variant"
                         />
-                        <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                        <div className="rounded-full bg-tertiary-container px-3 py-1 text-body-md font-semibold uppercase tracking-wide text-tertiary-container">
                             {role}
                         </div>
                     </div>
@@ -87,14 +87,14 @@ export default function Dashboard({
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
                         <div className="space-y-6">
-                            <div className="overflow-hidden rounded-2xl bg-slate-900 p-8 text-white shadow-sm">
-                                <p className="text-sm uppercase tracking-[0.24em] text-slate-300">
+                            <div className="overflow-hidden rounded-xl bg-primary p-8 text-white shadow-sm">
+                                <p className="text-body-md uppercase tracking-[0.24em] text-on-surface-variant">
                                     Welcome back
                                 </p>
                                 <h3 className="mt-4 text-3xl font-semibold">
                                     {user.name}
                                 </h3>
-                                <p className="mt-3 max-w-2xl text-sm text-slate-300">
+                                <p className="mt-3 max-w-2xl text-body-md text-on-surface-variant">
                                     You are signed in as {role}. Revenue, sales
                                     volume, best sellers, and replenishment alerts
                                     are now served from recorded business data.
@@ -120,9 +120,9 @@ export default function Dashboard({
                                      ].map(([label, value]) => (
                                         <div
                                             key={label}
-                                            className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                                            className="rounded-xl border border-white/10 bg-surface-container-lowest/5 p-4"
                                         >
-                                            <p className="text-xs uppercase tracking-wide text-slate-400">
+                                            <p className="text-body-md uppercase tracking-wide text-outline">
                                                 {label}
                                             </p>
                                             <p className="mt-2 text-lg font-semibold text-white">
@@ -133,13 +133,13 @@ export default function Dashboard({
                                 </div>
                             </div>
 
-                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                            <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                        <h3 className="text-body-md font-semibold uppercase tracking-wide text-on-surface-variant">
                                             Sales trend
                                         </h3>
-                                        <p className="mt-1 text-sm text-slate-500">
+                                        <p className="mt-1 text-body-md text-on-surface-variant">
                                             Revenue and transaction volume for the last seven days.
                                         </p>
                                     </div>
@@ -150,29 +150,29 @@ export default function Dashboard({
                                         salesTrend.map((point) => (
                                             <div
                                                 key={point.date}
-                                                className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                                                className="rounded-xl border border-outline-variant bg-surface-container-low p-4"
                                             >
-                                                <p className="text-xs uppercase tracking-wide text-slate-400">
+                                                <p className="text-body-md uppercase tracking-wide text-outline">
                                                     {point.date}
                                                 </p>
-                                                <p className="mt-2 text-lg font-semibold text-slate-900">
+                                                <p className="mt-2 text-lg font-semibold text-on-surface">
                                                     {formatCurrency(point.revenue)}
                                                 </p>
-                                                <p className="mt-1 text-sm text-slate-500">
+                                                <p className="mt-1 text-body-md text-on-surface-variant">
                                                     {point.transactions} transactions
                                                 </p>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-slate-500">
+                                        <p className="text-body-md text-on-surface-variant">
                                             No sales trend data is available yet.
                                         </p>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                            <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                <h3 className="text-body-md font-semibold uppercase tracking-wide text-on-surface-variant">
                                     Payment summary
                                 </h3>
                                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -180,21 +180,21 @@ export default function Dashboard({
                                         metrics.paymentSummary.map((entry) => (
                                             <div
                                                 key={entry.method}
-                                                className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                                                className="rounded-xl border border-outline-variant bg-surface-container-low p-4"
                                             >
-                                                <p className="text-sm font-medium text-slate-900">
+                                                <p className="text-body-md font-medium text-on-surface">
                                                     {entry.method}
                                                 </p>
-                                                <p className="mt-2 text-lg font-semibold text-emerald-700">
+                                                <p className="mt-2 text-lg font-semibold text-tertiary-container">
                                                     {formatCurrency(entry.total_amount)}
                                                 </p>
-                                                <p className="mt-1 text-sm text-slate-500">
+                                                <p className="mt-1 text-body-md text-on-surface-variant">
                                                     {entry.payment_count} payments
                                                 </p>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-slate-500">
+                                        <p className="text-body-md text-on-surface-variant">
                                             No payment activity is available for this period.
                                         </p>
                                     )}
@@ -203,60 +203,60 @@ export default function Dashboard({
                         </div>
 
                         <div className="space-y-4">
-                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                            <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                <h3 className="text-body-md font-semibold uppercase tracking-wide text-on-surface-variant">
                                     Top-selling products
                                 </h3>
-                                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                                <div className="mt-4 space-y-3 text-body-md text-on-surface-variant">
                                     {metrics.topProducts.length > 0 ? (
                                         metrics.topProducts.map((product) => (
                                             <div
                                                 key={product.id}
-                                                className="rounded-2xl border border-slate-200 p-4"
+                                                className="rounded-xl border border-outline-variant p-4"
                                             >
-                                                <p className="font-medium text-slate-900">
+                                                <p className="font-medium text-on-surface">
                                                     {product.name}
                                                 </p>
-                                                <p className="mt-1 text-slate-500">
+                                                <p className="mt-1 text-on-surface-variant">
                                                     {product.quantity_sold} sold
                                                 </p>
-                                                <p className="mt-2 text-xs uppercase tracking-wide text-emerald-600">
+                                                <p className="mt-2 text-body-md uppercase tracking-wide text-tertiary">
                                                     {formatCurrency(product.revenue)}
                                                 </p>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-slate-500">
+                                        <p className="text-body-md text-on-surface-variant">
                                             No sales have been recorded yet.
                                         </p>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                            <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                <h3 className="text-body-md font-semibold uppercase tracking-wide text-on-surface-variant">
                                     Low-stock alerts
                                 </h3>
-                                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                                <div className="mt-4 space-y-3 text-body-md text-on-surface-variant">
                                     {metrics.lowStockAlerts.length > 0 ? (
                                         metrics.lowStockAlerts.map((product) => (
                                             <div
                                                 key={product.id}
-                                                className="rounded-2xl border border-amber-200 bg-amber-50 p-4"
+                                                className="rounded-xl border border-secondary-fixed-dim bg-secondary-container p-4"
                                             >
-                                                <p className="font-medium text-slate-900">
+                                                <p className="font-medium text-on-surface">
                                                     {product.name}
                                                 </p>
-                                                <p className="mt-1 text-slate-600">
+                                                <p className="mt-1 text-on-surface-variant">
                                                     Stock {product.stock_quantity} / minimum {product.minimum_stock}
                                                 </p>
-                                                <p className="mt-1 text-xs uppercase tracking-wide text-amber-700">
+                                                <p className="mt-1 text-body-md uppercase tracking-wide text-on-secondary-container">
                                                     {product.outlet?.name}
                                                 </p>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-slate-500">
+                                        <p className="text-body-md text-on-surface-variant">
                                             All tracked products are above their minimum threshold.
                                         </p>
                                     )}

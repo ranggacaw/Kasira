@@ -25,14 +25,14 @@ export default function Welcome({ auth, canLogin, canRegister }) {
         <>
             <Head title="Kasira" />
 
-            <div className="min-h-screen bg-slate-950 text-slate-100">
+            <div className="min-h-screen bg-surface text-on-surface">
                 <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8 lg:px-8">
                     <header className="flex items-center justify-between gap-4 py-4">
                         <div>
-                            <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">
+                            <p className="text-label-bold uppercase text-primary">
                                 Kasira
                             </p>
-                            <p className="mt-2 text-sm text-slate-400">
+                            <p className="mt-2 text-body-md text-on-surface-variant">
                                 Modern POS foundation for small to medium businesses.
                             </p>
                         </div>
@@ -41,7 +41,7 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                             {canLogin && (
                                 <Link
                                     href={route('login')}
-                                    className="rounded-full border border-white/10 px-4 py-2 text-slate-200 transition hover:border-white/20 hover:bg-white/5"
+                                    className="rounded-full border border-outline px-4 py-2 text-on-surface transition hover:border-outline-variant hover:bg-surface-container"
                                 >
                                     Log in
                                 </Link>
@@ -50,7 +50,7 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                             {canRegister && !auth.user && (
                                 <Link
                                     href={route('register')}
-                                    className="rounded-full bg-white px-4 py-2 font-medium text-slate-950 transition hover:bg-emerald-200"
+                                    className="rounded-full bg-primary px-4 py-2 font-medium text-on-primary transition hover:bg-primary-container hover:text-on-primary-container"
                                 >
                                     Register
                                 </Link>
@@ -60,19 +60,19 @@ export default function Welcome({ auth, canLogin, canRegister }) {
 
                     <main className="grid flex-1 items-center gap-12 py-10 lg:grid-cols-[1.2fr_0.8fr]">
                         <div>
-                            <div className="inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-200">
+                            <div className="inline-flex rounded-full border border-outline-variant bg-surface-container-high px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-on-surface-variant">
                                 Laravel + Inertia + React
                             </div>
-                            <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                            <h1 className="mt-6 max-w-3xl text-display-lg text-on-surface">
                                 Kasira is ready for the first real POS workflows.
                             </h1>
-                            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+                            <p className="mt-6 max-w-2xl text-body-lg text-on-surface-variant">
                                 The application shell, authentication flow, and business roles are now in place so checkout, inventory, and reporting can be built on a stable foundation.
                             </p>
                             <div className="mt-8 flex flex-wrap items-center gap-4">
                                 <Link
                                     href={primaryHref}
-                                    className="rounded-full bg-emerald-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200"
+                                    className="rounded-full bg-primary px-5 py-3 text-label-bold text-on-primary transition hover:bg-primary-container hover:text-on-primary-container"
                                 >
                                     {primaryLabel}
                                 </Link>
@@ -80,7 +80,7 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                                 {canRegister && !auth.user && (
                                     <Link
                                         href={route('register')}
-                                        className="rounded-full border border-white/10 px-5 py-3 text-sm font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/5"
+                                        className="rounded-full border border-outline px-5 py-3 text-label-bold text-on-surface transition hover:bg-surface-container"
                                     >
                                         Create first account
                                     </Link>
@@ -91,12 +91,12 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                                 {pillars.map((pillar) => (
                                     <div
                                         key={pillar.title}
-                                        className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur"
+                                        className="rounded-xl border border-outline-variant bg-surface-container p-5"
                                     >
-                                        <h2 className="text-sm font-semibold text-white">
+                                        <h2 className="text-label-bold text-on-surface">
                                             {pillar.title}
                                         </h2>
-                                        <p className="mt-3 text-sm leading-6 text-slate-300">
+                                        <p className="mt-3 text-body-md text-on-surface-variant">
                                             {pillar.body}
                                         </p>
                                     </div>
@@ -104,18 +104,18 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                             </div>
                         </div>
 
-                        <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/30 backdrop-blur">
-                            <div className="rounded-[1.5rem] bg-slate-900 p-6 ring-1 ring-white/10">
+                        <div className="rounded-[2rem] border border-outline-variant bg-surface-container-lowest p-6 shadow-lg">
+                            <div className="rounded-xl bg-surface-container-low p-6 ring-1 ring-outline-variant">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm uppercase tracking-[0.22em] text-slate-400">
+                                        <p className="text-label-bold uppercase text-on-surface-variant">
                                             Access model
                                         </p>
-                                        <h2 className="mt-2 text-2xl font-semibold text-white">
+                                        <h2 className="mt-2 text-headline-md text-on-surface">
                                             MVP business roles
                                         </h2>
                                     </div>
-                                    <div className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                                    <div className="rounded-full bg-primary-container px-3 py-1 text-xs font-medium text-on-primary-container">
                                         Protected app
                                     </div>
                                 </div>
@@ -124,19 +124,19 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                                     {roles.map((role) => (
                                         <div
                                             key={role}
-                                            className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3"
+                                            className="flex items-center justify-between rounded-lg border border-outline-variant bg-surface px-4 py-3"
                                         >
-                                            <span className="font-medium text-white">
+                                            <span className="font-medium text-on-surface">
                                                 {role}
                                             </span>
-                                            <span className="text-sm text-slate-400">
+                                            <span className="text-sm text-on-surface-variant">
                                                 Ready for assignment
                                             </span>
                                         </div>
                                     ))}
                                 </div>
 
-                                <div className="mt-6 rounded-2xl bg-white/5 p-4 text-sm leading-6 text-slate-300">
+                                <div className="mt-6 rounded-lg bg-surface p-4 text-body-md text-on-surface-variant">
                                     Seeded demo users are created for local development so you can move straight into feature work after the PostgreSQL database is configured.
                                 </div>
                             </div>

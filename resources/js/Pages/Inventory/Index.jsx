@@ -26,10 +26,10 @@ export default function InventoryIndex({
         <AuthenticatedLayout
             header={
                 <div>
-                    <h2 className="text-2xl font-semibold text-slate-900">
+                    <h2 className="text-2xl font-semibold text-on-surface">
                         Inventory
                     </h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-outline">
                         Review stock movements, low-stock alerts, and outlet-specific inventory activity.
                     </p>
                 </div>
@@ -39,12 +39,12 @@ export default function InventoryIndex({
 
             <div className="space-y-6 pb-24">
                 {flash.success && (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    <div className="rounded-xl border border-tertiary-fixed-dim bg-tertiary-container px-4 py-3 text-sm text-emerald-800">
                         {flash.success}
                     </div>
                 )}
 
-                <div className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <div className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant">
                     <form
                         className="grid gap-3 md:grid-cols-4"
                         onSubmit={(event) => {
@@ -57,7 +57,7 @@ export default function InventoryIndex({
                         <select
                             value={filterForm.data.outlet}
                             onChange={(event) => filterForm.setData('outlet', event.target.value)}
-                            className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                            className="rounded-xl border border-outline px-4 py-3 text-sm"
                         >
                             {outlets.map((outlet) => (
                                 <option key={outlet.id} value={outlet.id}>
@@ -70,7 +70,7 @@ export default function InventoryIndex({
                             onChange={(event) =>
                                 filterForm.setData('product_id', event.target.value)
                             }
-                            className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                            className="rounded-xl border border-outline px-4 py-3 text-sm"
                         >
                             <option value="">All products</option>
                             {products.map((product) => (
@@ -84,7 +84,7 @@ export default function InventoryIndex({
                             onChange={(event) =>
                                 filterForm.setData('movement_type', event.target.value)
                             }
-                            className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                            className="rounded-xl border border-outline px-4 py-3 text-sm"
                         >
                             <option value="">All movement types</option>
                             <option value="stock_in">Stock in</option>
@@ -93,7 +93,7 @@ export default function InventoryIndex({
                             <option value="sale">Sale</option>
                             <option value="refund">Refund</option>
                         </select>
-                        <button className="rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white">
+                        <button className="rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white">
                             Apply filters
                         </button>
                     </form>
@@ -101,8 +101,8 @@ export default function InventoryIndex({
 
                 <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
                     <div className="space-y-6">
-                        <div className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-200">
-                            <h3 className="text-lg font-semibold text-slate-900">
+                        <div className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant">
+                            <h3 className="text-lg font-semibold text-on-surface">
                                 Record movement
                             </h3>
                             <form
@@ -117,7 +117,7 @@ export default function InventoryIndex({
                                     onChange={(event) =>
                                         movementForm.setData('product_id', event.target.value)
                                     }
-                                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                                 >
                                     {products.map((product) => (
                                         <option key={product.id} value={product.id}>
@@ -128,7 +128,7 @@ export default function InventoryIndex({
                                 <select
                                     value={movementForm.data.type}
                                     onChange={(event) => movementForm.setData('type', event.target.value)}
-                                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                                 >
                                     <option value="stock_in">Stock in</option>
                                     <option value="stock_out">Stock out</option>
@@ -140,7 +140,7 @@ export default function InventoryIndex({
                                     onChange={(event) =>
                                         movementForm.setData('quantity', event.target.value)
                                     }
-                                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
                                 <textarea
                                     value={movementForm.data.notes}
@@ -148,35 +148,35 @@ export default function InventoryIndex({
                                         movementForm.setData('notes', event.target.value)
                                     }
                                     placeholder="Reference or reason"
-                                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
-                                <button className="w-full rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white">
+                                <button className="w-full rounded-full bg-tertiary px-4 py-3 text-sm font-semibold text-white">
                                     Save movement
                                 </button>
                             </form>
                         </div>
 
-                        <div className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-200">
-                            <h3 className="text-lg font-semibold text-slate-900">
+                        <div className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant">
+                            <h3 className="text-lg font-semibold text-on-surface">
                                 Low-stock alerts
                             </h3>
                             <div className="mt-5 space-y-3">
                                 {lowStockAlerts.map((product) => (
                                     <div
                                         key={product.id}
-                                        className="rounded-2xl border border-amber-200 bg-amber-50 p-4"
+                                        className="rounded-xl border border-secondary-fixed-dim bg-secondary-container p-4"
                                     >
-                                        <p className="font-medium text-slate-900">{product.name}</p>
-                                        <p className="mt-1 text-sm text-slate-600">
+                                        <p className="font-medium text-on-surface">{product.name}</p>
+                                        <p className="mt-1 text-sm text-on-surface-variant">
                                             Stock {product.stock_quantity} / minimum {product.minimum_stock}
                                         </p>
-                                        <p className="mt-1 text-xs uppercase tracking-wide text-amber-700">
+                                        <p className="mt-1 text-xs uppercase tracking-wide text-on-secondary-container">
                                             {product.outlet?.name}
                                         </p>
                                     </div>
                                 ))}
                                 {lowStockAlerts.length === 0 && (
-                                    <p className="text-sm text-slate-500">
+                                    <p className="text-sm text-outline">
                                         No low-stock alerts for this filter.
                                     </p>
                                 )}
@@ -184,12 +184,12 @@ export default function InventoryIndex({
                         </div>
                     </div>
 
-                    <div className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                    <div className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant">
                         <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-lg font-semibold text-slate-900">
+                            <h3 className="text-lg font-semibold text-on-surface">
                                 Movement history
                             </h3>
-                            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <span className="rounded-full bg-surface-container-low px-3 py-1 text-xs font-semibold uppercase tracking-wide text-outline">
                                 {movements.length} records
                             </span>
                         </div>
@@ -198,26 +198,26 @@ export default function InventoryIndex({
                             {movements.map((movement) => (
                                 <div
                                     key={movement.id}
-                                    className="rounded-2xl border border-slate-200 p-4"
+                                    className="rounded-xl border border-outline-variant p-4"
                                 >
                                     <div className="flex flex-wrap items-center justify-between gap-3">
                                         <div>
-                                            <p className="font-medium text-slate-900">
+                                            <p className="font-medium text-on-surface">
                                                 {movement.product?.name}
                                             </p>
-                                            <p className="mt-1 text-sm text-slate-500">
+                                            <p className="mt-1 text-sm text-outline">
                                                 {movement.user?.name} • {movement.outlet?.name}
                                             </p>
                                         </div>
-                                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                        <span className="rounded-full bg-surface-container-low px-3 py-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
                                             {movement.type}
                                         </span>
                                     </div>
-                                    <p className="mt-3 text-sm text-slate-600">
+                                    <p className="mt-3 text-sm text-on-surface-variant">
                                         Qty {movement.quantity} • Balance {movement.balance_after}
                                     </p>
                                     {movement.notes && (
-                                        <p className="mt-1 text-sm text-slate-500">{movement.notes}</p>
+                                        <p className="mt-1 text-sm text-outline">{movement.notes}</p>
                                     )}
                                 </div>
                             ))}

@@ -117,10 +117,10 @@ export default function OperationsIndex({
         <AuthenticatedLayout
             header={
                 <div>
-                    <h2 className="text-xl font-semibold leading-tight text-slate-900">
+                    <h2 className="text-xl font-semibold leading-tight text-on-surface">
                         Business operations
                     </h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-outline">
                         Manage outlets, staff access, and customer records.
                     </p>
                 </div>
@@ -131,7 +131,7 @@ export default function OperationsIndex({
             <div className="space-y-6 py-10">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     {flash.success && (
-                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                        <div className="rounded-xl border border-tertiary-fixed-dim bg-tertiary-container px-4 py-3 text-sm text-emerald-800">
                             {flash.success}
                         </div>
                     )}
@@ -146,12 +146,12 @@ export default function OperationsIndex({
                             ].map(([label, value]) => (
                                 <div
                                     key={label}
-                                    className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+                                    className="rounded-xl bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant"
                                 >
-                                    <p className="text-xs uppercase tracking-wide text-slate-400">
+                                    <p className="text-xs uppercase tracking-wide text-outline">
                                         {label}
                                     </p>
-                                    <p className="mt-2 text-lg font-semibold text-slate-900">
+                                    <p className="mt-2 text-lg font-semibold text-on-surface">
                                         {value}
                                     </p>
                                 </div>
@@ -163,8 +163,8 @@ export default function OperationsIndex({
                         <div className="space-y-6">
                             {canManageOperations && (
                                 <>
-                                    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                                        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                    <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                        <h3 className="text-sm font-semibold uppercase tracking-wide text-outline">
                                             Outlet administration
                                         </h3>
                                         <form
@@ -180,7 +180,7 @@ export default function OperationsIndex({
                                                     outletForm.setData('name', event.target.value)
                                                 }
                                                 placeholder="Outlet name"
-                                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                                className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             />
                                             <input
                                                 value={outletForm.data.code}
@@ -188,7 +188,7 @@ export default function OperationsIndex({
                                                     outletForm.setData('code', event.target.value)
                                                 }
                                                 placeholder="Code"
-                                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                                className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             />
                                             <textarea
                                                 value={outletForm.data.address}
@@ -196,9 +196,9 @@ export default function OperationsIndex({
                                                     outletForm.setData('address', event.target.value)
                                                 }
                                                 placeholder="Address"
-                                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm md:col-span-2"
+                                                className="rounded-xl border border-outline px-3 py-2 text-sm md:col-span-2"
                                             />
-                                            <label className="flex items-center gap-2 text-sm text-slate-600">
+                                            <label className="flex items-center gap-2 text-sm text-on-surface-variant">
                                                 <input
                                                     type="checkbox"
                                                     checked={outletForm.data.is_active}
@@ -208,7 +208,7 @@ export default function OperationsIndex({
                                                 />
                                                 Active outlet
                                             </label>
-                                            <label className="flex items-center gap-2 text-sm text-slate-600">
+                                            <label className="flex items-center gap-2 text-sm text-on-surface-variant">
                                                 <input
                                                     type="checkbox"
                                                     checked={outletForm.data.is_primary}
@@ -218,7 +218,7 @@ export default function OperationsIndex({
                                                 />
                                                 Primary outlet
                                             </label>
-                                            <button className="rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white md:col-span-2">
+                                            <button className="rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white md:col-span-2">
                                                 Add outlet
                                             </button>
                                         </form>
@@ -227,13 +227,13 @@ export default function OperationsIndex({
                                             {outlets.map((outlet) => (
                                                 <div
                                                     key={outlet.id}
-                                                    className="flex items-center justify-between rounded-2xl border border-slate-200 p-4"
+                                                    className="flex items-center justify-between rounded-xl border border-outline-variant p-4"
                                                 >
                                                     <div>
-                                                        <p className="font-medium text-slate-900">
+                                                        <p className="font-medium text-on-surface">
                                                             {outlet.name}
                                                         </p>
-                                                        <p className="text-sm text-slate-500">
+                                                        <p className="text-sm text-outline">
                                                             {outlet.code || 'No code'}
                                                         </p>
                                                     </div>
@@ -246,7 +246,7 @@ export default function OperationsIndex({
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleOutlet(outlet)}
-                                                            className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700"
+                                                            className="rounded-full border border-outline px-3 py-1 text-xs font-medium text-on-surface-variant"
                                                         >
                                                             {outlet.is_active ? 'Deactivate' : 'Activate'}
                                                         </button>
@@ -256,8 +256,8 @@ export default function OperationsIndex({
                                         </div>
                                     </div>
 
-                                    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                                        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                    <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                        <h3 className="text-sm font-semibold uppercase tracking-wide text-outline">
                                             User administration
                                         </h3>
                                         <form
@@ -273,7 +273,7 @@ export default function OperationsIndex({
                                                     userForm.setData('name', event.target.value)
                                                 }
                                                 placeholder="Full name"
-                                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                                className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             />
                                             <input
                                                 type="email"
@@ -282,7 +282,7 @@ export default function OperationsIndex({
                                                     userForm.setData('email', event.target.value)
                                                 }
                                                 placeholder="Email"
-                                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                                className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             />
                                             <input
                                                 type="password"
@@ -291,14 +291,14 @@ export default function OperationsIndex({
                                                     userForm.setData('password', event.target.value)
                                                 }
                                                 placeholder="Password"
-                                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                                className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             />
                                             <select
                                                 value={userForm.data.role_id}
                                                 onChange={(event) =>
                                                     userForm.setData('role_id', event.target.value)
                                                 }
-                                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                                className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             >
                                                 {roles.map((role) => (
                                                     <option key={role.id} value={role.id}>
@@ -311,7 +311,7 @@ export default function OperationsIndex({
                                                 onChange={(event) =>
                                                     userForm.setData('outlet_id', event.target.value)
                                                 }
-                                                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                                className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             >
                                                 {outlets.map((outlet) => (
                                                     <option key={outlet.id} value={outlet.id}>
@@ -319,7 +319,7 @@ export default function OperationsIndex({
                                                     </option>
                                                 ))}
                                             </select>
-                                            <label className="flex items-center gap-2 text-sm text-slate-600">
+                                            <label className="flex items-center gap-2 text-sm text-on-surface-variant">
                                                 <input
                                                     type="checkbox"
                                                     checked={userForm.data.is_active}
@@ -329,7 +329,7 @@ export default function OperationsIndex({
                                                 />
                                                 Active user
                                             </label>
-                                            <button className="rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white md:col-span-2">
+                                            <button className="rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white md:col-span-2">
                                                 Add staff user
                                             </button>
                                         </form>
@@ -338,13 +338,13 @@ export default function OperationsIndex({
                                             {staffUsers.map((user) => (
                                                 <div
                                                     key={user.id}
-                                                    className="flex items-center justify-between rounded-2xl border border-slate-200 p-4"
+                                                    className="flex items-center justify-between rounded-xl border border-outline-variant p-4"
                                                 >
                                                     <div>
-                                                        <p className="font-medium text-slate-900">
+                                                        <p className="font-medium text-on-surface">
                                                             {user.name}
                                                         </p>
-                                                        <p className="text-sm text-slate-500">
+                                                        <p className="text-sm text-outline">
                                                             {user.role?.name} • {user.outlet?.name || 'No outlet'}
                                                         </p>
                                                     </div>
@@ -352,14 +352,14 @@ export default function OperationsIndex({
                                                         <button
                                                             type="button"
                                                             onClick={() => promoteUser(user)}
-                                                            className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700"
+                                                            className="rounded-full border border-outline px-3 py-1 text-xs font-medium text-on-surface-variant"
                                                         >
                                                             Change role
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleUser(user)}
-                                                            className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700"
+                                                            className="rounded-full border border-outline px-3 py-1 text-xs font-medium text-on-surface-variant"
                                                         >
                                                             {user.is_active ? 'Deactivate' : 'Activate'}
                                                         </button>
@@ -374,8 +374,8 @@ export default function OperationsIndex({
 
                         <div className="space-y-6">
                             {canManageCustomers && (
-                                <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-outline">
                                         Customer directory
                                     </h3>
                                     <form
@@ -391,7 +391,7 @@ export default function OperationsIndex({
                                                 customerForm.setData('name', event.target.value)
                                             }
                                             placeholder="Customer name"
-                                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                            className="w-full rounded-xl border border-outline px-3 py-2 text-sm"
                                         />
                                         <input
                                             value={customerForm.data.email}
@@ -399,7 +399,7 @@ export default function OperationsIndex({
                                                 customerForm.setData('email', event.target.value)
                                             }
                                             placeholder="Email"
-                                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                            className="w-full rounded-xl border border-outline px-3 py-2 text-sm"
                                         />
                                         <input
                                             value={customerForm.data.phone}
@@ -407,7 +407,7 @@ export default function OperationsIndex({
                                                 customerForm.setData('phone', event.target.value)
                                             }
                                             placeholder="Phone"
-                                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                            className="w-full rounded-xl border border-outline px-3 py-2 text-sm"
                                         />
                                         <input
                                             value={customerForm.data.membership_number}
@@ -418,7 +418,7 @@ export default function OperationsIndex({
                                                 )
                                             }
                                             placeholder="Membership number"
-                                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                            className="w-full rounded-xl border border-outline px-3 py-2 text-sm"
                                         />
                                         <input
                                             value={customerForm.data.membership_tier}
@@ -429,7 +429,7 @@ export default function OperationsIndex({
                                                 )
                                             }
                                             placeholder="Membership tier"
-                                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                            className="w-full rounded-xl border border-outline px-3 py-2 text-sm"
                                         />
                                         <input
                                             type="number"
@@ -441,9 +441,9 @@ export default function OperationsIndex({
                                                 )
                                             }
                                             placeholder="Membership discount rate"
-                                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                            className="w-full rounded-xl border border-outline px-3 py-2 text-sm"
                                         />
-                                        <button className="rounded-full bg-emerald-500 px-4 py-3 text-sm font-semibold text-white">
+                                        <button className="rounded-full bg-tertiary-container0 px-4 py-3 text-sm font-semibold text-white">
                                             Save customer
                                         </button>
                                     </form>
@@ -452,14 +452,14 @@ export default function OperationsIndex({
                                         {customers.map((customer) => (
                                             <div
                                                 key={customer.id}
-                                                className="rounded-2xl border border-slate-200 p-4"
+                                                className="rounded-xl border border-outline-variant p-4"
                                             >
                                                 <div className="flex items-center justify-between gap-4">
                                                     <div>
-                                                        <p className="font-medium text-slate-900">
+                                                        <p className="font-medium text-on-surface">
                                                             {customer.name}
                                                         </p>
-                                                        <p className="text-sm text-slate-500">
+                                                        <p className="text-sm text-outline">
                                                             {customer.membership_tier || 'Standard customer'}
                                                         </p>
                                                     </div>
@@ -467,20 +467,20 @@ export default function OperationsIndex({
                                                         <button
                                                             type="button"
                                                             onClick={() => editCustomer(customer)}
-                                                            className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700"
+                                                            className="rounded-full border border-outline px-3 py-1 text-xs font-medium text-on-surface-variant"
                                                         >
                                                             Edit
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleCustomer(customer)}
-                                                            className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700"
+                                                            className="rounded-full border border-outline px-3 py-1 text-xs font-medium text-on-surface-variant"
                                                         >
                                                             {customer.is_active ? 'Deactivate' : 'Activate'}
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <p className="mt-2 text-sm text-slate-500">
+                                                <p className="mt-2 text-sm text-outline">
                                                     {customer.email || 'No email'}
                                                     {customer.phone ? ` • ${customer.phone}` : ''}
                                                 </p>

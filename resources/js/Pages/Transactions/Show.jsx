@@ -26,17 +26,17 @@ export default function TransactionShow({
             header={
                 <div className="flex items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-xl font-semibold leading-tight text-slate-900">
+                        <h2 className="text-xl font-semibold leading-tight text-on-surface">
                             Receipt {transaction.invoice_number}
                         </h2>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-sm text-outline">
                             Reprint and connected receipt delivery history.
                         </p>
                     </div>
                     <button
                         type="button"
                         onClick={() => window.print()}
-                        className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                        className="rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
                     >
                         Print receipt
                     </button>
@@ -48,23 +48,23 @@ export default function TransactionShow({
             <div className="space-y-6 py-10">
                 <div className="mx-auto max-w-5xl space-y-6 sm:px-6 lg:px-8">
                     {flash.success && (
-                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                        <div className="rounded-xl border border-tertiary-fixed-dim bg-tertiary-container px-4 py-3 text-sm text-emerald-800">
                             {flash.success}
                         </div>
                     )}
 
                     <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
-                        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                            <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                            <div className="flex items-center justify-between gap-4 border-b border-outline-variant pb-4">
                                 <div>
-                                    <p className="text-sm text-slate-500">
+                                    <p className="text-sm text-outline">
                                         {transaction.outlet?.name || 'Outlet'}
                                     </p>
-                                    <p className="text-lg font-semibold text-slate-900">
+                                    <p className="text-lg font-semibold text-on-surface">
                                         {transaction.invoice_number}
                                     </p>
                                 </div>
-                                <div className="text-right text-sm text-slate-500">
+                                <div className="text-right text-sm text-outline">
                                     <p>{transaction.paid_at || '-'}</p>
                                     <p>{transaction.cashier?.name || '-'}</p>
                                 </div>
@@ -72,31 +72,31 @@ export default function TransactionShow({
 
                             <div className="mt-4 space-y-3">
                                 {receiptSettings.receipt_header && (
-                                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                                    <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface-variant">
                                         {receiptSettings.receipt_header}
                                     </div>
                                 )}
                                 {transaction.items.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4"
+                                        className="flex items-center justify-between rounded-xl border border-outline-variant bg-surface-container-low p-4"
                                     >
                                         <div>
-                                            <p className="font-medium text-slate-900">
+                                            <p className="font-medium text-on-surface">
                                                 {item.product?.name}
                                             </p>
-                                            <p className="text-sm text-slate-500">
+                                            <p className="text-sm text-outline">
                                                 {item.quantity} x {formatCurrency(item.unit_price)}
                                             </p>
                                         </div>
-                                        <p className="font-medium text-slate-900">
+                                        <p className="font-medium text-on-surface">
                                             {formatCurrency(item.subtotal)}
                                         </p>
                                     </div>
                                 ))}
                             </div>
 
-                                <div className="mt-6 space-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
+                                <div className="mt-6 space-y-2 border-t border-outline-variant pt-4 text-sm text-on-surface-variant">
                                 <div className="flex justify-between">
                                     <span>Subtotal</span>
                                     <span>{formatCurrency(transaction.subtotal)}</span>
@@ -113,60 +113,60 @@ export default function TransactionShow({
                                     <span>Service fee</span>
                                     <span>{formatCurrency(transaction.service_fee_amount)}</span>
                                 </div>
-                                    <div className="flex justify-between text-base font-semibold text-slate-900">
+                                    <div className="flex justify-between text-base font-semibold text-on-surface">
                                         <span>Total</span>
                                         <span>{formatCurrency(transaction.total)}</span>
                                     </div>
                                 </div>
 
                                 {receiptSettings.receipt_footer && (
-                                    <p className="mt-6 border-t border-dashed border-slate-200 pt-4 text-center text-sm text-slate-500">
+                                    <p className="mt-6 border-t border-dashed border-outline-variant pt-4 text-center text-sm text-outline">
                                         {receiptSettings.receipt_footer}
                                     </p>
                                 )}
                             </div>
 
                         <div className="space-y-6">
-                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                            <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-outline">
                                     Sale context
                                 </h3>
-                                <dl className="mt-4 space-y-3 text-sm text-slate-600">
+                                <dl className="mt-4 space-y-3 text-sm text-on-surface-variant">
                                     <div>
-                                        <dt className="text-slate-400">Customer</dt>
-                                        <dd className="mt-1 font-medium text-slate-900">
+                                        <dt className="text-outline">Customer</dt>
+                                        <dd className="mt-1 font-medium text-on-surface">
                                             {transaction.customer?.name || 'Walk-in customer'}
                                         </dd>
                                     </div>
                                     <div>
-                                        <dt className="text-slate-400">Payment</dt>
-                                        <dd className="mt-1 font-medium text-slate-900">
+                                        <dt className="text-outline">Payment</dt>
+                                        <dd className="mt-1 font-medium text-on-surface">
                                             {transaction.payments[0]?.method || '-'}
                                         </dd>
                                     </div>
                                     <div>
-                                        <dt className="text-slate-400">Promotion</dt>
-                                        <dd className="mt-1 font-medium text-slate-900">
+                                        <dt className="text-outline">Promotion</dt>
+                                        <dd className="mt-1 font-medium text-on-surface">
                                             {transaction.promotion?.name || 'None'}
                                         </dd>
                                     </div>
                                     <div>
-                                        <dt className="text-slate-400">Voucher</dt>
-                                        <dd className="mt-1 font-medium text-slate-900">
+                                        <dt className="text-outline">Voucher</dt>
+                                        <dd className="mt-1 font-medium text-on-surface">
                                             {transaction.voucher?.code || 'None'}
                                         </dd>
                                     </div>
                                 </dl>
                             </div>
 
-                            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                            <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-outline">
                                     Receipt delivery log
                                 </h3>
                                 <div className="mt-4 flex flex-wrap gap-3">
                                     <Link
                                         href={route('transactions.download', transaction.id)}
-                                        className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                                        className="rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
                                     >
                                         Download receipt
                                     </Link>
@@ -180,7 +180,7 @@ export default function TransactionShow({
                                                 });
                                             }
                                         }}
-                                        className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                                        className="rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
                                     >
                                         Share receipt
                                     </button>
@@ -190,7 +190,7 @@ export default function TransactionShow({
                                             onClick={() =>
                                                 router.post(route('transactions.refund', transaction.id))
                                             }
-                                            className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700"
+                                            className="rounded-full border border-rose-200 bg-error-container px-4 py-2 text-sm font-medium text-rose-700"
                                         >
                                             Refund transaction
                                         </button>
@@ -210,7 +210,7 @@ export default function TransactionShow({
                                         onChange={(event) =>
                                             receiptForm.setData('channel', event.target.value)
                                         }
-                                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                        className="w-full rounded-xl border border-outline px-3 py-2 text-sm"
                                     >
                                         {receiptChannels.map((channel) => (
                                             <option key={channel} value={channel}>
@@ -224,14 +224,14 @@ export default function TransactionShow({
                                             receiptForm.setData('recipient', event.target.value)
                                         }
                                         placeholder="Email or WhatsApp recipient"
-                                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                        className="w-full rounded-xl border border-outline px-3 py-2 text-sm"
                                     />
                                     {!canSendDigitalReceipts && (
                                         <p className="text-xs text-amber-600">
                                             Digital receipt delivery requires the Business plan.
                                         </p>
                                     )}
-                                    <button className="rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white">
+                                    <button className="rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white">
                                         Log receipt action
                                     </button>
                                 </form>
@@ -240,15 +240,15 @@ export default function TransactionShow({
                                     {transaction.receipt_deliveries.map((delivery) => (
                                         <div
                                             key={delivery.id}
-                                            className="rounded-2xl border border-slate-200 p-4"
+                                            className="rounded-xl border border-outline-variant p-4"
                                         >
-                                            <p className="font-medium text-slate-900">
+                                            <p className="font-medium text-on-surface">
                                                 {delivery.channel}
                                             </p>
-                                            <p className="mt-1 text-sm text-slate-500">
+                                            <p className="mt-1 text-sm text-outline">
                                                 {delivery.recipient || 'No recipient'}
                                             </p>
-                                            <p className="mt-1 text-xs uppercase tracking-wide text-slate-400">
+                                            <p className="mt-1 text-xs uppercase tracking-wide text-outline">
                                                 {delivery.status}
                                             </p>
                                         </div>

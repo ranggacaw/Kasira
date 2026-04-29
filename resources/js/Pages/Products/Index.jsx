@@ -95,17 +95,17 @@ export default function ProductsIndex({
             header={
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-2xl font-semibold leading-tight text-slate-900">
+                        <h2 className="text-2xl font-semibold leading-tight text-on-surface">
                             Products
                         </h2>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-sm text-outline">
                             Outlet-aware product administration with touch-friendly detail editing.
                         </p>
                     </div>
                     <select
                         value={selectedOutletId || ''}
                         onChange={changeOutlet}
-                        className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                        className="rounded-full border border-outline px-4 py-2 text-sm text-on-surface-variant"
                     >
                         {outlets.map((outlet) => (
                             <option key={outlet.id} value={outlet.id}>
@@ -120,7 +120,7 @@ export default function ProductsIndex({
 
             <div className="space-y-6 pb-24">
                 {flash.success && (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    <div className="rounded-xl border border-tertiary-fixed-dim bg-tertiary-container px-4 py-3 text-sm text-emerald-800">
                         {flash.success}
                     </div>
                 )}
@@ -128,14 +128,14 @@ export default function ProductsIndex({
                 <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
                     <form
                         onSubmit={submit}
-                        className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-200"
+                        className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant"
                     >
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <h3 className="text-lg font-semibold text-slate-900">
+                                <h3 className="text-lg font-semibold text-on-surface">
                                     {editingProduct ? 'Edit product' : 'New product'}
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-500">
+                                <p className="mt-1 text-sm text-outline">
                                     Sticky actions keep saves within thumb reach on tablet and mobile.
                                 </p>
                             </div>
@@ -143,7 +143,7 @@ export default function ProductsIndex({
                                 <button
                                     type="button"
                                     onClick={resetForm}
-                                    className="rounded-full border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
+                                    className="rounded-full border border-outline px-3 py-2 text-sm font-medium text-on-surface-variant"
                                 >
                                     Clear
                                 </button>
@@ -155,13 +155,13 @@ export default function ProductsIndex({
                                 value={productForm.data.name}
                                 onChange={(event) => productForm.setData('name', event.target.value)}
                                 placeholder="Product name"
-                                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                             />
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <select
                                     value={productForm.data.category_id}
                                     onChange={(event) => productForm.setData('category_id', event.target.value)}
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 >
                                     <option value="">No category</option>
                                     {categories.map((category) => (
@@ -173,7 +173,7 @@ export default function ProductsIndex({
                                 <select
                                     value={productForm.data.unit_id}
                                     onChange={(event) => productForm.setData('unit_id', event.target.value)}
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 >
                                     {units.map((unit) => (
                                         <option key={unit.id} value={unit.id}>
@@ -187,13 +187,13 @@ export default function ProductsIndex({
                                     value={productForm.data.sku}
                                     onChange={(event) => productForm.setData('sku', event.target.value)}
                                     placeholder="SKU"
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
                                 <input
                                     value={productForm.data.barcode}
                                     onChange={(event) => productForm.setData('barcode', event.target.value)}
                                     placeholder="Barcode"
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
                             </div>
                             <div className="grid gap-3 sm:grid-cols-2">
@@ -204,7 +204,7 @@ export default function ProductsIndex({
                                         productForm.setData('selling_price', event.target.value)
                                     }
                                     placeholder="Selling price"
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
                                 <input
                                     type="number"
@@ -213,7 +213,7 @@ export default function ProductsIndex({
                                         productForm.setData('cost_price', event.target.value)
                                     }
                                     placeholder="Cost price"
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
                             </div>
                             <div className="grid gap-3 sm:grid-cols-2">
@@ -224,7 +224,7 @@ export default function ProductsIndex({
                                         productForm.setData('stock_quantity', event.target.value)
                                     }
                                     placeholder="Stock quantity"
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
                                 <input
                                     type="number"
@@ -233,17 +233,17 @@ export default function ProductsIndex({
                                         productForm.setData('minimum_stock', event.target.value)
                                     }
                                     placeholder="Minimum stock"
-                                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
                                 />
                             </div>
                             <input
                                 value={productForm.data.image_path}
                                 onChange={(event) => productForm.setData('image_path', event.target.value)}
                                 placeholder="Image path or URL"
-                                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                             />
                             <div className="grid gap-3 sm:grid-cols-2">
-                                <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
+                                <label className="flex items-center gap-3 rounded-xl border border-outline-variant px-4 py-3 text-sm text-on-surface-variant">
                                     <input
                                         type="checkbox"
                                         checked={productForm.data.is_active}
@@ -253,7 +253,7 @@ export default function ProductsIndex({
                                     />
                                     Active for checkout
                                 </label>
-                                <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
+                                <label className="flex items-center gap-3 rounded-xl border border-outline-variant px-4 py-3 text-sm text-on-surface-variant">
                                     <input
                                         type="checkbox"
                                         checked={productForm.data.track_stock}
@@ -266,15 +266,15 @@ export default function ProductsIndex({
                             </div>
                         </div>
 
-                        <div className="sticky bottom-4 mt-6 flex gap-3 rounded-[1.5rem] border border-slate-200 bg-white/95 p-3 backdrop-blur">
-                            <button className="flex-1 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white">
+                        <div className="sticky bottom-4 mt-6 flex gap-3 rounded-[1.5rem] border border-outline-variant bg-surface-container-lowest/95 p-3 backdrop-blur">
+                            <button className="flex-1 rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white">
                                 {editingProduct ? 'Save changes' : 'Save product'}
                             </button>
                             {editingProduct && (
                                 <button
                                     type="button"
                                     onClick={resetForm}
-                                    className="rounded-full border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700"
+                                    className="rounded-full border border-outline px-4 py-3 text-sm font-semibold text-on-surface-variant"
                                 >
                                     Cancel
                                 </button>
@@ -284,10 +284,10 @@ export default function ProductsIndex({
 
                     <div className="space-y-4">
                         <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-lg font-semibold text-slate-900">
+                            <h3 className="text-lg font-semibold text-on-surface">
                                 Current products
                             </h3>
-                            <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
                                 {products.length} items
                             </span>
                         </div>
@@ -298,54 +298,54 @@ export default function ProductsIndex({
                                     key={product.id}
                                     type="button"
                                     onClick={() => beginEdit(product)}
-                                    className="rounded-[2rem] border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-emerald-300 hover:shadow-md"
+                                    className="rounded-[2rem] border border-outline-variant bg-surface-container-lowest p-5 text-left shadow-sm transition hover:border-emerald-300 hover:shadow-md"
                                 >
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
-                                            <p className="text-lg font-semibold text-slate-900">
+                                            <p className="text-lg font-semibold text-on-surface">
                                                 {product.name}
                                             </p>
-                                            <p className="mt-1 text-sm text-slate-500">
+                                            <p className="mt-1 text-sm text-outline">
                                                 {(product.category?.name || 'Uncategorized') + ' • ' + (product.unit?.short_name || 'pcs')}
                                             </p>
                                         </div>
                                         <span
                                             className={`rounded-full px-3 py-1 text-xs font-semibold ${
                                                 product.is_active
-                                                    ? 'bg-emerald-50 text-emerald-700'
-                                                    : 'bg-slate-100 text-slate-500'
+                                                    ? 'bg-tertiary-container text-tertiary-container'
+                                                    : 'bg-surface-container-low text-outline'
                                             }`}
                                         >
                                             {product.is_active ? 'Active' : 'Inactive'}
                                         </span>
                                     </div>
                                     <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                                        <div className="rounded-2xl bg-slate-50 p-3">
-                                            <p className="text-xs uppercase tracking-wide text-slate-400">
+                                        <div className="rounded-xl bg-surface-container-low p-3">
+                                            <p className="text-xs uppercase tracking-wide text-outline">
                                                 Price
                                             </p>
-                                            <p className="mt-1 font-semibold text-slate-900">
+                                            <p className="mt-1 font-semibold text-on-surface">
                                                 {formatCurrency(product.selling_price)}
                                             </p>
                                         </div>
-                                        <div className="rounded-2xl bg-slate-50 p-3">
-                                            <p className="text-xs uppercase tracking-wide text-slate-400">
+                                        <div className="rounded-xl bg-surface-container-low p-3">
+                                            <p className="text-xs uppercase tracking-wide text-outline">
                                                 Stock
                                             </p>
-                                            <p className="mt-1 font-semibold text-slate-900">
+                                            <p className="mt-1 font-semibold text-on-surface">
                                                 {product.stock_quantity}
                                             </p>
                                         </div>
-                                        <div className="rounded-2xl bg-slate-50 p-3">
-                                            <p className="text-xs uppercase tracking-wide text-slate-400">
+                                        <div className="rounded-xl bg-surface-container-low p-3">
+                                            <p className="text-xs uppercase tracking-wide text-outline">
                                                 Min
                                             </p>
-                                            <p className="mt-1 font-semibold text-slate-900">
+                                            <p className="mt-1 font-semibold text-on-surface">
                                                 {product.minimum_stock}
                                             </p>
                                         </div>
                                     </div>
-                                    <p className="mt-4 text-xs uppercase tracking-wide text-slate-400">
+                                    <p className="mt-4 text-xs uppercase tracking-wide text-outline">
                                         {product.sku || product.barcode || 'No stock code'}
                                     </p>
                                 </button>

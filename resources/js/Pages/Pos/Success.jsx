@@ -27,10 +27,10 @@ export default function Success({
             <Head title="Transaction Success" />
 
             <div className="grid gap-6 lg:grid-cols-[1.2fr_420px]">
-                <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur">
+                <section className="rounded-[2rem] border border-white/10 bg-surface-container-lowest/5 p-6 backdrop-blur">
                     <div className="flex items-center justify-between gap-4">
                         <div>
-                            <p className="text-sm text-slate-400">{transaction.outlet?.name}</p>
+                            <p className="text-sm text-outline">{transaction.outlet?.name}</p>
                             <h2 className="mt-2 text-2xl font-semibold text-white">
                                 {transaction.invoice_number}
                             </h2>
@@ -45,7 +45,7 @@ export default function Success({
                     </div>
 
                     {receiptSettings.header && (
-                        <p className="mt-6 rounded-2xl border border-dashed border-white/10 p-4 text-sm text-slate-300">
+                        <p className="mt-6 rounded-xl border border-dashed border-white/10 p-4 text-sm text-on-surface-variant">
                             {receiptSettings.header}
                         </p>
                     )}
@@ -54,11 +54,11 @@ export default function Success({
                         {transaction.items.map((item) => (
                             <div
                                 key={item.id}
-                                className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/40 p-4"
+                                className="flex items-center justify-between rounded-xl border border-white/10 bg-surface-container/40 p-4"
                             >
                                 <div>
                                     <p className="font-medium text-white">{item.product?.name}</p>
-                                    <p className="mt-1 text-sm text-slate-400">
+                                    <p className="mt-1 text-sm text-outline">
                                         {item.quantity} x {formatCurrency(item.unit_price)}
                                     </p>
                                 </div>
@@ -69,7 +69,7 @@ export default function Success({
                         ))}
                     </div>
 
-                    <div className="mt-6 space-y-2 border-t border-white/10 pt-4 text-sm text-slate-300">
+                    <div className="mt-6 space-y-2 border-t border-white/10 pt-4 text-sm text-on-surface-variant">
                         <div className="flex justify-between">
                             <span>Subtotal</span>
                             <span>{formatCurrency(transaction.subtotal)}</span>
@@ -93,16 +93,16 @@ export default function Success({
                     </div>
 
                     {receiptSettings.footer && (
-                        <p className="mt-6 border-t border-dashed border-white/10 pt-4 text-center text-sm text-slate-400">
+                        <p className="mt-6 border-t border-dashed border-white/10 pt-4 text-center text-sm text-outline">
                             {receiptSettings.footer}
                         </p>
                     )}
                 </section>
 
-                <section className="space-y-6 rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur">
+                <section className="space-y-6 rounded-[2rem] border border-white/10 bg-surface-container-lowest/5 p-6 backdrop-blur">
                     <div>
                         <h3 className="text-lg font-semibold text-white">Receipt handoff</h3>
-                        <p className="mt-1 text-sm text-slate-400">
+                        <p className="mt-1 text-sm text-outline">
                             Print, download, or share the receipt right after payment.
                         </p>
                     </div>
@@ -110,7 +110,7 @@ export default function Success({
                     <div className="grid gap-3">
                         <Link
                             href={route('transactions.download', transaction.id)}
-                            className="rounded-full bg-white px-4 py-3 text-center text-sm font-semibold text-slate-950"
+                            className="rounded-full bg-surface-container-lowest px-4 py-3 text-center text-sm font-semibold text-on-surface-variant"
                         >
                             Download receipt
                         </Link>
@@ -140,7 +140,7 @@ export default function Success({
                         <select
                             value={receiptForm.data.channel}
                             onChange={(event) => receiptForm.setData('channel', event.target.value)}
-                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                            className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                         >
                             {receiptChannels.map((channel) => (
                                 <option key={channel} value={channel}>
@@ -154,14 +154,14 @@ export default function Success({
                                 receiptForm.setData('recipient', event.target.value)
                             }
                             placeholder="Email or WhatsApp recipient"
-                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white"
+                            className="w-full rounded-xl border border-white/10 bg-on-surface px-4 py-3 text-sm text-white"
                         />
                         {!canSendDigitalReceipts && (
                             <p className="text-xs text-amber-300">
                                 Connected digital delivery requires the Business plan.
                             </p>
                         )}
-                        <button className="w-full rounded-full bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950">
+                        <button className="w-full rounded-full bg-emerald-400 px-4 py-3 text-sm font-semibold text-on-surface-variant">
                             Log receipt action
                         </button>
                     </form>
