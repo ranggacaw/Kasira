@@ -20,6 +20,7 @@ Use `@/prompter/AGENTS.md` to learn:
 
 - The application baseline uses Laravel 12, Inertia.js, React, Tailwind CSS, and PostgreSQL.
 - Protected app pages should live in `resources/js/Pages` and receive auth context from `app/Http/Middleware/HandleInertiaRequests.php`.
+- Reuse `resources/js/Components/AppSidebar.jsx` for all authenticated app sidebar UI. When creating, recreating, or editing pages/layouts that need a sidebar, extend this shared component instead of building a new sidebar variant.
 - The POS checkout workspace lives under `resources/js/Pages/Pos`, while transaction totals remain authoritative on the server before sales are persisted.
 - The operational authorization model is role-based with `Owner`, `Admin`, `Manager`, and `Cashier` stored in the `roles` table.
 - Outlet-aware pages should resolve their current outlet from the authenticated user context or the `outlet` query parameter before loading products, stock, transactions, or dashboard metrics.

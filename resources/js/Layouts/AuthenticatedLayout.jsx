@@ -1,4 +1,4 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
+import AppSidebar from '@/Components/AppSidebar';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -6,46 +6,64 @@ export default function AuthenticatedLayout({ header, children }) {
     const { auth, subscription } = usePage().props;
     const user = auth.user;
     const roleName = user?.role?.name ?? 'Unassigned';
+    const initials = useMemo(
+        () =>
+            (user?.name || 'K')
+                .split(' ')
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase(),
+        [user?.name],
+    );
     const navItems = [
         user?.abilities?.checkout && {
             label: 'POS',
             routeName: 'pos.index',
             matches: ['pos.index', 'pos.success'],
+            icon: 'M4 6h16M4 12h16M4 18h16',
         },
         user?.abilities?.dashboard && {
             label: 'Dashboard',
             routeName: 'dashboard',
             matches: ['dashboard'],
+            icon: 'M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zm10-10h8V3h-8v8z',
         },
         user?.abilities?.catalog && {
             label: 'Products',
             routeName: 'products.index',
             matches: ['products.index'],
+            icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
         },
         user?.abilities?.catalog && {
             label: 'Categories',
             routeName: 'categories.index',
             matches: ['categories.index'],
+            icon: 'M7 7h10M7 12h6m-6 5h10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z',
         },
         user?.abilities?.catalog && {
             label: 'Inventory',
             routeName: 'inventory.index',
             matches: ['inventory.index'],
+            icon: 'M4 7h16M4 12h16M4 17h16',
         },
         user?.abilities?.transactions && {
             label: 'Transactions',
             routeName: 'transactions.index',
             matches: ['transactions.index', 'transactions.show'],
+            icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
         },
         user?.abilities?.reports && {
             label: 'Reports',
             routeName: 'reports.index',
             matches: ['reports.index'],
+            icon: 'M9 17v-6m4 6V7m4 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z',
         },
         user?.abilities?.settings && {
             label: 'Settings',
             routeName: 'settings.index',
             matches: ['settings.index'],
+            icon: 'M10.325 4.317a1 1 0 011.35-.936l.566.226a1 1 0 00.758 0l.566-.226a1 1 0 011.35.936l.093.615a1 1 0 00.57.746l.552.276a1 1 0 01.447 1.341l-.248.574a1 1 0 000 .791l.248.574a1 1 0 01-.447 1.341l-.552.276a1 1 0 00-.57.746l-.093.615a1 1 0 01-1.35.936l-.566-.226a1 1 0 00-.758 0l-.566.226a1 1 0 01-1.35-.936l-.093-.615a1 1 0 00-.57-.746l-.552-.276a1 1 0 01-.447-1.341l.248-.574a1 1 0 000-.791l-.248-.574a1 1 0 01.447-1.341l.552-.276a1 1 0 00.57-.746l.093-.615z M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z',
         },
     ].filter(Boolean);
 
@@ -81,26 +99,30 @@ export default function AuthenticatedLayout({ header, children }) {
         [navItems],
     );
 
-    const renderNavItems = (compact = false) =>
-        navItems.map((item) => {
-            const active = item.matches.some((pattern) => route().current(pattern));
+    const sidebarNavigation = navItems.map((item) => ({
+        key: item.routeName,
+        name: item.label,
+        href: route(item.routeName),
+        icon: item.icon,
+        active: item.matches.some((pattern) => route().current(pattern)),
+    }));
 
-            return (
-                <Link
-                    key={item.routeName}
-                    href={route(item.routeName)}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className={`flex items-center rounded-xl px-lg py-sm text-label-bold transition ${
-                        active
-                            ? 'bg-primary-container text-on-primary-container shadow-sm'
-                            : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                    } ${compact ? 'justify-center px-base' : ''}`}
-                >
-                    <span className={compact ? 'sr-only' : ''}>{item.label}</span>
-                    {compact && <span>{item.label.slice(0, 1)}</span>}
-                </Link>
-            );
-        });
+    const sidebarFooterItems = [
+        {
+            key: 'profile',
+            name: 'Profile',
+            href: route('profile.edit'),
+            icon: 'M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z',
+        },
+        {
+            key: 'logout',
+            name: 'Log out',
+            href: route('logout'),
+            method: 'post',
+            as: 'button',
+            icon: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
+        },
+    ];
 
     return (
         <div className="min-h-screen bg-surface">
@@ -112,26 +134,23 @@ export default function AuthenticatedLayout({ header, children }) {
                     onClick={() => setIsDrawerOpen(false)}
                 />
 
-                <aside
-                    className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-outline-variant bg-surface-container-lowest px-md py-md shadow-lg transition-transform md:sticky md:translate-x-0 ${
+                <AppSidebar
+                    className={`fixed inset-y-0 left-0 z-50 w-72 shadow-lg transition-transform md:sticky md:translate-x-0 ${
                         isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
                     } ${isSidebarCollapsed ? 'md:w-24' : 'md:w-72'}`}
-                >
-                    <div className="flex items-center justify-between gap-3">
-                        <Link href={route('dashboard')} className="flex items-center gap-3">
-                            <ApplicationLogo className="h-10 w-10 text-primary" />
-                            {!isSidebarCollapsed && (
-                                <div>
-                                    <div className="text-label-bold uppercase tracking-[0.24em] text-on-surface">
-                                        Kasira
-                                    </div>
-                                    <div className="text-body-md text-on-surface-variant">
-                                        Back office
-                                    </div>
-                                </div>
-                            )}
-                        </Link>
-
+                    brandHref={route('dashboard')}
+                    initials={initials}
+                    brandTitle="Kasira"
+                    brandSubtitle="Back office"
+                    userName={user?.name}
+                    roleName={roleName}
+                    planName={subscription?.plan}
+                    navigation={sidebarNavigation}
+                    footerItems={sidebarFooterItems}
+                    collapsed={isSidebarCollapsed}
+                    responsiveLabels={false}
+                    onNavigate={() => setIsDrawerOpen(false)}
+                    headerAction={(
                         <button
                             type="button"
                             onClick={() =>
@@ -139,55 +158,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     ? setIsSidebarCollapsed((value) => !value)
                                     : setIsDrawerOpen(false)
                             }
-                            className="rounded-xl border border-outline-variant px-sm py-xs text-label-bold text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface"
+                            className="rounded-lg border border-outline-variant px-3 py-2 text-sm font-medium text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface"
                         >
                             {isDesktop ? 'Collapse' : 'Close'}
                         </button>
-                    </div>
-
-                    <div className="mt-md rounded-xl bg-inverse-surface px-md py-md text-inverse-on-surface">
-                        <p className="text-label-bold uppercase tracking-[0.24em] text-outline-variant">
-                            Signed in
-                        </p>
-                        {!isSidebarCollapsed && (
-                            <>
-                                <h2 className="mt-2 text-headline-md">{user.name}</h2>
-                                <p className="mt-1 text-body-md text-surface-variant">{user.email}</p>
-                            </>
-                        )}
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-surface-variant/20 px-sm py-xs text-label-bold text-inverse-on-surface">
-                                {roleName}
-                            </span>
-                            {!isSidebarCollapsed && (
-                                <span className="rounded-full bg-tertiary/20 px-sm py-xs text-label-bold text-tertiary-fixed-dim">
-                                    {subscription?.plan}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
-                    <nav className="mt-md flex-1 space-y-2 overflow-y-auto">
-                        {renderNavItems(isSidebarCollapsed)}
-                    </nav>
-
-                    <div className="space-y-2 border-t border-outline-variant pt-md">
-                        <Link
-                            href={route('profile.edit')}
-                            className="flex rounded-xl px-lg py-sm text-label-bold text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface"
-                        >
-                            {isSidebarCollapsed ? 'P' : 'Profile'}
-                        </Link>
-                        <Link
-                            href={route('logout')}
-                            method="post"
-                            as="button"
-                            className="flex w-full rounded-xl px-lg py-sm text-left text-label-bold text-error transition hover:bg-error-container"
-                        >
-                            {isSidebarCollapsed ? 'O' : 'Log out'}
-                        </Link>
-                    </div>
-                </aside>
+                    )}
+                />
 
                 <div className="min-w-0 flex-1">
                     {!isOnline && (
