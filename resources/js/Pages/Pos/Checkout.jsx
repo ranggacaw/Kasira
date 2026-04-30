@@ -351,6 +351,7 @@ export default function Checkout({
 }) {
     const { auth } = usePage().props;
     const [activeCategoryId, setActiveCategoryId] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState([]);
     const [discountType, setDiscountType] = useState('percentage');
     const [discountValue, setDiscountValue] = useState(0);
@@ -366,10 +367,18 @@ export default function Checkout({
 
     const filteredProducts = useMemo(
         () =>
-            products.filter((product) =>
-                activeCategoryId === 'all' ? true : product.category?.id === activeCategoryId,
-            ),
-        [activeCategoryId, products],
+            products.filter((product) => {
+                const matchesCategory =
+                    activeCategoryId === 'all'
+                        ? true
+                        : product.category?.id === activeCategoryId;
+                const matchesSearch = searchQuery
+                    ? product.name.toLowerCase().includes(searchQuery.toLowerCase())
+                    : true;
+
+                return matchesCategory && matchesSearch;
+            }),
+        [activeCategoryId, products, searchQuery],
     );
 
     const subtotal = useMemo(
@@ -687,7 +696,38 @@ export default function Checkout({
                 )}
 
                 {/* Section: Categories */}
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 space-y-3">
+                    <div className="relative">
+                        <svg
+                            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
+                            placeholder="Search menu by name"
+                            className="w-full rounded-xl border border-outline-variant bg-white py-3 pl-10 pr-10 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant transition hover:text-primary"
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
                     <div className="flex gap-2 overflow-x-auto pb-2">
                         <button
                             type="button"
@@ -719,44 +759,57 @@ export default function Checkout({
 
                 {/* Section: Product Grid */}
                 <div className="flex-1 overflow-y-auto">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                        {filteredProducts.map((product) => (
-                            <button
-                                key={product.id}
-                                type="button"
-                                onClick={() => addToCart(product)}
-                                disabled={!product.is_active || (product.track_stock && product.stock_quantity === 0)}
-                                className={`group rounded-2xl border-2 border-outline-variant bg-white p-4 text-left transition hover:border-primary hover:shadow-lg hover:shadow-primary/10 disabled:opacity-50 disabled:cursor-not-allowed`}
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-bold text-on-surface group-hover:text-primary transition">
-                                            {product.name}
-                                        </p>
-                                        <p className="text-xs text-on-surface-variant mt-0.5">
-                                            {product.category?.name || 'Uncategorized'}
-                                        </p>
-                                    </div>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
-                                        !product.is_active
-                                            ? 'bg-red-100 text-red-600'
-                                            : product.track_stock
-                                                ? product.stock_quantity > 10
-                                                    ? 'bg-tertiary-container/15 text-tertiary'
-                                                    : product.stock_quantity > 0
-                                                    ? 'bg-amber-100 text-amber-700'
-                                                    : 'bg-red-100 text-red-600'
-                                                : 'bg-tertiary-container/15 text-tertiary'
-                                    }`}>
-                                        {product.track_stock ? product.stock_quantity : '∞'}
-                                    </span>
-                                </div>
-                                <p className="text-xl font-extrabold text-primary mt-4">
-                                    {formatCurrency(product.selling_price)}
+                    {filteredProducts.length === 0 ? (
+                        <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-outline-variant bg-white p-8 text-center">
+                            <div>
+                                <p className="text-base font-semibold text-on-surface">
+                                    No menu found
                                 </p>
-                            </button>
-                        ))}
-                    </div>
+                                <p className="mt-1 text-sm text-on-surface-variant">
+                                    Try a different menu name or change category.
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                            {filteredProducts.map((product) => (
+                                <button
+                                    key={product.id}
+                                    type="button"
+                                    onClick={() => addToCart(product)}
+                                    disabled={!product.is_active || (product.track_stock && product.stock_quantity === 0)}
+                                    className={`group rounded-2xl border-2 border-outline-variant bg-white p-4 text-left transition hover:border-primary hover:shadow-lg hover:shadow-primary/10 disabled:opacity-50 disabled:cursor-not-allowed`}
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-bold text-on-surface group-hover:text-primary transition">
+                                                {product.name}
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-on-surface-variant">
+                                                {product.category?.name || 'Uncategorized'}
+                                            </p>
+                                        </div>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
+                                            !product.is_active
+                                                ? 'bg-red-100 text-red-600'
+                                                : product.track_stock
+                                                    ? product.stock_quantity > 10
+                                                        ? 'bg-tertiary-container/15 text-tertiary'
+                                                        : product.stock_quantity > 0
+                                                          ? 'bg-amber-100 text-amber-700'
+                                                          : 'bg-red-100 text-red-600'
+                                                    : 'bg-tertiary-container/15 text-tertiary'
+                                        }`}>
+                                            {product.track_stock ? product.stock_quantity : '∞'}
+                                        </span>
+                                    </div>
+                                    <p className="mt-4 text-xl font-extrabold text-primary">
+                                        {formatCurrency(product.selling_price)}
+                                    </p>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </PosLayout>

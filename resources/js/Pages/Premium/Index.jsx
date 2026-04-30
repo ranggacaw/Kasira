@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SelectInput from '@/Components/SelectInput';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 
 const formatCurrency = (value) =>
@@ -82,7 +83,7 @@ export default function PremiumIndex({
 
                     <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
                         <div className="grid gap-3 md:grid-cols-4">
-                            <select
+                            <SelectInput
                                 value={selectedOutletId || ''}
                                 onChange={(event) =>
                                     router.get(route('reports.index'), {
@@ -98,7 +99,7 @@ export default function PremiumIndex({
                                         {outlet.name}
                                     </option>
                                 ))}
-                            </select>
+                            </SelectInput>
                             <input
                                 type="date"
                                 value={filters.date_from}
@@ -310,7 +311,7 @@ export default function PremiumIndex({
                                                 promotionForm.post(route('premium.promotions.store'));
                                             }}
                                         >
-                                            <select
+                                            <SelectInput
                                                 value={promotionForm.data.outlet_id}
                                                 onChange={(event) =>
                                                     promotionForm.setData('outlet_id', event.target.value)
@@ -323,7 +324,7 @@ export default function PremiumIndex({
                                                         {outlet.name}
                                                     </option>
                                                 ))}
-                                            </select>
+                                            </SelectInput>
                                             <input
                                                 value={promotionForm.data.name}
                                                 onChange={(event) =>
@@ -332,7 +333,7 @@ export default function PremiumIndex({
                                                 placeholder="Promotion name"
                                                 className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             />
-                                            <select
+                                            <SelectInput
                                                 value={promotionForm.data.type}
                                                 onChange={(event) =>
                                                     promotionForm.setData('type', event.target.value)
@@ -341,7 +342,7 @@ export default function PremiumIndex({
                                             >
                                                 <option value="percentage">Percentage</option>
                                                 <option value="fixed">Fixed</option>
-                                            </select>
+                                            </SelectInput>
                                             <input
                                                 type="number"
                                                 value={promotionForm.data.value}
@@ -403,7 +404,7 @@ export default function PremiumIndex({
                                                 placeholder="Voucher code"
                                                 className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             />
-                                            <select
+                                            <SelectInput
                                                 value={voucherForm.data.outlet_id}
                                                 onChange={(event) =>
                                                     voucherForm.setData('outlet_id', event.target.value)
@@ -416,8 +417,8 @@ export default function PremiumIndex({
                                                         {outlet.name}
                                                     </option>
                                                 ))}
-                                            </select>
-                                            <select
+                                            </SelectInput>
+                                            <SelectInput
                                                 value={voucherForm.data.type}
                                                 onChange={(event) =>
                                                     voucherForm.setData('type', event.target.value)
@@ -426,7 +427,7 @@ export default function PremiumIndex({
                                             >
                                                 <option value="fixed">Fixed</option>
                                                 <option value="percentage">Percentage</option>
-                                            </select>
+                                            </SelectInput>
                                             <input
                                                 type="number"
                                                 value={voucherForm.data.value}
@@ -526,7 +527,7 @@ export default function PremiumIndex({
                                             subscriptionForm.patch(route('premium.subscription.update'));
                                         }}
                                     >
-                                        <select
+                                        <SelectInput
                                             value={subscriptionForm.data.plan}
                                             onChange={(event) =>
                                                 subscriptionForm.setData('plan', event.target.value)
@@ -536,7 +537,7 @@ export default function PremiumIndex({
                                             <option value="Starter">Starter</option>
                                             <option value="Pro">Pro</option>
                                             <option value="Business">Business</option>
-                                        </select>
+                                        </SelectInput>
                                         <input
                                             value={subscriptionForm.data.status}
                                             onChange={(event) =>

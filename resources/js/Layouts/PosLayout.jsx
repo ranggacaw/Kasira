@@ -1,4 +1,5 @@
 import AppSidebar from '@/Components/AppSidebar';
+import SelectInput from '@/Components/SelectInput';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -112,17 +113,17 @@ export default function PosLayout({
                 <header className="flex h-16 shrink-0 items-center justify-between border-b border-outline-variant bg-white px-6">
                     <div className="flex items-center gap-4">
                         {outlets.length > 0 ? (
-                            <select
+                            <SelectInput
                                 value={currentOutlet}
                                 onChange={(e) => onOutletChange?.(e.target.value)}
-                                className="rounded-lg border border-outline-variant bg-surface-container px-4 py-2 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                className="rounded-lg border border-outline-variant bg-surface-container px-4 py-2 text-sm font-medium text-on-surface"
                             >
                                 {outlets.map((outlet) => (
                                     <option key={outlet.id} value={outlet.id}>
                                         {outlet.name}
                                     </option>
                                 ))}
-                            </select>
+                            </SelectInput>
                         ) : (
                             <span className="text-sm text-on-surface-variant">
                                 {title}

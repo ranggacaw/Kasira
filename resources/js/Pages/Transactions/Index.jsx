@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SelectInput from '@/Components/SelectInput';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
 const formatCurrency = (value) =>
@@ -63,7 +64,7 @@ export default function TransactionsIndex({
                                 onChange={(event) =>
                                     filterForm.setData('date_from', event.target.value)
                                 }
-                                className="rounded-xl border border-outline px-3 py-2 text-sm"
+                                className="rounded-xl border border-outline px-3 py-2 text-sm cursor-pointer"
                             />
                             <input
                                 type="date"
@@ -71,14 +72,14 @@ export default function TransactionsIndex({
                                 onChange={(event) =>
                                     filterForm.setData('date_to', event.target.value)
                                 }
-                                className="rounded-xl border border-outline px-3 py-2 text-sm"
+                                className="rounded-xl border border-outline px-3 py-2 text-sm cursor-pointer"
                             />
-                            <select
+                            <SelectInput
                                 value={filterForm.data.cashier_id}
                                 onChange={(event) =>
                                     filterForm.setData('cashier_id', event.target.value)
                                 }
-                                className="rounded-xl border border-outline px-3 py-2 text-sm"
+                                className="rounded-xl border border-outline px-3 py-2 text-sm cursor-pointer"
                             >
                                 <option value="">All cashiers</option>
                                 {cashiers.map((cashier) => (
@@ -86,13 +87,13 @@ export default function TransactionsIndex({
                                         {cashier.name}
                                     </option>
                                 ))}
-                            </select>
-                            <select
+                            </SelectInput>
+                            <SelectInput
                                 value={filterForm.data.outlet_id}
                                 onChange={(event) =>
                                     filterForm.setData('outlet_id', event.target.value)
                                 }
-                                className="rounded-xl border border-outline px-3 py-2 text-sm"
+                                className="rounded-xl border border-outline px-3 py-2 text-sm cursor-pointer"
                             >
                                 <option value="">All outlets</option>
                                 {outlets.map((outlet) => (
@@ -100,13 +101,13 @@ export default function TransactionsIndex({
                                         {outlet.name}
                                     </option>
                                 ))}
-                            </select>
-                            <select
+                            </SelectInput>
+                            <SelectInput
                                 value={filterForm.data.payment_method}
                                 onChange={(event) =>
                                     filterForm.setData('payment_method', event.target.value)
                                 }
-                                className="rounded-xl border border-outline px-3 py-2 text-sm"
+                                className="rounded-xl border border-outline px-3 py-2 text-sm cursor-pointer"
                             >
                                 <option value="">All payment methods</option>
                                 {paymentMethods.map((method) => (
@@ -114,18 +115,18 @@ export default function TransactionsIndex({
                                         {method}
                                     </option>
                                 ))}
-                            </select>
-                            <select
+                            </SelectInput>
+                            <SelectInput
                                 value={filterForm.data.status}
                                 onChange={(event) =>
                                     filterForm.setData('status', event.target.value)
                                 }
-                                className="rounded-xl border border-outline px-3 py-2 text-sm"
+                                className="rounded-xl border border-outline px-3 py-2 text-sm cursor-pointer"
                             >
                                 <option value="">All statuses</option>
                                 <option value="completed">Completed</option>
                                 <option value="refunded">Refunded</option>
-                            </select>
+                            </SelectInput>
                             <button className="rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white md:col-span-5 xl:col-span-1">
                                 Apply filters
                             </button>

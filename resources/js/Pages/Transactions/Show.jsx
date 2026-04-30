@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SelectInput from '@/Components/SelectInput';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 
 const formatCurrency = (value) =>
@@ -211,7 +212,7 @@ export default function TransactionShow({
                                         );
                                     }}
                                 >
-                                    <select
+                                    <SelectInput
                                         value={receiptForm.data.channel}
                                         onChange={(event) =>
                                             receiptForm.setData('channel', event.target.value)
@@ -223,7 +224,7 @@ export default function TransactionShow({
                                                 {channel}
                                             </option>
                                         ))}
-                                    </select>
+                                    </SelectInput>
                                     <input
                                         value={receiptForm.data.recipient}
                                         onChange={(event) =>

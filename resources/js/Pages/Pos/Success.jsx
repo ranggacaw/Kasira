@@ -1,4 +1,5 @@
 import PosLayout from '@/Layouts/PosLayout';
+import SelectInput from '@/Components/SelectInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -201,7 +202,7 @@ export default function Success({
                                 }}
                                 className="space-y-3"
                             >
-                                <select
+                                <SelectInput
                                     value={receiptForm.data.channel}
                                     onChange={(event) => receiptForm.setData('channel', event.target.value)}
                                     disabled={receiptForm.processing}
@@ -212,7 +213,7 @@ export default function Success({
                                             {channel}
                                         </option>
                                     ))}
-                                </select>
+                                </SelectInput>
                                 <input
                                     value={receiptForm.data.recipient}
                                     onChange={(event) =>

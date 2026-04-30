@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SelectInput from '@/Components/SelectInput';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 
@@ -131,7 +132,7 @@ export default function CatalogIndex({
                             Manage products, categories, and stock movement history.
                         </p>
                     </div>
-                    <select
+                    <SelectInput
                         value={selectedOutletId || ''}
                         onChange={changeOutlet}
                         className="rounded-full border border-outline px-4 py-2 text-sm text-on-surface-variant"
@@ -141,7 +142,7 @@ export default function CatalogIndex({
                                 {outlet.name}
                             </option>
                         ))}
-                    </select>
+                    </SelectInput>
                 </div>
             }
         >
@@ -168,7 +169,7 @@ export default function CatalogIndex({
                                         productForm.post(route('catalog.products.store'));
                                     }}
                                 >
-                                    <select
+                                    <SelectInput
                                         value={productForm.data.outlet_id}
                                         onChange={(event) =>
                                             productForm.setData('outlet_id', event.target.value)
@@ -180,8 +181,8 @@ export default function CatalogIndex({
                                                 {outlet.name}
                                             </option>
                                         ))}
-                                    </select>
-                                    <select
+                                    </SelectInput>
+                                    <SelectInput
                                         value={productForm.data.category_id}
                                         onChange={(event) =>
                                             productForm.setData('category_id', event.target.value)
@@ -194,7 +195,7 @@ export default function CatalogIndex({
                                                 {category.name}
                                             </option>
                                         ))}
-                                    </select>
+                                    </SelectInput>
                                     <input
                                         value={productForm.data.name}
                                         onChange={(event) =>
@@ -426,7 +427,7 @@ export default function CatalogIndex({
                                         movementForm.post(route('inventory.movements.store'));
                                     }}
                                 >
-                                    <select
+                                    <SelectInput
                                         value={movementForm.data.product_id}
                                         onChange={(event) =>
                                             movementForm.setData('product_id', event.target.value)
@@ -438,8 +439,8 @@ export default function CatalogIndex({
                                                 {product.name}
                                             </option>
                                         ))}
-                                    </select>
-                                    <select
+                                    </SelectInput>
+                                    <SelectInput
                                         value={movementForm.data.type}
                                         onChange={(event) =>
                                             movementForm.setData('type', event.target.value)
@@ -448,7 +449,7 @@ export default function CatalogIndex({
                                     >
                                         <option value="stock_in">Stock in</option>
                                         <option value="stock_out">Stock out</option>
-                                    </select>
+                                    </SelectInput>
                                     <input
                                         type="number"
                                         value={movementForm.data.quantity}

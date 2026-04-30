@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SelectInput from '@/Components/SelectInput';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 
 export default function InventoryIndex({
@@ -54,7 +55,7 @@ export default function InventoryIndex({
                             });
                         }}
                     >
-                        <select
+                        <SelectInput
                             value={filterForm.data.outlet}
                             onChange={(event) => filterForm.setData('outlet', event.target.value)}
                             className="rounded-xl border border-outline px-4 py-3 text-sm"
@@ -64,8 +65,8 @@ export default function InventoryIndex({
                                     {outlet.name}
                                 </option>
                             ))}
-                        </select>
-                        <select
+                        </SelectInput>
+                        <SelectInput
                             value={filterForm.data.product_id}
                             onChange={(event) =>
                                 filterForm.setData('product_id', event.target.value)
@@ -78,8 +79,8 @@ export default function InventoryIndex({
                                     {product.name}
                                 </option>
                             ))}
-                        </select>
-                        <select
+                        </SelectInput>
+                        <SelectInput
                             value={filterForm.data.movement_type}
                             onChange={(event) =>
                                 filterForm.setData('movement_type', event.target.value)
@@ -92,7 +93,7 @@ export default function InventoryIndex({
                             <option value="adjustment">Adjustment</option>
                             <option value="sale">Sale</option>
                             <option value="refund">Refund</option>
-                        </select>
+                        </SelectInput>
                         <button className="rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white">
                             Apply filters
                         </button>
@@ -112,7 +113,7 @@ export default function InventoryIndex({
                                     movementForm.post(route('inventory.movements.store'));
                                 }}
                             >
-                                <select
+                                <SelectInput
                                     value={movementForm.data.product_id}
                                     onChange={(event) =>
                                         movementForm.setData('product_id', event.target.value)
@@ -124,15 +125,15 @@ export default function InventoryIndex({
                                             {product.name}
                                         </option>
                                     ))}
-                                </select>
-                                <select
+                                </SelectInput>
+                                <SelectInput
                                     value={movementForm.data.type}
                                     onChange={(event) => movementForm.setData('type', event.target.value)}
                                     className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                                 >
                                     <option value="stock_in">Stock in</option>
                                     <option value="stock_out">Stock out</option>
-                                </select>
+                                </SelectInput>
                                 <input
                                     type="number"
                                     min="1"

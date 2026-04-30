@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SelectInput from '@/Components/SelectInput';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 
 export default function OperationsIndex({
@@ -293,7 +294,7 @@ export default function OperationsIndex({
                                                 placeholder="Password"
                                                 className="rounded-xl border border-outline px-3 py-2 text-sm"
                                             />
-                                            <select
+                                            <SelectInput
                                                 value={userForm.data.role_id}
                                                 onChange={(event) =>
                                                     userForm.setData('role_id', event.target.value)
@@ -305,8 +306,8 @@ export default function OperationsIndex({
                                                         {role.name}
                                                     </option>
                                                 ))}
-                                            </select>
-                                            <select
+                                            </SelectInput>
+                                            <SelectInput
                                                 value={userForm.data.outlet_id}
                                                 onChange={(event) =>
                                                     userForm.setData('outlet_id', event.target.value)
@@ -318,7 +319,7 @@ export default function OperationsIndex({
                                                         {outlet.name}
                                                     </option>
                                                 ))}
-                                            </select>
+                                            </SelectInput>
                                             <label className="flex items-center gap-2 text-sm text-on-surface-variant">
                                                 <input
                                                     type="checkbox"

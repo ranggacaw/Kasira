@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SelectInput from '@/Components/SelectInput';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -102,7 +103,7 @@ export default function ProductsIndex({
                             Outlet-aware product administration with touch-friendly detail editing.
                         </p>
                     </div>
-                    <select
+                    <SelectInput
                         value={selectedOutletId || ''}
                         onChange={changeOutlet}
                         className="rounded-full border border-outline px-4 py-2 text-sm text-on-surface-variant"
@@ -112,7 +113,7 @@ export default function ProductsIndex({
                                 {outlet.name}
                             </option>
                         ))}
-                    </select>
+                    </SelectInput>
                 </div>
             }
         >
@@ -158,7 +159,7 @@ export default function ProductsIndex({
                                 className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
                             />
                             <div className="grid gap-3 sm:grid-cols-2">
-                                <select
+                                <SelectInput
                                     value={productForm.data.category_id}
                                     onChange={(event) => productForm.setData('category_id', event.target.value)}
                                     className="rounded-xl border border-outline px-4 py-3 text-sm"
@@ -169,8 +170,8 @@ export default function ProductsIndex({
                                             {category.name}
                                         </option>
                                     ))}
-                                </select>
-                                <select
+                                </SelectInput>
+                                <SelectInput
                                     value={productForm.data.unit_id}
                                     onChange={(event) => productForm.setData('unit_id', event.target.value)}
                                     className="rounded-xl border border-outline px-4 py-3 text-sm"
@@ -180,7 +181,7 @@ export default function ProductsIndex({
                                             {unit.name}
                                         </option>
                                     ))}
-                                </select>
+                                </SelectInput>
                             </div>
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <input

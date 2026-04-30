@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SelectInput from '@/Components/SelectInput';
 import { Head, router, usePage } from '@inertiajs/react';
 
 const formatCurrency = (value) =>
@@ -45,7 +46,7 @@ export default function Dashboard({
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                        <select
+                        <SelectInput
                             value={selectedOutletId || ''}
                             onChange={(event) =>
                                 updateFilters({ outlet: event.target.value || undefined })
@@ -57,7 +58,7 @@ export default function Dashboard({
                                 {outlet.name}
                                 </option>
                             ))}
-                        </select>
+                        </SelectInput>
                         <input
                             type="date"
                             value={filters.date_from || ''}
