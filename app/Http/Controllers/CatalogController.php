@@ -74,6 +74,7 @@ class CatalogController extends Controller
                 StockMovement::TYPE_SALE,
                 StockMovement::TYPE_REFUND,
             ])],
+            'search' => ['nullable', 'string'],
         ]);
 
         $outlets = Outlet::query()->orderByDesc('is_primary')->orderBy('name')->get();
@@ -93,9 +94,10 @@ class CatalogController extends Controller
                 ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
                 ->when($filters['product_id'] ?? null, fn ($query, $value) => $query->where('product_id', $value))
                 ->when($filters['movement_type'] ?? null, fn ($query, $value) => $query->where('type', $value))
+                ->when($filters['search'] ?? null, fn ($query, $value) => $query->whereHas('product', fn ($q) => $q->where('name', 'like', "%{$value}%")))
                 ->latest()
-                ->limit(30)
-                ->get(),
+                ->paginate(10)
+                ->withQueryString(),
             'lowStockAlerts' => Product::query()
                 ->with(['category:id,name', 'outlet:id,name'])
                 ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))

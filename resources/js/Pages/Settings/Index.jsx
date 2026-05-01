@@ -39,8 +39,8 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
         <AuthenticatedLayout
             header={
                 <div>
-                    <h2 className="text-2xl font-semibold text-on-surface">Settings</h2>
-                    <p className="mt-1 text-sm text-outline">
+                    <h2 className="text-headline-md text-on-surface">Settings</h2>
+                    <p className="mt-1 text-body-md text-on-surface-variant">
                         Business identity, receipt content, manual payment methods, and PWA appearance.
                     </p>
                 </div>
@@ -50,7 +50,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
 
             <div className="space-y-6 pb-24">
                 {flash.success && (
-                    <div className="rounded-xl border border-tertiary-fixed-dim bg-tertiary-container px-4 py-3 text-sm text-emerald-800">
+                    <div className="rounded-xl border border-tertiary-fixed-dim bg-tertiary-fixed-dim px-4 py-3 text-body-md text-on-tertiary-fixed">
                         {flash.success}
                     </div>
                 )}
@@ -74,13 +74,13 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
 
                 <div className="grid gap-6 xl:grid-cols-2">
                     <form
-                        className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant"
+                        className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
                         onSubmit={(event) => {
                             event.preventDefault();
                             businessForm.patch(route('settings.business.update'));
                         }}
                     >
-                        <h3 className="text-lg font-semibold text-on-surface">Business identity</h3>
+                        <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">Business identity</h3>
                         <div className="mt-5 space-y-4">
                             <input
                                 value={businessForm.data.business_name}
@@ -88,7 +88,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                     businessForm.setData('business_name', event.target.value)
                                 }
                                 placeholder="Business name"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
                             <input
                                 value={businessForm.data.business_phone}
@@ -96,7 +96,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                     businessForm.setData('business_phone', event.target.value)
                                 }
                                 placeholder="Phone number"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
                             <textarea
                                 value={businessForm.data.business_address}
@@ -104,7 +104,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                     businessForm.setData('business_address', event.target.value)
                                 }
                                 placeholder="Business address"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
                             <input
                                 value={businessForm.data.logo_path}
@@ -112,7 +112,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                     businessForm.setData('logo_path', event.target.value)
                                 }
                                 placeholder="Logo path"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <input
@@ -121,7 +121,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                         businessForm.setData('currency', event.target.value)
                                     }
                                     placeholder="Currency"
-                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                                 />
                                 <input
                                     value={businessForm.data.timezone}
@@ -129,23 +129,23 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                         businessForm.setData('timezone', event.target.value)
                                     }
                                     placeholder="Timezone"
-                                    className="rounded-xl border border-outline px-4 py-3 text-sm"
+                                    className="rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                                 />
                             </div>
                         </div>
-                        <button className="mt-5 w-full rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white">
+                        <button className="mt-5 w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:opacity-90">
                             Save business settings
                         </button>
                     </form>
 
                     <form
-                        className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant"
+                        className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
                         onSubmit={(event) => {
                             event.preventDefault();
                             receiptForm.patch(route('settings.receipt.update'));
                         }}
                     >
-                        <h3 className="text-lg font-semibold text-on-surface">Receipt configuration</h3>
+                        <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">Receipt configuration</h3>
                         <div className="mt-5 space-y-4">
                             <textarea
                                 value={receiptForm.data.receipt_header}
@@ -153,7 +153,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                     receiptForm.setData('receipt_header', event.target.value)
                                 }
                                 placeholder="Receipt header"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
                             <textarea
                                 value={receiptForm.data.receipt_footer}
@@ -161,9 +161,9 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                     receiptForm.setData('receipt_footer', event.target.value)
                                 }
                                 placeholder="Receipt footer"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
-                            <label className="flex items-center gap-3 rounded-xl border border-outline-variant px-4 py-3 text-sm text-on-surface-variant">
+                            <label className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-body-md text-on-surface-variant">
                                 <input
                                     type="checkbox"
                                     checked={receiptForm.data.show_cashier_on_receipt}
@@ -176,7 +176,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                 />
                                 Show cashier name on receipts
                             </label>
-                            <label className="flex items-center gap-3 rounded-xl border border-outline-variant px-4 py-3 text-sm text-on-surface-variant">
+                            <label className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-body-md text-on-surface-variant">
                                 <input
                                     type="checkbox"
                                     checked={receiptForm.data.show_tax_breakdown_on_receipt}
@@ -190,7 +190,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                 Show tax breakdown on receipts
                             </label>
                         </div>
-                        <button className="mt-5 w-full rounded-full bg-tertiary px-4 py-3 text-sm font-semibold text-white">
+                        <button className="mt-5 w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:opacity-90">
                             Save receipt settings
                         </button>
                     </form>
@@ -198,48 +198,48 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
 
                 <div className="grid gap-6 xl:grid-cols-2">
                     <form
-                        className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant"
+                        className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
                         onSubmit={(event) => {
                             event.preventDefault();
                             paymentForm.patch(route('settings.payments.update'));
                         }}
                     >
-                        <h3 className="text-lg font-semibold text-on-surface">Manual payment methods</h3>
+                        <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">Manual payment methods</h3>
                         <div className="mt-5 grid gap-3 sm:grid-cols-2">
                             {paymentMethods.map((method) => (
                                 <button
                                     key={method}
                                     type="button"
                                     onClick={() => togglePaymentMethod(method)}
-                                    className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
+                                    className={`rounded-xl border px-4 py-3 text-left text-body-md font-medium transition ${
                                         paymentForm.data.enabled_payment_methods.includes(method)
-                                            ? 'border-emerald-300 bg-tertiary-container text-emerald-800'
-                                            : 'border-outline-variant bg-surface-container-lowest text-on-surface-variant'
+                                            ? 'border-tertiary-fixed-dim bg-tertiary-fixed-dim text-on-tertiary-fixed'
+                                            : 'border-outline-variant bg-surface-container-low text-on-surface-variant'
                                     }`}
                                 >
                                     {method}
                                 </button>
                             ))}
                         </div>
-                        <button className="mt-5 w-full rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white">
+                        <button className="mt-5 w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:opacity-90">
                             Save payment methods
                         </button>
                     </form>
 
                     <form
-                        className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant"
+                        className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
                         onSubmit={(event) => {
                             event.preventDefault();
                             pwaForm.patch(route('settings.pwa.update'));
                         }}
                     >
-                        <h3 className="text-lg font-semibold text-on-surface">PWA appearance</h3>
+                        <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">PWA appearance</h3>
                         <div className="mt-5 space-y-4">
                             <input
                                 value={pwaForm.data.pwa_name}
                                 onChange={(event) => pwaForm.setData('pwa_name', event.target.value)}
                                 placeholder="App name"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
                             <input
                                 value={pwaForm.data.pwa_short_name}
@@ -247,7 +247,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                     pwaForm.setData('pwa_short_name', event.target.value)
                                 }
                                 placeholder="Short name"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
                             <input
                                 value={pwaForm.data.pwa_theme_color}
@@ -255,7 +255,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                     pwaForm.setData('pwa_theme_color', event.target.value)
                                 }
                                 placeholder="#0f172a"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
                             <textarea
                                 value={pwaForm.data.pwa_description}
@@ -263,26 +263,26 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                                     pwaForm.setData('pwa_description', event.target.value)
                                 }
                                 placeholder="PWA description"
-                                className="w-full rounded-xl border border-outline px-4 py-3 text-sm"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
                         </div>
-                        <button className="mt-5 w-full rounded-full bg-tertiary px-4 py-3 text-sm font-semibold text-white">
+                        <button className="mt-5 w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:opacity-90">
                             Save PWA settings
                         </button>
                     </form>
                 </div>
 
-                <div className="rounded-[2rem] bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant">
+                <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h3 className="text-lg font-semibold text-on-surface">Operational administration</h3>
-                            <p className="mt-1 text-sm text-outline">
+                            <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">Operational administration</h3>
+                            <p className="mt-1 text-body-md text-on-surface-variant">
                                 Existing outlet, staff, and customer administration stays available during the route transition.
                             </p>
                         </div>
                         <Link
                             href={route('operations.index')}
-                            className="rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
+                            className="rounded-full border border-outline bg-surface-container-lowest px-4 py-2 text-sm font-medium text-on-surface-variant"
                         >
                             Open legacy operations tools
                         </Link>

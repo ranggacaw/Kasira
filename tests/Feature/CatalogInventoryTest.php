@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class CatalogInventoryTest extends TestCase
@@ -82,6 +84,67 @@ class CatalogInventoryTest extends TestCase
             ->get('/dashboard')
             ->assertOk()
             ->assertSee('Cold Brew');
+    }
+
+    public function test_inventory_search_filters_movements_by_product_name(): void
+    {
+        $admin = $this->createUserWithRole(Role::ADMIN);
+        $outlet = Outlet::query()->firstOrFail();
+
+        $match = Product::query()->create([
+            'outlet_id' => $outlet->id,
+            'name' => 'Cappuccino',
+            'sku' => 'CAP001',
+            'barcode' => '100001',
+            'selling_price' => 30000,
+            'cost_price' => 12000,
+            'stock_quantity' => 10,
+            'minimum_stock' => 2,
+            'is_active' => true,
+            'track_stock' => true,
+        ]);
+
+        $other = Product::query()->create([
+            'outlet_id' => $outlet->id,
+            'name' => 'Latte',
+            'sku' => 'LAT001',
+            'barcode' => '100002',
+            'selling_price' => 28000,
+            'cost_price' => 11000,
+            'stock_quantity' => 8,
+            'minimum_stock' => 2,
+            'is_active' => true,
+            'track_stock' => true,
+        ]);
+
+        StockMovement::query()->create([
+            'product_id' => $match->id,
+            'outlet_id' => $outlet->id,
+            'user_id' => $admin->id,
+            'type' => 'stock_in',
+            'quantity' => 2,
+            'balance_after' => 12,
+            'notes' => 'Inventory refill',
+        ]);
+
+        StockMovement::query()->create([
+            'product_id' => $other->id,
+            'outlet_id' => $outlet->id,
+            'user_id' => $admin->id,
+            'type' => 'stock_in',
+            'quantity' => 2,
+            'balance_after' => 10,
+            'notes' => 'Inventory refill',
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/inventory?outlet='.$outlet->id.'&search=Cappu')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Inventory/Index')
+                ->where('filters.search', 'Cappu')
+                ->where('movements.total', 1)
+                ->where('movements.data.0.product.name', 'Cappuccino'));
     }
 
     private function createUserWithRole(string $roleName): User

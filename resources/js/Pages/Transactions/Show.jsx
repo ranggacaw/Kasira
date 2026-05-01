@@ -47,8 +47,8 @@ export default function TransactionShow({
         >
             <Head title={`Receipt ${transaction.invoice_number}`} />
 
-            <div className="space-y-6 py-10">
-                <div className="mx-auto max-w-5xl space-y-6 sm:px-6 lg:px-8">
+            <div className="space-y-6 ">
+                <div className="mx-auto space-y-6">
                     {flash.success && (
                         <div className="rounded-xl border border-tertiary-fixed-dim bg-tertiary-container px-4 py-3 text-sm text-emerald-800">
                             {flash.success}
