@@ -25,6 +25,13 @@ export default function ResetPassword({ token, email }) {
         <GuestLayout>
             <Head title="Reset Password" />
 
+            <div className="mb-6">
+                <h2 className="text-2xl font-semibold text-on-surface">Choose a new password</h2>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                    Update your password to regain secure access to Kasira.
+                </p>
+            </div>
+
             <form onSubmit={submit}>
                 <div>
                     <InputLabel htmlFor="email" value="Email" />
@@ -83,8 +90,8 @@ export default function ResetPassword({ token, email }) {
                     />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
+                <div className="mt-6 flex justify-end">
+                    <PrimaryButton className="w-full sm:w-auto" disabled={processing}>
                         Reset Password
                     </PrimaryButton>
                 </div>

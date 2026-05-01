@@ -25,6 +25,13 @@ export default function Register() {
         <GuestLayout>
             <Head title="Register" />
 
+            <div className="mb-6">
+                <h2 className="text-2xl font-semibold text-on-surface">Create your account</h2>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                    Set up the first Kasira operator and start configuring your workspace.
+                </p>
+            </div>
+
             <form onSubmit={submit}>
                 <div>
                     <InputLabel htmlFor="name" value="Name" />
@@ -102,7 +109,7 @@ export default function Register() {
                     />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
+                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
                     <Link
                         href={route('login')}
                         className="rounded-md text-sm text-on-surface-variant underline hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -110,7 +117,7 @@ export default function Register() {
                         Already registered?
                     </Link>
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
+                    <PrimaryButton className="w-full sm:ms-4 sm:w-auto" disabled={processing}>
                         Register
                     </PrimaryButton>
                 </div>

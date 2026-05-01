@@ -1,3 +1,4 @@
+import PwaInstallPrompt from '@/Components/PwaInstallPrompt';
 import { Head, Link } from '@inertiajs/react';
 
 const pillars = [
@@ -25,9 +26,11 @@ export default function Welcome({ auth, canLogin, canRegister }) {
         <>
             <Head title="Kasira" />
 
-            <div className="min-h-screen bg-surface text-on-surface">
-                <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8 lg:px-8">
-                    <header className="flex items-center justify-between gap-4 py-4">
+            <div className="min-h-screen overflow-x-hidden bg-surface text-on-surface">
+                <PwaInstallPrompt />
+
+                <div className="safe-area-y safe-area-x mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8 lg:px-8">
+                    <header className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-label-bold uppercase text-primary">
                                 Kasira
@@ -37,11 +40,11 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                             </p>
                         </div>
 
-                        <nav className="flex items-center gap-3 text-sm">
+                        <nav className="flex flex-wrap items-center gap-3 text-sm">
                             {canLogin && (
                                 <Link
                                     href={route('login')}
-                                    className="rounded-full border border-outline px-4 py-2 text-on-surface transition hover:border-outline-variant hover:bg-surface-container"
+                                    className="touch-target inline-flex items-center justify-center rounded-full border border-outline px-4 py-2 text-on-surface transition hover:border-outline-variant hover:bg-surface-container"
                                 >
                                     Log in
                                 </Link>
@@ -50,7 +53,7 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                             {canRegister && !auth.user && (
                                 <Link
                                     href={route('register')}
-                                    className="rounded-full bg-primary px-4 py-2 font-medium text-on-primary transition hover:bg-primary-container hover:text-on-primary-container"
+                                    className="touch-target inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 font-medium text-on-primary transition hover:bg-primary-container hover:text-on-primary-container"
                                 >
                                     Register
                                 </Link>
@@ -58,7 +61,7 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                         </nav>
                     </header>
 
-                    <main className="grid flex-1 items-center gap-12 py-10 lg:grid-cols-[1.2fr_0.8fr]">
+                    <main className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-12">
                         <div>
                             <div className="inline-flex rounded-full border border-outline-variant bg-surface-container-high px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-on-surface-variant">
                                 Laravel + Inertia + React
@@ -72,7 +75,7 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                             <div className="mt-8 flex flex-wrap items-center gap-4">
                                 <Link
                                     href={primaryHref}
-                                    className="rounded-full bg-primary px-5 py-3 text-label-bold text-on-primary transition hover:bg-primary-container hover:text-on-primary-container"
+                                    className="touch-target inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-label-bold text-on-primary transition hover:bg-primary-container hover:text-on-primary-container"
                                 >
                                     {primaryLabel}
                                 </Link>
@@ -80,7 +83,7 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                                 {canRegister && !auth.user && (
                                     <Link
                                         href={route('register')}
-                                        className="rounded-full border border-outline px-5 py-3 text-label-bold text-on-surface transition hover:bg-surface-container"
+                                        className="touch-target inline-flex items-center justify-center rounded-full border border-outline px-5 py-3 text-label-bold text-on-surface transition hover:bg-surface-container"
                                     >
                                         Create first account
                                     </Link>
@@ -104,7 +107,7 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                             </div>
                         </div>
 
-                        <div className="rounded-[2rem] border border-outline-variant bg-surface-container-lowest p-6 shadow-lg">
+                        <div className="rounded-[2rem] border border-outline-variant bg-surface-container-lowest p-5 shadow-lg sm:p-6">
                             <div className="rounded-xl bg-surface-container-low p-6 ring-1 ring-outline-variant">
                                 <div className="flex items-center justify-between">
                                     <div>

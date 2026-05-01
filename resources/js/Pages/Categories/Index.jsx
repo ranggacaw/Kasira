@@ -131,7 +131,7 @@ export default function CategoriesIndex({ categories, units }) {
                                 rows={2}
                                 className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                             />
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid gap-3 sm:grid-cols-3">
                                 <div className="relative">
                                     <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full" style={{ backgroundColor: categoryForm.data.color || '#0f766e' }}></div>
                                     <input
@@ -173,7 +173,7 @@ export default function CategoriesIndex({ categories, units }) {
                                         key={category.id}
                                         type="button"
                                         onClick={() => startCategoryEdit(category)}
-                                        className="flex w-full items-center justify-between rounded-lg border border-outline-variant bg-surface-container-low p-4 text-left hover:border-primary/30 hover:shadow-sm transition"
+                                        className="flex w-full flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-low p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
                                     >
                                         <div className="flex items-center gap-3">
                                             <span className="h-4 w-4 rounded-full" style={{ backgroundColor: category.color }}></span>
@@ -252,7 +252,7 @@ export default function CategoriesIndex({ categories, units }) {
                                         key={unit.id}
                                         type="button"
                                         onClick={() => startUnitEdit(unit)}
-                                        className="flex w-full items-center justify-between rounded-lg border border-outline-variant bg-surface-container-low p-4 text-left hover:border-primary/30 hover:shadow-sm transition"
+                                        className="flex w-full flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-low p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
                                     >
                                         <div>
                                             <p className="font-medium text-on-surface">{unit.name}</p>

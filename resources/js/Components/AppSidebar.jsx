@@ -6,7 +6,7 @@ const SidebarItem = ({ icon, label, href, active, hiddenLabelClass = 'hidden lg:
         method={method}
         as={as}
         onClick={onClick}
-        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${
+        className={`touch-target flex items-center gap-3 rounded-xl px-4 py-3 text-left transition ${
             active
                 ? 'bg-primary text-white'
                 : 'text-on-surface-variant hover:bg-surface-container'
@@ -35,14 +35,14 @@ export default function AppSidebar({
     headerAction = null,
     onNavigate,
 }) {
-    const hiddenLabelClass = collapsed ? 'sr-only' : responsiveLabels ? 'hidden lg:block' : 'block';
+    const hiddenLabelClass = collapsed ? 'sr-only' : responsiveLabels ? 'hidden md:block' : 'block';
 
     return (
-        <aside className={`flex flex-col overflow-hidden border-r border-outline-variant bg-white ${className}`}>
-            <div className="border-b border-outline-variant p-4">
+        <aside className={`flex flex-col overflow-hidden border-r border-outline-variant bg-surface-container-lowest ${className}`}>
+            <div className="border-b border-outline-variant p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-3">
                     <Link href={brandHref} onClick={onNavigate} className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-container text-label-bold text-on-primary-container">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-container text-label-bold text-on-primary-container">
                             {initials}
                         </div>
                         {!collapsed && (
@@ -56,9 +56,9 @@ export default function AppSidebar({
                 </div>
             </div>
 
-            <div className="border-b border-outline-variant p-4">
+            <div className="border-b border-outline-variant p-4 sm:p-5">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-label-bold text-on-primary-container">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-container text-label-bold text-on-primary-container">
                         {initials}
                     </div>
                     {!collapsed && (
@@ -79,7 +79,7 @@ export default function AppSidebar({
                 </div>
             </div>
 
-            <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+            <nav className="touch-scroll flex-1 space-y-2 overflow-y-auto p-4 sm:p-5">
                 {navigation.map((item) => (
                     <SidebarItem
                         key={item.key}
@@ -93,7 +93,7 @@ export default function AppSidebar({
                 ))}
             </nav>
 
-            <div className="border-t border-outline-variant p-4">
+            <div className="border-t border-outline-variant p-4 sm:p-5">
                 <div className="space-y-1">
                     {footerItems.map((item) => (
                         <SidebarItem

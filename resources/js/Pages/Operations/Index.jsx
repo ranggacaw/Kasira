@@ -228,7 +228,7 @@ export default function OperationsIndex({
                                             {outlets.map((outlet) => (
                                                 <div
                                                     key={outlet.id}
-                                                    className="flex items-center justify-between rounded-xl border border-outline-variant p-4"
+                                                    className="flex flex-col gap-3 rounded-xl border border-outline-variant p-4 sm:flex-row sm:items-center sm:justify-between"
                                                 >
                                                     <div>
                                                         <p className="font-medium text-on-surface">
@@ -238,7 +238,7 @@ export default function OperationsIndex({
                                                             {outlet.code || 'No code'}
                                                         </p>
                                                     </div>
-                                                    <div className="flex gap-2">
+                                                    <div className="flex flex-wrap gap-2">
                                                         {outlet.is_primary && (
                                                             <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
                                                                 Primary
@@ -339,7 +339,7 @@ export default function OperationsIndex({
                                             {staffUsers.map((user) => (
                                                 <div
                                                     key={user.id}
-                                                    className="flex items-center justify-between rounded-xl border border-outline-variant p-4"
+                                                    className="flex flex-col gap-3 rounded-xl border border-outline-variant p-4 sm:flex-row sm:items-center sm:justify-between"
                                                 >
                                                     <div>
                                                         <p className="font-medium text-on-surface">
@@ -349,7 +349,7 @@ export default function OperationsIndex({
                                                             {user.role?.name} • {user.outlet?.name || 'No outlet'}
                                                         </p>
                                                     </div>
-                                                    <div className="flex gap-2">
+                                                    <div className="flex flex-wrap gap-2">
                                                         <button
                                                             type="button"
                                                             onClick={() => promoteUser(user)}
@@ -455,7 +455,7 @@ export default function OperationsIndex({
                                                 key={customer.id}
                                                 className="rounded-xl border border-outline-variant p-4"
                                             >
-                                                <div className="flex items-center justify-between gap-4">
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                                     <div>
                                                         <p className="font-medium text-on-surface">
                                                             {customer.name}
@@ -464,7 +464,7 @@ export default function OperationsIndex({
                                                             {customer.membership_tier || 'Standard customer'}
                                                         </p>
                                                     </div>
-                                                    <div className="flex gap-2">
+                                                    <div className="flex flex-wrap gap-2">
                                                         <button
                                                             type="button"
                                                             onClick={() => editCustomer(customer)}

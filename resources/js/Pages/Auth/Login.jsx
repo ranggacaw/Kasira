@@ -31,6 +31,13 @@ export default function Login({ status, canResetPassword }) {
                 </div>
             )}
 
+            <div className="mb-6">
+                <h2 className="text-2xl font-semibold text-on-surface">Welcome back</h2>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                    Sign in to continue with back-office and cashier workflows.
+                </p>
+            </div>
+
             <form onSubmit={submit}>
                 <div>
                     <InputLabel htmlFor="email" value="Email" />
@@ -80,7 +87,7 @@ export default function Login({ status, canResetPassword }) {
                     </label>
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
+                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
@@ -90,7 +97,7 @@ export default function Login({ status, canResetPassword }) {
                         </Link>
                     )}
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
+                    <PrimaryButton className="w-full sm:ms-4 sm:w-auto" disabled={processing}>
                         Log in
                     </PrimaryButton>
                 </div>

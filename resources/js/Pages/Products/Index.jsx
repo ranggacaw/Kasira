@@ -154,7 +154,7 @@ export default function ProductsIndex({
                     <SelectInput
                         value={selectedOutletId || ''}
                         onChange={changeOutlet}
-                        className="rounded-full border border-outline bg-surface-container-lowest px-4 py-2 text-body-md text-on-surface-variant"
+                        className="w-full rounded-full border border-outline bg-surface-container-lowest px-4 py-2 text-body-md text-on-surface-variant sm:w-auto"
                     >
                         {outlets.map((outlet) => (
                             <option key={outlet.id} value={outlet.id}>
@@ -177,7 +177,7 @@ export default function ProductsIndex({
 
                 {/* Search + Filter Toolbar */}
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative flex-1 min-w-64">
+                    <div className="relative min-w-full flex-1 sm:min-w-64">
                         <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0 1 14 0z" />
                         </svg>
@@ -192,7 +192,7 @@ export default function ProductsIndex({
                     <SelectInput
                         value={filterCategory}
                         onChange={handleCategoryFilter}
-                        className="rounded-full border border-outline bg-surface-container-lowest px-4 py-2 text-body-md text-on-surface-variant"
+                        className="w-full rounded-full border border-outline bg-surface-container-lowest px-4 py-2 text-body-md text-on-surface-variant sm:w-auto"
                     >
                         <option value="">All Categories</option>
                         {categories.map((category) => (
@@ -204,7 +204,7 @@ export default function ProductsIndex({
                     <SelectInput
                         value={filterStatus}
                         onChange={handleStatusFilter}
-                        className="rounded-full border border-outline bg-surface-container-lowest px-4 py-2 text-body-md text-on-surface-variant"
+                        className="w-full rounded-full border border-outline bg-surface-container-lowest px-4 py-2 text-body-md text-on-surface-variant sm:w-auto"
                     >
                         <option value="">All Status</option>
                         <option value="active">Active</option>
@@ -247,7 +247,7 @@ export default function ProductsIndex({
                                 placeholder="Product name"
                                 className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
                                 <SelectInput
                                     value={productForm.data.category_id}
                                     onChange={(event) => productForm.setData('category_id', event.target.value)}
@@ -272,7 +272,7 @@ export default function ProductsIndex({
                                     ))}
                                 </SelectInput>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
                                 <input
                                     value={productForm.data.sku}
                                     onChange={(event) => productForm.setData('sku', event.target.value)}
@@ -286,7 +286,7 @@ export default function ProductsIndex({
                                     className="rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
                                 <input
                                     type="number"
                                     value={productForm.data.selling_price}
@@ -302,7 +302,7 @@ export default function ProductsIndex({
                                     className="rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
                                 <input
                                     type="number"
                                     value={productForm.data.stock_quantity}
@@ -346,7 +346,7 @@ export default function ProductsIndex({
                             </div>
                         </div>
 
-                        <div className="sticky bottom-4 mt-5 flex gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest/95 p-3 backdrop-blur">
+                        <div className="sticky bottom-4 mt-5 flex flex-col gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest/95 p-3 backdrop-blur sm:flex-row">
                             <button
                                 type="submit"
                                 className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:opacity-90"
@@ -404,7 +404,7 @@ export default function ProductsIndex({
                                             index === products.length - 1 ? 'border-b-0' : ''
                                         }`}
                                     >
-                                        <div className="col-span-5 flex items-center gap-3">
+                                        <div className="col-span-5 flex flex-col gap-3 sm:flex-row sm:items-center">
                                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-low text-sm font-semibold uppercase text-on-surface-variant">
                                                 {product.name.slice(0, 2)}
                                             </div>

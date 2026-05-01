@@ -26,7 +26,7 @@ export default function TransactionShow({
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-xl font-semibold leading-tight text-on-surface">
                             Receipt {transaction.invoice_number}
@@ -38,7 +38,7 @@ export default function TransactionShow({
                     <button
                         type="button"
                         onClick={() => window.print()}
-                        className="rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
+                        className="touch-target inline-flex items-center justify-center rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
                     >
                         {canUseThermalPrinting ? 'Print receipt' : 'Print in browser'}
                     </button>
@@ -57,7 +57,7 @@ export default function TransactionShow({
 
                     <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
                         <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
-                            <div className="flex items-center justify-between gap-4 border-b border-outline-variant pb-4">
+                            <div className="flex flex-col gap-3 border-b border-outline-variant pb-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p className="text-sm text-outline">
                                         {transaction.outlet?.name || 'Outlet'}
@@ -66,7 +66,7 @@ export default function TransactionShow({
                                         {transaction.invoice_number}
                                     </p>
                                 </div>
-                                <div className="text-right text-sm text-outline">
+                                <div className="text-sm text-outline sm:text-right">
                                     <p>{transaction.paid_at || '-'}</p>
                                     <p>{transaction.cashier?.name || '-'}</p>
                                 </div>
@@ -81,7 +81,7 @@ export default function TransactionShow({
                                 {transaction.items.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="flex items-center justify-between rounded-xl border border-outline-variant bg-surface-container-low p-4"
+                                        className="flex flex-col gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between"
                                     >
                                         <div>
                                             <p className="font-medium text-on-surface">
@@ -173,7 +173,7 @@ export default function TransactionShow({
                                 <div className="mt-4 flex flex-wrap gap-3">
                                     <Link
                                         href={route('transactions.download', transaction.id)}
-                                        className="rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
+                                        className="touch-target rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
                                     >
                                         Download receipt
                                     </Link>
@@ -187,7 +187,7 @@ export default function TransactionShow({
                                                 });
                                             }
                                         }}
-                                        className="rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
+                                        className="touch-target rounded-full border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant"
                                     >
                                         Share receipt
                                     </button>
@@ -197,7 +197,7 @@ export default function TransactionShow({
                                             onClick={() =>
                                                 router.post(route('transactions.refund', transaction.id))
                                             }
-                                            className="rounded-full border border-rose-200 bg-error-container px-4 py-2 text-sm font-medium text-rose-700"
+                                            className="touch-target rounded-full border border-rose-200 bg-error-container px-4 py-2 text-sm font-medium text-rose-700"
                                         >
                                             Refund transaction
                                         </button>
@@ -238,7 +238,7 @@ export default function TransactionShow({
                                             Digital receipt delivery requires the Business plan.
                                         </p>
                                     )}
-                                    <button className="rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white">
+                                    <button className="touch-target rounded-full bg-on-surface px-4 py-3 text-sm font-semibold text-white">
                                         Log receipt action
                                     </button>
                                 </form>

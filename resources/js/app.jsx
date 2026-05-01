@@ -7,9 +7,30 @@ import { createRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Kasira';
 
+const syncDisplayMode = () => {
+    const isStandalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+
+    document.documentElement.dataset.displayMode = isStandalone ? 'standalone' : 'browser';
+    document.documentElement.classList.toggle('standalone-shell', isStandalone);
+};
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+        syncDisplayMode();
+
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+
+        const displayModeMedia = window.matchMedia('(display-mode: standalone)');
+
+        if (displayModeMedia.addEventListener) {
+            displayModeMedia.addEventListener('change', syncDisplayMode);
+        } else if (displayModeMedia.addListener) {
+            displayModeMedia.addListener(syncDisplayMode);
+        }
+
+        window.addEventListener('appinstalled', syncDisplayMode);
     });
 }
 

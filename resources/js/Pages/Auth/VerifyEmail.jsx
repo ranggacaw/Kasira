@@ -15,6 +15,13 @@ export default function VerifyEmail({ status }) {
         <GuestLayout>
             <Head title="Email Verification" />
 
+            <div className="mb-6">
+                <h2 className="text-2xl font-semibold text-on-surface">Verify your email</h2>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                    Confirm your inbox before entering the protected Kasira workspace.
+                </p>
+            </div>
+
             <div className="mb-4 text-sm text-on-surface-variant">
                 Thanks for signing up! Before getting started, could you verify
                 your email address by clicking on the link we just emailed to
@@ -30,8 +37,8 @@ export default function VerifyEmail({ status }) {
             )}
 
             <form onSubmit={submit}>
-                <div className="mt-4 flex items-center justify-between">
-                    <PrimaryButton disabled={processing}>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <PrimaryButton className="w-full sm:w-auto" disabled={processing}>
                         Resend Verification Email
                     </PrimaryButton>
 

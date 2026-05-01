@@ -2,7 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+  }
+
+  html,
+  body {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-surface text-on-surface;
+  }
+}
+
 @layer utilities {
+  .safe-area-top {
+    padding-top: max(1rem, calc(var(--safe-top) + 0.5rem));
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(1rem, calc(var(--safe-bottom) + 0.5rem));
+  }
+
+  .safe-area-x {
+    padding-left: max(1rem, calc(var(--safe-left) + 0.5rem));
+    padding-right: max(1rem, calc(var(--safe-right) + 0.5rem));
+  }
+
+  .safe-area-y {
+    padding-top: max(1rem, calc(var(--safe-top) + 0.5rem));
+    padding-bottom: max(1rem, calc(var(--safe-bottom) + 0.5rem));
+  }
+
+  .touch-target {
+    min-height: 44px;
+  }
+
+  .touch-input {
+    min-height: 48px;
+  }
+
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
   .text-display-lg {
     @apply font-sans text-[40px] font-bold leading-[48px] tracking-[-0.02em];
   }
@@ -22,4 +71,3 @@
     @apply font-sans text-[32px] font-bold leading-[40px] tracking-[-0.01em];
   }
 }
-

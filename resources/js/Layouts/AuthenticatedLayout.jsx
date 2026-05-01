@@ -1,4 +1,5 @@
 import AppSidebar from '@/Components/AppSidebar';
+import PwaInstallPrompt from '@/Components/PwaInstallPrompt';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -78,7 +79,15 @@ export default function AuthenticatedLayout({ header, children }) {
 
         const setOnline = () => setIsOnline(true);
         const setOffline = () => setIsOnline(false);
-        const updateViewport = () => setIsDesktop(window.innerWidth >= 768);
+        const updateViewport = () => {
+            const tabletUp = window.innerWidth >= 768;
+
+            setIsDesktop(tabletUp);
+
+            if (tabletUp) {
+                setIsDrawerOpen(false);
+            }
+        };
 
         window.addEventListener('online', setOnline);
         window.addEventListener('offline', setOffline);
@@ -125,17 +134,19 @@ export default function AuthenticatedLayout({ header, children }) {
     ];
 
     return (
-        <div className="min-h-screen bg-surface">
+        <div className="min-h-screen overflow-x-hidden bg-surface text-on-surface">
+            <PwaInstallPrompt />
+
             <div className="flex min-h-screen">
                 <div
-                    className={`fixed inset-0 z-40 bg-surface-variant/40 transition md:hidden ${
+                    className={`fixed inset-0 z-40 bg-surface-variant/50 backdrop-blur-sm transition md:hidden ${
                         isDrawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
                     }`}
                     onClick={() => setIsDrawerOpen(false)}
                 />
 
                 <AppSidebar
-                    className={`fixed inset-y-0 left-0 z-50 w-72 shadow-lg transition-transform md:sticky md:translate-x-0 ${
+                    className={`fixed inset-y-0 left-0 z-50 h-dvh w-72 shadow-lg transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 ${
                         isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
                     } ${isSidebarCollapsed ? 'md:w-24' : 'md:w-72'}`}
                     brandHref={route('dashboard')}
@@ -165,47 +176,53 @@ export default function AuthenticatedLayout({ header, children }) {
                     )}
                 />
 
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 overflow-x-hidden">
                     {!isOnline && (
-                        <div className="bg-secondary-container px-md py-sm text-body-md font-medium text-on-secondary-container">
+                        <div className="safe-area-x bg-secondary-container px-md py-sm text-body-md font-medium text-on-secondary-container">
                             Offline mode: cached pages stay available, but sync and network actions wait for reconnection.
                         </div>
                     )}
 
-                    <div className="sticky top-0 z-30 border-b border-outline-variant bg-surface-container-lowest/90 backdrop-blur">
-                        <div className="flex items-center justify-between gap-4 px-md py-md lg:px-lg">
-                            <div className="flex items-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsDrawerOpen(true)}
-                                    className="rounded-xl border border-outline-variant px-sm py-xs text-label-bold text-on-surface-variant md:hidden"
-                                >
-                                    Menu
-                                </button>
-                                <div>
-                                    <p className="text-label-bold uppercase tracking-[0.24em] text-on-surface-variant">
-                                        Back office
-                                    </p>
-                                    <p className="text-headline-md text-on-surface">
-                                        {activeRoute || 'Workspace'}
-                                    </p>
+                    <div className="safe-area-top sticky top-0 z-30 border-b border-outline-variant bg-surface-container-lowest/90 backdrop-blur">
+                        <div className="safe-area-x flex flex-col gap-4 px-md py-md lg:px-lg">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsDrawerOpen(true)}
+                                        className="touch-target rounded-xl border border-outline-variant px-4 py-2 text-label-bold text-on-surface-variant md:hidden"
+                                    >
+                                        Menu
+                                    </button>
+                                    <div>
+                                        <p className="text-label-bold uppercase tracking-[0.24em] text-on-surface-variant">
+                                            Back office
+                                        </p>
+                                        <p className="text-headline-md text-on-surface">
+                                            {activeRoute || 'Workspace'}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <Link
-                                href={route('pos.index')}
-                                className="rounded-full border border-outline px-lg py-sm text-label-bold text-on-surface transition hover:border-outline-variant hover:bg-surface-container"
-                            >
-                                Open POS
-                            </Link>
+                                {user?.abilities?.checkout && (
+                                    <Link
+                                        href={route('pos.index')}
+                                        className="touch-target inline-flex items-center justify-center rounded-full border border-outline px-lg py-sm text-label-bold text-on-surface transition hover:border-outline-variant hover:bg-surface-container"
+                                    >
+                                        Open POS
+                                    </Link>
+                                )}
+                            </div>
                         </div>
                     </div>
 
                     {header && (
-                        <header className="px-md py-6 lg:px-lg">{header}</header>
+                        <header className="safe-area-x px-md py-6 lg:px-lg">{header}</header>
                     )}
 
-                    <main className="px-md pb-10 lg:px-lg">{children}</main>
+                    <main className="safe-area-x safe-area-bottom px-md pb-24 lg:px-lg">
+                        {children}
+                    </main>
                 </div>
             </div>
         </div>

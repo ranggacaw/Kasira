@@ -1,5 +1,5 @@
 import PosLayout from '@/Layouts/PosLayout';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 const formatCurrency = (value) =>
@@ -13,9 +13,7 @@ function CartPanel({
     cart,
     subtotal,
     discountAmount,
-    taxRate,
     taxAmount,
-    serviceFeeRate,
     serviceFeeAmount,
     total,
     changeDue,
@@ -45,294 +43,343 @@ function CartPanel({
     processing,
 }) {
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [expandedItemId, setExpandedItemId] = useState(null);
+
+    const content = (isMobileDrawer = false) => (
+        <form onSubmit={onSubmit} className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b border-outline-variant bg-surface-container-low p-4 sm:p-5">
+                <div>
+                    <h3 className="text-lg font-bold text-on-surface">Current Order</h3>
+                    <p className="text-sm text-on-surface-variant">
+                        {cart.length} items {activeDraftId ? '• Draft resumed' : ''}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    {cart.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={onClear}
+                            className="touch-target rounded-full border border-outline-variant px-3 py-2 text-sm font-medium text-on-surface-variant transition hover:bg-surface-container"
+                        >
+                            Clear
+                        </button>
+                    )}
+                    {isMobileDrawer ? (
+                        <button
+                            type="button"
+                            onClick={() => setIsCartOpen(false)}
+                            className="touch-target rounded-full border border-outline-variant px-3 py-2 text-sm font-medium text-on-surface-variant"
+                        >
+                            Close
+                        </button>
+                    ) : null}
+                </div>
+            </div>
+
+            <div className="touch-scroll flex-1 space-y-3 overflow-y-auto p-4 sm:p-5">
+                <div className="flex flex-col gap-2">
+                    {cart.map((item) => {
+                        const isExpanded = expandedItemId === item.product_id;
+                        return (
+                            <div
+                                key={item.product_id}
+                                className={`overflow-hidden rounded-xl border bg-white transition-colors ${isExpanded ? 'border-primary ring-1 ring-primary/20' : 'border-outline-variant'}`}
+                            >
+                                <div
+                                    className="flex cursor-pointer items-center gap-3 p-3 hover:bg-surface-container-lowest"
+                                    onClick={() => setExpandedItemId(isExpanded ? null : item.product_id)}
+                                >
+                                    <div className="flex h-5 w-5 shrink-0 items-center justify-center text-on-surface-variant">
+                                        <svg className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </div>
+                                    <span className="w-5 shrink-0 text-center text-sm font-bold text-on-surface">{item.quantity}</span>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-bold text-on-surface">{item.name}</p>
+                                    </div>
+                                    <p className="shrink-0 text-sm font-bold text-on-surface">
+                                        {formatCurrency(item.subtotal)}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onRemoveItem(item.product_id);
+                                        }}
+                                        className="shrink-0 rounded-full p-1 text-on-surface-variant transition hover:bg-surface-container-high hover:text-error"
+                                    >
+                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {isExpanded && (
+                                    <div className="border-t border-outline-variant bg-surface-container-lowest p-3">
+                                        <div>
+                                            <label className="mb-1.5 block text-xs font-medium text-on-surface-variant">Quantity</label>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onUpdateQuantity(item.product_id, item.quantity - 1)}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-outline-variant bg-white text-lg font-bold text-on-surface transition hover:bg-surface-container-high"
+                                                >
+                                                    −
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value);
+                                                        if (!isNaN(val) && val >= 1) {
+                                                            onUpdateQuantity(item.product_id, val);
+                                                        }
+                                                    }}
+                                                    className="h-9 w-20 rounded-lg border border-outline-variant bg-white text-center text-sm font-bold text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onUpdateQuantity(item.product_id, item.quantity + 1)}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-outline-variant bg-white text-lg font-bold text-on-surface transition hover:bg-surface-container-high"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {cart.length === 0 && (
+                    <div className="rounded-xl border-2 border-dashed border-outline-variant p-8 text-center">
+                        <svg className="mx-auto h-12 w-12 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <p className="mt-3 text-sm text-on-surface-variant">Add products to start a sale</p>
+                    </div>
+                )}
+            </div>
+
+            <div
+                className="border-t-4 border-primary/10 bg-surface-container-lowest p-4 sm:p-5"
+                style={isMobileDrawer ? { paddingBottom: 'calc(var(--safe-bottom) + 1rem)' } : undefined}
+            >
+                <div className="space-y-2 border-b border-outline-variant pb-4">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-on-surface-variant">Subtotal</span>
+                        <span className="font-semibold text-on-surface">{formatCurrency(subtotal)}</span>
+                    </div>
+                    {discountAmount > 0 && (
+                        <div className="flex justify-between text-sm">
+                            <span className="text-on-surface-variant">Discount</span>
+                            <span className="font-semibold text-tertiary">-{formatCurrency(discountAmount)}</span>
+                        </div>
+                    )}
+                    {taxRateValue > 0 && (
+                        <div className="flex justify-between text-sm">
+                            <span className="text-on-surface-variant">Tax ({taxRateValue}%)</span>
+                            <span className="font-semibold text-on-surface">{formatCurrency(taxAmount)}</span>
+                        </div>
+                    )}
+                    {serviceFeeRateValue > 0 && (
+                        <div className="flex justify-between text-sm">
+                            <span className="text-on-surface-variant">Service ({serviceFeeRateValue}%)</span>
+                            <span className="font-semibold text-on-surface">{formatCurrency(serviceFeeAmount)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between pt-2">
+                        <span className="text-lg font-bold text-on-surface">Total</span>
+                        <span className="text-2xl font-extrabold text-primary">{formatCurrency(total)}</span>
+                    </div>
+                </div>
+
+                {cart.length > 0 && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <select
+                            value={selectedCustomer}
+                            onChange={(event) => setSelectedCustomer(event.target.value)}
+                            className="touch-input rounded-xl border-2 border-outline-variant bg-white px-4 py-3 text-sm text-on-surface sm:col-span-2"
+                        >
+                            <option value="">Walk-in customer</option>
+                            {customers.map((customer) => (
+                                <option key={customer.id} value={customer.id}>
+                                    {customer.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={discountType}
+                            onChange={(event) => setDiscountType(event.target.value)}
+                            className="touch-input rounded-xl border-2 border-outline-variant bg-white px-3 py-2.5 text-sm text-on-surface"
+                        >
+                            <option value="percentage">Discount %</option>
+                            <option value="fixed">Discount IDR</option>
+                        </select>
+                        <input
+                            type="number"
+                            value={discountValue || ''}
+                            onChange={(event) => setDiscountValue(Number(event.target.value || 0))}
+                            placeholder="0"
+                            className="touch-input rounded-xl border-2 border-outline-variant bg-white px-3 py-2.5 text-sm text-on-surface"
+                        />
+
+                        <input
+                            type="number"
+                            value={taxRateValue || ''}
+                            onChange={(event) => setTaxRate(Number(event.target.value || 0))}
+                            placeholder="Tax %"
+                            className="touch-input rounded-xl border-2 border-outline-variant bg-white px-3 py-2.5 text-sm text-on-surface"
+                        />
+                        <input
+                            type="number"
+                            value={serviceFeeRateValue || ''}
+                            onChange={(event) => setServiceFeeRate(Number(event.target.value || 0))}
+                            placeholder="Service %"
+                            className="touch-input rounded-xl border-2 border-outline-variant bg-white px-3 py-2.5 text-sm text-on-surface"
+                        />
+                    </div>
+                )}
+
+                {cart.length > 0 && (
+                    <>
+                        <div className="mt-4">
+                            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                                Payment Method
+                            </label>
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                {paymentMethods.map((method) => (
+                                    <button
+                                        key={method}
+                                        type="button"
+                                        onClick={() => setSelectedPaymentMethod(method)}
+                                        className={`touch-target rounded-2xl px-3 py-3 text-sm font-bold transition ${
+                                            selectedPaymentMethod === method
+                                                ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                                : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
+                                        }`}
+                                    >
+                                        {method}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {selectedPaymentMethod === 'Cash' && (
+                            <div className="mt-3">
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                    {quickCashAmounts.map((amount) => (
+                                        <button
+                                            key={amount}
+                                            type="button"
+                                            onClick={() => setPaidAmount(amount.toString())}
+                                            className="touch-target rounded-xl border-2 border-outline-variant bg-white px-3 py-2.5 text-sm font-bold text-on-surface transition hover:border-primary hover:text-primary"
+                                        >
+                                            {amount / 1000}K
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedPaymentMethod === 'Cash' ? (
+                            <div className="mt-3">
+                                <input
+                                    type="text"
+                                    value={paidAmount}
+                                    onChange={(event) => setPaidAmount(event.target.value)}
+                                    placeholder="Enter amount"
+                                    className="touch-input w-full rounded-2xl border-2 border-outline-variant bg-white px-4 py-3 text-right text-sm font-bold text-on-surface focus:border-primary focus:outline-none"
+                                />
+                                {changeDue > 0 && (
+                                    <div className="mt-2 flex justify-between px-1">
+                                        <span className="text-xs font-medium text-on-surface-variant">Change:</span>
+                                        <span className="text-sm font-bold text-tertiary">{formatCurrency(changeDue)}</span>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="mt-3">
+                                <input
+                                    type="text"
+                                    placeholder="Payment reference"
+                                    className="touch-input w-full rounded-xl border-2 border-outline-variant bg-white px-4 py-3 text-sm text-on-surface"
+                                />
+                            </div>
+                        )}
+
+                        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                            <button
+                                type="button"
+                                onClick={onClear}
+                                className="touch-target flex-1 rounded-2xl border-2 border-outline-variant px-4 py-3 text-sm font-bold text-on-surface-variant transition hover:bg-surface-container"
+                            >
+                                Clear
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onSaveDraft}
+                                disabled={cart.length === 0}
+                                className="touch-target flex-1 rounded-2xl border-2 border-outline-variant px-4 py-3 text-sm font-bold text-on-surface-variant transition hover:bg-surface-container disabled:opacity-50"
+                            >
+                                Draft
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={processing || cart.length === 0}
+                                className="touch-target flex-1 rounded-2xl bg-primary px-4 py-4 text-sm font-extrabold text-white shadow-xl shadow-primary/20 transition hover:bg-primary/90 disabled:opacity-50 sm:flex-[1.5]"
+                            >
+                                Charge {formatCurrency(total)}
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </form>
+    );
 
     return (
         <>
-            {/* Mobile: Cart Toggle Button */}
-            <button
-                type="button"
-                onClick={() => setIsCartOpen(true)}
-                className="fixed bottom-6 right-6 z-30 flex flex-col items-end rounded-3xl bg-primary px-6 py-4 text-white shadow-2xl shadow-primary/30 lg:hidden"
-            >
-                <span className="text-xs font-medium opacity-80">{cart.length} items</span>
-                <span className="text-xl font-extrabold">{formatCurrency(total)}</span>
-            </button>
+            {cart.length > 0 ? (
+                <button
+                    type="button"
+                    onClick={() => setIsCartOpen(true)}
+                    className="fixed inset-x-4 z-30 flex items-center justify-between rounded-[1.75rem] bg-primary px-5 py-4 text-white shadow-2xl shadow-primary/30 md:hidden"
+                    style={{ bottom: 'calc(var(--safe-bottom) + 1rem)' }}
+                >
+                    <div>
+                        <span className="text-xs font-medium uppercase tracking-[0.18em] opacity-80">
+                            Cart ready
+                        </span>
+                        <p className="mt-1 text-sm font-semibold">{cart.length} items in the order</p>
+                    </div>
+                    <span className="text-xl font-extrabold">{formatCurrency(total)}</span>
+                </button>
+            ) : null}
 
-            {/* Mobile: Cart Overlay */}
             <div
-                className={`fixed inset-0 z-40 bg-surface-container/80 transition lg:hidden ${
+                className={`fixed inset-0 z-40 bg-surface-container/80 transition md:hidden ${
                     isCartOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
                 }`}
                 onClick={() => setIsCartOpen(false)}
             />
 
-            {/* Cart Panel */}
-            <div className={`flex h-full flex-col bg-white transition-transform duration-300 lg:static ${
-                isCartOpen ? 'translate-y-0 fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] rounded-t-3xl lg:rounded-none' : 'lg:translate-y-0'
-            }`}>
-                <form onSubmit={onSubmit} className="flex h-full flex-col">
-                    {/* Cart Header */}
-                    <div className="flex items-center justify-between border-b border-outline-variant bg-surface-container-low p-5">
-                        <div>
-                            <h3 className="text-lg font-bold text-on-surface">Current Order</h3>
-                            <p className="text-sm text-on-surface-variant">
-                                {cart.length} items {activeDraftId ? '• Draft resumed' : ''}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {cart.length > 0 && (
-                                <button
-                                    type="button"
-                                    onClick={onClear}
-                                    className="text-sm font-medium text-primary hover:underline"
-                                >
-                                    Clear
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => setIsCartOpen(false)}
-                                className="rounded-lg border border-outline-variant px-3 py-2 text-sm font-medium text-on-surface-variant lg:hidden"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Cart Items */}
-                    <div className="flex-1 overflow-y-auto p-5 space-y-3">
-                        {cart.map((item) => (
-                            <div
-                                key={item.product_id}
-                                className="flex gap-3 rounded-2xl bg-surface-container p-4"
-                            >
-                                <div className="min-w-0 flex-1">
-                                    <p className="font-bold text-on-surface">{item.name}</p>
-                                    <p className="text-sm text-on-surface-variant">
-                                        {formatCurrency(item.unit_price)} each
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => onUpdateQuantity(item.product_id, item.quantity - 1)}
-                                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-outline-variant bg-white text-lg font-bold text-on-surface hover:bg-surface-container-high transition"
-                                    >
-                                        −
-                                    </button>
-                                    <span className="w-10 text-center font-bold text-lg">{item.quantity}</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => onUpdateQuantity(item.product_id, item.quantity + 1)}
-                                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-outline-variant bg-white text-lg font-bold text-on-surface hover:bg-surface-container-high transition"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                <p className="min-w-[90px] text-right font-bold text-on-surface">
-                                    {formatCurrency(item.subtotal)}
-                                </p>
-                            </div>
-                        ))}
-
-                        {cart.length === 0 && (
-                            <div className="rounded-xl border-2 border-dashed border-outline-variant p-8 text-center">
-                                <svg className="mx-auto h-12 w-12 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                <p className="mt-3 text-sm text-on-surface-variant">Add products to start a sale</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Order Summary & Payment */}
-                    <div className="border-t-4 border-primary/10 bg-surface-container-lowest p-5">
-                        {/* Summary */}
-                        <div className="space-y-2 border-b border-outline-variant pb-4">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-on-surface-variant">Subtotal</span>
-                                <span className="font-semibold text-on-surface">{formatCurrency(subtotal)}</span>
-                            </div>
-                            {discountAmount > 0 && (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-on-surface-variant">Discount</span>
-                                    <span className="font-semibold text-tertiary">-{formatCurrency(discountAmount)}</span>
-                                </div>
-                            )}
-                            {taxRateValue > 0 && (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-on-surface-variant">Tax ({taxRateValue}%)</span>
-                                    <span className="font-semibold text-on-surface">{formatCurrency(taxAmount)}</span>
-                                </div>
-                            )}
-                            {serviceFeeRateValue > 0 && (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-on-surface-variant">Service ({serviceFeeRateValue}%)</span>
-                                    <span className="font-semibold text-on-surface">{formatCurrency(serviceFeeAmount)}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between pt-2">
-                                <span className="text-lg font-bold text-on-surface">Total</span>
-                                <span className="text-2xl font-extrabold text-primary">{formatCurrency(total)}</span>
-                            </div>
-                        </div>
-
-                        {/* Quick Adjustments */}
-                        {cart.length > 0 && (
-                            <div className="mt-4 grid grid-cols-2 gap-3">
-                                {/* Customer */}
-                                <select
-                                    value={selectedCustomer}
-                                    onChange={(event) => setSelectedCustomer(event.target.value)}
-                                    className="col-span-2 rounded-xl border-2 border-outline-variant bg-white px-4 py-3 text-sm text-on-surface"
-                                >
-                                    <option value="">Walk-in customer</option>
-                                    {customers.map((customer) => (
-                                        <option key={customer.id} value={customer.id}>
-                                            {customer.name}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                {/* Discount */}
-                                <select
-                                    value={discountType}
-                                    onChange={(event) => setDiscountType(event.target.value)}
-                                    className="rounded-xl border-2 border-outline-variant bg-white px-3 py-2.5 text-sm text-on-surface"
-                                >
-                                    <option value="percentage">Discount %</option>
-                                    <option value="fixed">Discount IDR</option>
-                                </select>
-                                <input
-                                    type="number"
-                                    value={discountValue || ''}
-                                    onChange={(event) => setDiscountValue(Number(event.target.value || 0))}
-                                    placeholder="0"
-                                    className="rounded-xl border-2 border-outline-variant bg-white px-3 py-2.5 text-sm text-on-surface"
-                                />
-
-                                {/* Tax & Service */}
-                                <input
-                                    type="number"
-                                    value={taxRateValue || ''}
-                                    onChange={(event) => setTaxRate(Number(event.target.value || 0))}
-                                    placeholder="Tax %"
-                                    className="rounded-xl border-2 border-outline-variant bg-white px-3 py-2.5 text-sm text-on-surface"
-                                />
-                                <input
-                                    type="number"
-                                    value={serviceFeeRateValue || ''}
-                                    onChange={(event) => setServiceFeeRate(Number(event.target.value || 0))}
-                                    placeholder="Service %"
-                                    className="rounded-xl border-2 border-outline-variant bg-white px-3 py-2.5 text-sm text-on-surface"
-                                />
-                            </div>
-                        )}
-
-                        {/* Payment Method */}
-                        {cart.length > 0 && (
-                            <>
-                                <div className="mt-4">
-                                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                                        Payment Method
-                                    </label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {paymentMethods.map((method) => (
-                                            <button
-                                                key={method}
-                                                type="button"
-                                                onClick={() => setSelectedPaymentMethod(method)}
-                                                className={`rounded-2xl py-3.5 text-sm font-bold transition ${
-                                                    selectedPaymentMethod === method
-                                                        ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                                        : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
-                                                }`}
-                                            >
-                                                {method}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Quick Cash (Cash only) */}
-                                {selectedPaymentMethod === 'Cash' && (
-                                    <div className="mt-3">
-                                        <div className="grid grid-cols-4 gap-2">
-                                            {quickCashAmounts.map((amount) => (
-                                                <button
-                                                    key={amount}
-                                                    type="button"
-                                                    onClick={() => setPaidAmount(amount.toString())}
-                                                    className="rounded-xl border-2 border-outline-variant bg-white py-2.5 text-sm font-bold text-on-surface hover:border-primary hover:text-primary transition"
-                                                >
-                                                    {amount / 1000}K
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Paid Amount */}
-                                {selectedPaymentMethod === 'Cash' && (
-                                    <div className="mt-3">
-                                        <input
-                                            type="text"
-                                            value={paidAmount}
-                                            onChange={(event) => setPaidAmount(event.target.value)}
-                                            placeholder="Enter amount"
-                                            className="w-full rounded-2xl border-2 border-outline-variant bg-white px-4 py-3 text-right text-sm font-bold text-on-surface focus:border-primary focus:outline-none"
-                                        />
-                                        {changeDue > 0 && (
-                                            <div className="mt-2 flex justify-between px-1">
-                                                <span className="text-xs font-medium text-on-surface-variant">Change:</span>
-                                                <span className="text-sm font-bold text-tertiary">{formatCurrency(changeDue)}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Payment Reference (Non-cash) */}
-                                {selectedPaymentMethod !== 'Cash' && (
-                                    <div className="mt-3">
-                                        <input
-                                            type="text"
-                                            placeholder="Payment reference"
-                                            className="w-full rounded-xl border-2 border-outline-variant bg-white px-4 py-3 text-sm text-on-surface"
-                                        />
-                                    </div>
-                                )}
-
-                                {/* Action Buttons */}
-                                <div className="mt-4 flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={onClear}
-                                        className="flex-1 rounded-2xl border-2 border-outline-variant py-3 text-sm font-bold text-on-surface-variant hover:bg-surface-container transition"
-                                    >
-                                        Clear
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={onSaveDraft}
-                                        disabled={cart.length === 0}
-                                        className="flex-1 rounded-2xl border-2 border-outline-variant py-3 text-sm font-bold text-on-surface-variant hover:bg-surface-container transition disabled:opacity-50"
-                                    >
-                                        Draft
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={processing || cart.length === 0}
-                                        className="flex-[2] rounded-2xl bg-primary py-4 text-sm font-extrabold text-white hover:bg-primary/90 transition disabled:opacity-50 shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
-                                    >
-                                        <span>Charge</span>
-                                        <span>{formatCurrency(total)}</span>
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </form>
+            <div
+                className={`fixed inset-x-0 bottom-0 z-50 transition-transform duration-300 md:hidden ${
+                    isCartOpen ? 'translate-y-0' : 'translate-y-full'
+                }`}
+            >
+                <div className="max-h-[calc(100dvh-3rem)] overflow-hidden rounded-t-[2rem] border border-outline-variant bg-surface-container-lowest shadow-2xl shadow-slate-900/20">
+                    {content(true)}
+                </div>
             </div>
+
+            <div className="hidden h-full md:flex md:flex-col">{content(false)}</div>
         </>
     );
 }
@@ -349,7 +396,6 @@ export default function Checkout({
     currentShift,
     draftOrders,
 }) {
-    const { auth } = usePage().props;
     const [activeCategoryId, setActiveCategoryId] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState([]);
@@ -651,7 +697,7 @@ export default function Checkout({
             )}
 
             {/* Main Content Grid - Products only */}
-            <div className="flex flex-1 flex-col overflow-hidden p-6 gap-4">
+            <div className="flex flex-1 flex-col gap-4 overflow-hidden p-4 pb-24 sm:p-6">
                 {/* Section: Draft Orders */}
                 {draftOrders.length > 0 && (
                     <div className="flex-shrink-0 rounded-2xl border border-outline-variant bg-white p-4">
@@ -728,7 +774,7 @@ export default function Checkout({
                             </button>
                         )}
                     </div>
-                    <div className="flex gap-2 overflow-x-auto pb-2">
+                    <div className="touch-scroll flex gap-2 overflow-x-auto pb-2 pr-4">
                         <button
                             type="button"
                             onClick={() => setActiveCategoryId('all')}
@@ -771,7 +817,7 @@ export default function Checkout({
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                             {filteredProducts.map((product) => (
                                 <button
                                     key={product.id}

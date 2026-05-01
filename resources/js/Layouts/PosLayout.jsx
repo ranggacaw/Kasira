@@ -1,53 +1,39 @@
-import AppSidebar from '@/Components/AppSidebar';
+import PwaInstallPrompt from '@/Components/PwaInstallPrompt';
 import SelectInput from '@/Components/SelectInput';
-import { Link, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { Link } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 export default function PosLayout({
     title,
-    subtitle,
-    actions,
     children,
     cart,
     currentOutlet,
     outlets = [],
     onOutletChange,
     currentShift,
-    activeNav = 'new-sale',
 }) {
-    const { auth, subscription } = usePage().props;
     const [isFullscreen, setIsFullscreen] = useState(false);
-
-    const initials = useMemo(
-        () =>
-            (auth.user?.name || 'K')
-                .split(' ')
-                .map((part) => part[0])
-                .join('')
-                .slice(0, 2)
-                .toUpperCase(),
-        [auth.user?.name],
-    );
-
-    const formatCurrency = (value) =>
-        new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0,
-        }).format(value || 0);
-
-    const canManageCatalog = auth.user?.abilities?.catalog ?? false;
+    const [isOnline, setIsOnline] = useState(true);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
             setIsFullscreen(Boolean(document.fullscreenElement));
         };
 
+        const setOnline = () => setIsOnline(true);
+        const setOffline = () => setIsOnline(false);
+
         handleFullscreenChange();
+        setIsOnline(window.navigator.onLine);
+
         document.addEventListener('fullscreenchange', handleFullscreenChange);
+        window.addEventListener('online', setOnline);
+        window.addEventListener('offline', setOffline);
 
         return () => {
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            window.removeEventListener('online', setOnline);
+            window.removeEventListener('offline', setOffline);
         };
     }, []);
 
@@ -68,55 +54,28 @@ export default function PosLayout({
         }
     };
 
-    const navigation = [
-        { name: 'New Sale', href: route('pos.index'), icon: 'M4 6h16M4 12h16M4 18h16', key: 'new-sale', active: activeNav === 'new-sale' },
-        { name: 'Transactions', href: route('transactions.index'), icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', key: 'transactions', active: activeNav === 'transactions' },
-        ...(canManageCatalog ? [{ name: 'Products', href: route('products.index'), icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', key: 'products', active: activeNav === 'products' }] : []),
-        { name: 'Customers', href: route('operations.index'), icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', key: 'customers', active: activeNav === 'customers' },
-    ];
-
-    const footerItems = [
-        {
-            key: 'logout',
-            name: 'Log out',
-            href: route('logout'),
-            method: 'post',
-            as: 'button',
-            icon: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
-        },
-    ];
-
-    const shiftBalance = currentShift?.closing_balance || 0;
     const isShiftOpen = !!currentShift;
 
     return (
-        <div className="flex h-screen overflow-hidden bg-surface">
-            {/* Sidebar */}
-            {!isFullscreen && (
-                <AppSidebar
-                    className="w-20 flex-shrink-0 lg:w-64"
-                    brandHref={route('pos.index')}
-                    initials={initials}
-                    brandTitle="Kasira"
-                    brandSubtitle="Point of Sale"
-                    userName={auth.user?.name}
-                    roleName={auth.user?.role?.name}
-                    planName={subscription?.plan}
-                    navigation={navigation}
-                    footerItems={footerItems}
-                />
+        <div className="h-screen flex flex-col overflow-hidden bg-surface text-on-surface">
+            <PwaInstallPrompt />
+
+            {!isOnline && (
+                <div className="safe-area-x bg-secondary-container px-4 py-3 text-sm font-medium text-on-secondary-container">
+                    Offline mode: cached pages stay available, but payment sync and live receipt actions wait for reconnection.
+                </div>
             )}
 
-            {/* Main Content */}
-            <main className="flex flex-1 flex-col overflow-hidden">
-                {/* Header Bar */}
-                <header className="flex h-16 shrink-0 items-center justify-between border-b border-outline-variant bg-white px-6">
-                    <div className="flex items-center gap-4">
+            {/* Section: Compact Header */}
+            <header className="safe-area-top sticky top-0 z-30 border-b border-outline-variant bg-surface-container-lowest/95 backdrop-blur">
+                <div className="safe-area-x flex items-center justify-between gap-3 px-4 py-3">
+                    {/* Left: Outlet + Shift */}
+                    <div className="flex items-center gap-2 min-w-0">
                         {outlets.length > 0 ? (
                             <SelectInput
                                 value={currentOutlet}
                                 onChange={(e) => onOutletChange?.(e.target.value)}
-                                className="rounded-lg border border-outline-variant bg-surface-container px-4 py-2 text-sm font-medium text-on-surface"
+                                className="rounded-full border border-outline-variant bg-surface-container px-3 py-2 text-xs font-semibold text-on-surface"
                             >
                                 {outlets.map((outlet) => (
                                     <option key={outlet.id} value={outlet.id}>
@@ -125,58 +84,99 @@ export default function PosLayout({
                                 ))}
                             </SelectInput>
                         ) : (
-                            <span className="text-sm text-on-surface-variant">
-                                {title}
+                            <span className="rounded-full bg-surface-container px-3 py-2 text-xs font-semibold text-on-surface">
+                                {currentOutlet?.name || title}
                             </span>
                         )}
+
                         {currentShift && (
-                            <span className="hidden text-xs text-on-surface-variant sm:inline">
-                                Shift: {isShiftOpen ? 'Open' : 'Closed'} • {formatCurrency(shiftBalance)}
+                            <span className="rounded-full bg-secondary-container px-3 py-2 text-xs font-semibold text-on-secondary-container">
+                                Shift {isShiftOpen ? 'open' : 'closed'}
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center gap-3">
+
+                    {/* Section: Icon Nav */}
+                    <div className="flex items-center gap-1">
+                        <Link
+                            href={route('dashboard')}
+                            className="touch-target flex h-11 w-11 items-center justify-center rounded-xl border border-outline bg-surface-container-lowest text-on-surface-variant transition hover:bg-surface-container md:hidden"
+                        >
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12h18M13 6l6 6-6 6" />
+                            </svg>
+                        </Link>
+                        <Link
+                            href={route('transactions.index')}
+                            className="touch-target hidden h-11 w-11 items-center justify-center rounded-xl border border-outline bg-surface-container-lowest text-on-surface-variant transition hover:bg-surface-container md:flex"
+                        >
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                        </Link>
                         <button
                             type="button"
                             onClick={handleFullscreenToggle}
-                            className="rounded-lg px-3 py-2 text-sm font-medium text-on-surface transition hover:bg-surface-container hover:text-primary"
+                            className="touch-target flex h-11 w-11 items-center justify-center rounded-xl border border-outline bg-surface-container-lowest text-on-surface-variant transition hover:bg-surface-container"
                         >
-                            {isFullscreen ? 'Exit full size' : 'Full size'}
-                        </button>
-                        <button className="relative rounded-lg p-2 hover:bg-surface-container transition">
-                            <svg className="h-5 w-5 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                             </svg>
-                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"></span>
                         </button>
-                        <Link href={route('transactions.index')} className="text-sm font-medium text-on-surface hover:text-primary transition">
-                            View receipts
-                        </Link>
                     </div>
-                </header>
+                </div>
 
-                {/* Actions Bar */}
-                {actions && (
-                    <div className="flex shrink-0 items-center gap-3 border-outline-variant bg-surface-container-low">
-                        {actions}
-                    </div>
-                )}
+                {/* Section: Title Row */}
+                <div className="px-4 pb-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                        Cashier workspace
+                    </p>
+                    <h1 className="text-xl font-semibold text-on-surface sm:text-2xl">
+                        {title}
+                    </h1>
+                </div>
+            </header>
 
-                {/* Page Content */}
-                <div className={`flex flex-1 overflow-hidden ${cart ? '' : ''}`}>
-                    {/* Left: Main Content Area */}
-                    <div className="flex-1 overflow-hidden">
+            {/* Section: Main Content */}
+            <main className={`min-h-0 flex-1 flex flex-col pb-20 md:pb-0`}>
+                <div className="flex flex-1 flex-col md:flex-row min-h-0">
+                    <div className="min-w-0 flex-1 flex flex-col overflow-y-auto">
                         {children}
                     </div>
 
-                    {/* Right: Cart Panel */}
                     {cart && (
-                        <aside className="flex w-[28rem] flex-shrink-0 flex-col border-l border-outline-variant bg-white">
+                        /* Section: Cart Panel — Tablet+ */
+                        <aside className="hidden md:order-last md:flex md:w-[40rem] md:flex-col md:border-l md:border-outline-variant md:bg-surface-container-lowest">
                             {cart}
                         </aside>
                     )}
                 </div>
             </main>
+
+            {cart && (
+                /* Section: Bottom Cart Bar — Mobile */
+                <div className="fixed inset-x-0 bottom-0 z-40 border-t border-outline-variant bg-surface-container-lowest shadow-[-4px_20px_rgba(0,0,0,0.1)] md:hidden">
+                    <div className="safe-area-x flex h-[72px] items-center justify-between gap-3 px-4">
+                        <Link
+                            href={route('transactions.index')}
+                            className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-on-primary"
+                        >
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 5M17 13l2.4 5M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                            </svg>
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-xs text-on-surface-variant truncate">{title} • View cart</p>
+                        </div>
+                        <Link
+                            href={route('transactions.index')}
+                            className="touch-target flex h-14 max-w-48 flex-1 items-center justify-center rounded-2xl bg-primary text-base font-bold text-on-primary shadow-lg shadow-primary/30"
+                        >
+                            Checkout
+                        </Link>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

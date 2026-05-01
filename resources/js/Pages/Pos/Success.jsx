@@ -28,11 +28,10 @@ export default function Success({
         <PosLayout
             title="Sale completed"
             subtitle={`Transaction ${transaction.invoice_number} is ready for receipt handoff.`}
-            className=""
         >
             <Head title="Transaction Success" />
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-4 pb-24 sm:p-6">
                 {/* Success Header Card */}
                 <section className="rounded-2xl border border-outline-variant bg-white p-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -47,7 +46,7 @@ export default function Success({
                                 <h2 className="text-xl font-bold text-on-surface">{transaction.invoice_number}</h2>
                             </div>
                         </div>
-                        <div className="text-right">
+                        <div className="sm:text-right">
                             <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Total Collected</p>
                             <p className="text-2xl font-extrabold text-primary">{formatCurrency(transaction.total)}</p>
                         </div>
@@ -63,12 +62,12 @@ export default function Success({
                                 {receiptSettings.header}
                             </div>
                         )}
-                        <div className="mb-4 flex items-center justify-between">
+                        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <h3 className="text-lg font-bold text-on-surface">Receipt</h3>
                             <button
                                 type="button"
                                 onClick={() => window.print()}
-                                className="flex items-center gap-2 rounded-lg border border-outline-variant bg-white px-4 py-2 text-sm font-medium text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface"
+                                className="touch-target inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant bg-white px-4 py-2 text-sm font-medium text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface"
                             >
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -82,7 +81,7 @@ export default function Success({
                             {transaction.items.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="flex items-center justify-between p-4 transition hover:bg-surface-container-low"
+                                    className="flex flex-col gap-3 p-4 transition hover:bg-surface-container-low sm:flex-row sm:items-center sm:justify-between"
                                 >
                                     <div className="min-w-0">
                                         <p className="font-semibold text-on-surface">{item.product?.name}</p>
@@ -142,13 +141,13 @@ export default function Success({
                             <div className="space-y-3">
                                 <Link
                                     href={route('pos.index')}
-                                    className="block rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-primary/90 hover:-translate-y-0.5 active:scale-[0.98] shadow-lg shadow-primary/20"
+                                    className="touch-target block rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 hover:-translate-y-0.5 active:scale-[0.98]"
                                 >
                                     Start Another Sale
                                 </Link>
                                 <Link
                                     href={route('transactions.download', transaction.id)}
-                                    className="block rounded-xl border-2 border-outline-variant bg-white px-4 py-3 text-center text-sm font-semibold text-on-surface transition hover:bg-surface-container hover:border-primary/30 active:scale-[0.98]"
+                                    className="touch-target block rounded-xl border-2 border-outline-variant bg-white px-4 py-3 text-center text-sm font-semibold text-on-surface transition hover:border-primary/30 hover:bg-surface-container active:scale-[0.98]"
                                 >
                                     Download PDF
                                 </Link>
@@ -176,7 +175,7 @@ export default function Success({
                                             }
                                         }
                                     }}
-                                    className="w-full rounded-xl border-2 border-outline-variant bg-white px-4 py-3 text-sm font-semibold transition hover:bg-surface-container hover:text-on-surface active:scale-[0.98] text-on-surface-variant"
+                                    className="touch-target w-full rounded-xl border-2 border-outline-variant bg-white px-4 py-3 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface active:scale-[0.98]"
                                 >
                                     {shareCopied ? 'Link Copied!' : 'Share Receipt Link'}
                                 </button>
@@ -241,7 +240,7 @@ export default function Success({
                                 <button
                                     type="submit"
                                     disabled={receiptForm.processing}
-                                    className="w-full rounded-xl bg-surface-container px-4 py-3 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-high active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="touch-target w-full rounded-xl bg-surface-container px-4 py-3 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-high active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {receiptForm.processing ? 'Logging...' : 'Log Delivery'}
                                 </button>

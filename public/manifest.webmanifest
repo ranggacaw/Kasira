@@ -1,16 +1,40 @@
 {
     "name": "Kasira POS",
     "short_name": "Kasira",
-    "start_url": "/dashboard",
+    "id": "/?source=pwa",
+    "start_url": "/dashboard?source=pwa",
+    "scope": "/",
+    "display_override": ["window-controls-overlay", "standalone"],
     "display": "standalone",
+    "orientation": "portrait",
     "background_color": "#ffffff",
     "theme_color": "#0f172a",
     "description": "Kasira business operations and POS workspace.",
+    "categories": ["business", "productivity", "shopping"],
     "icons": [
         {
-            "src": "/favicon.ico",
-            "sizes": "48x48",
-            "type": "image/x-icon"
+            "src": "/icons/kasira-icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/kasira-maskable.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Open dashboard",
+            "short_name": "Dashboard",
+            "url": "/dashboard"
+        },
+        {
+            "name": "Start sale",
+            "short_name": "POS",
+            "url": "/pos"
         }
     ]
 }
