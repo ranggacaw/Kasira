@@ -31,14 +31,14 @@ export default function Login({ status, canResetPassword }) {
                 </div>
             )}
 
-            <div className="mb-6">
+            <div className="mb-8">
                 <h2 className="text-2xl font-semibold text-on-surface">Welcome back</h2>
                 <p className="mt-2 text-sm text-on-surface-variant">
                     Sign in to continue with back-office and cashier workflows.
                 </p>
             </div>
 
-            <form onSubmit={submit}>
+            <form onSubmit={submit} className="space-y-5">
                 <div>
                     <InputLabel htmlFor="email" value="Email" />
 
@@ -56,7 +56,7 @@ export default function Login({ status, canResetPassword }) {
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
+                <div>
                     <InputLabel htmlFor="password" value="Password" />
 
                     <TextInput
@@ -72,8 +72,8 @@ export default function Login({ status, canResetPassword }) {
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="mt-4 block">
-                    <label className="flex items-center">
+                <div className="flex items-center justify-between">
+                    <label className="flex cursor-pointer items-center gap-2">
                         <Checkbox
                             name="remember"
                             checked={data.remember}
@@ -81,19 +81,27 @@ export default function Login({ status, canResetPassword }) {
                                 setData('remember', e.target.checked)
                             }
                         />
-                        <span className="ms-2 text-sm text-on-surface-variant">
+                        <span className="text-sm text-on-surface-variant">
                             Remember me
                         </span>
                     </label>
-                </div>
-
-                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="rounded-md text-sm text-on-surface-variant underline hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                            className="text-sm text-on-surface-variant underline hover:text-on-surface"
                         >
-                            Forgot your password?
+                            Forgot password?
+                        </Link>
+                    )}
+                </div>
+
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    {canResetPassword && (
+                        <Link
+                            href={route('password.request')}
+                            className="text-sm text-on-surface-variant underline hover:text-on-surface"
+                        >
+                            Forgot password?
                         </Link>
                     )}
 

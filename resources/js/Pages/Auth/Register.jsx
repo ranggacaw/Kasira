@@ -25,14 +25,14 @@ export default function Register() {
         <GuestLayout>
             <Head title="Register" />
 
-            <div className="mb-6">
+            <div className="mb-8">
                 <h2 className="text-2xl font-semibold text-on-surface">Create your account</h2>
                 <p className="mt-2 text-sm text-on-surface-variant">
                     Set up the first Kasira operator and start configuring your workspace.
                 </p>
             </div>
 
-            <form onSubmit={submit}>
+            <form onSubmit={submit} className="space-y-5">
                 <div>
                     <InputLabel htmlFor="name" value="Name" />
 
@@ -50,7 +50,7 @@ export default function Register() {
                     <InputError message={errors.name} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
+                <div>
                     <InputLabel htmlFor="email" value="Email" />
 
                     <TextInput
@@ -67,7 +67,7 @@ export default function Register() {
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
+                <div>
                     <InputLabel htmlFor="password" value="Password" />
 
                     <TextInput
@@ -84,7 +84,7 @@ export default function Register() {
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
+                <div>
                     <InputLabel
                         htmlFor="password_confirmation"
                         value="Confirm Password"
@@ -109,10 +109,10 @@ export default function Register() {
                     />
                 </div>
 
-                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
                     <Link
                         href={route('login')}
-                        className="rounded-md text-sm text-on-surface-variant underline hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                        className="text-sm text-on-surface-variant underline hover:text-on-surface"
                     >
                         Already registered?
                     </Link>

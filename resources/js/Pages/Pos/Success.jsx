@@ -38,11 +38,91 @@ export default function Success({
         : 0;
 
     return (
-        <PosLayout
-            title="Sale completed"
-            subtitle={`Transaction ${transaction.invoice_number} is ready for receipt handoff.`}
-        >
+        <>
             <Head title="Transaction Success" />
+
+            {/* Thermal Print Receipt - Only visible when printing */}
+            <div className="hidden print:block w-full bg-white p-0 font-mono text-sm text-black">
+                {/* Header */}
+                <div className="mb-6 text-center">
+                    <h2 className="mb-2 text-2xl font-bold uppercase tracking-wider">Kasira</h2>
+                    <h2 className="mb-2 text-lg font-bold uppercase tracking-wider">Order Receipt</h2>
+                    <p className="text-xs">#{transaction.invoice_number}</p>
+                    {receiptSettings.header && (
+                        <div className="mt-4 whitespace-pre-wrap text-xs">
+                            {receiptSettings.header}
+                        </div>
+                    )}
+                </div>
+
+                {/* Table Header */}
+                <div className="mb-2 flex border-b border-dashed border-gray-400 pb-2 text-xs font-bold uppercase">
+                    <div className="w-8 text-left">Qty</div>
+                    <div className="flex-1 px-2 text-left">Item</div>
+                    <div className="w-24 text-right">Cost</div>
+                </div>
+
+                {/* Items */}
+                <div className="mb-4 space-y-3 text-xs">
+                    {transaction.items.map((item) => (
+                        <div key={item.id} className="flex items-start">
+                            <div className="w-8 text-left">{item.quantity}</div>
+                            <div className="flex-1 px-2 text-left">
+                                <div>{item.name}</div>
+                                {item.quantity > 1 && (
+                                    <div className="mt-0.5 text-gray-600">
+                                        @ {formatCurrency(item.unit_price)}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="w-24 text-right">{formatCurrency(item.subtotal)}</div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Totals */}
+                <div className="mb-6 border-t border-dashed border-gray-400 pt-4 space-y-2 text-xs">
+                    <div className="flex justify-end gap-4">
+                        <span className="w-24 text-right">Subtotal:</span>
+                        <span className="w-24 text-right">{formatCurrency(transaction.subtotal)}</span>
+                    </div>
+                    {transaction.discount_amount > 0 && (
+                        <div className="flex justify-end gap-4">
+                            <span className="w-24 text-right">Discount:</span>
+                            <span className="w-24 text-right">-{formatCurrency(transaction.discount_amount)}</span>
+                        </div>
+                    )}
+                    {transaction.tax_amount > 0 && (
+                        <div className="flex justify-end gap-4">
+                            <span className="w-24 text-right">Tax:</span>
+                            <span className="w-24 text-right">{formatCurrency(transaction.tax_amount)}</span>
+                        </div>
+                    )}
+                    {transaction.service_fee_amount > 0 && (
+                        <div className="flex justify-end gap-4">
+                            <span className="w-24 text-right">Service Fee:</span>
+                            <span className="w-24 text-right">{formatCurrency(transaction.service_fee_amount)}</span>
+                        </div>
+                    )}
+                    <div className="mt-2 flex justify-end gap-4 border-t border-dashed border-gray-400 pt-2 font-bold text-sm">
+                        <span className="w-24 text-right uppercase">Total:</span>
+                        <span className="w-24 text-right">{formatCurrency(transaction.total)}</span>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="text-center text-xs">
+                    <p className="mb-2 tracking-widest">************************</p>
+                    <p className="font-bold uppercase whitespace-pre-wrap">{receiptSettings.footer || 'Thank You!'}</p>
+                    <p className="mt-2 tracking-widest">************************</p>
+                </div>
+            </div>
+
+            <div className="print:hidden contents">
+                <PosLayout
+                    title="Sale completed"
+                    subtitle={`Transaction ${transaction.invoice_number} is ready for receipt handoff.`}
+                >
 
             <div className="space-y-6 p-4 pb-24 sm:p-6">
                 {/* Success Header Card */}
@@ -293,6 +373,8 @@ export default function Success({
                     </section>
                 </div>
             </div>
-        </PosLayout>
+            </PosLayout>
+            </div>
+        </>
     );
 }
