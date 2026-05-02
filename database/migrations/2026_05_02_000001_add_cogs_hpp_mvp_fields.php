@@ -9,33 +9,59 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->decimal('minimum_margin', 5, 2)->nullable()->after('cost_price');
-        });
+        if (! Schema::hasColumn('products', 'minimum_margin')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->decimal('minimum_margin', 5, 2)->nullable()->after('cost_price');
+            });
+        }
 
-        Schema::table('app_settings', function (Blueprint $table) {
-            $table->decimal('default_minimum_product_margin', 5, 2)->default(20)->after('enabled_payment_methods');
-        });
+        if (! Schema::hasColumn('app_settings', 'default_minimum_product_margin')) {
+            Schema::table('app_settings', function (Blueprint $table) {
+                $table->decimal('default_minimum_product_margin', 5, 2)->default(20)->after('enabled_payment_methods');
+            });
+        }
 
         Schema::table('transaction_items', function (Blueprint $table) {
-            $table->string('product_name_snapshot')->nullable()->after('product_id');
-            $table->decimal('selling_price_snapshot', 12, 2)->nullable()->after('subtotal');
-            $table->decimal('cost_price_snapshot', 12, 2)->nullable()->after('selling_price_snapshot');
-            $table->decimal('subtotal_revenue_snapshot', 12, 2)->nullable()->after('cost_price_snapshot');
-            $table->decimal('subtotal_cost_snapshot', 12, 2)->nullable()->after('subtotal_revenue_snapshot');
-            $table->decimal('gross_profit_snapshot', 12, 2)->nullable()->after('subtotal_cost_snapshot');
-            $table->decimal('gross_margin_snapshot', 8, 2)->nullable()->after('gross_profit_snapshot');
+            if (! Schema::hasColumn('transaction_items', 'product_name_snapshot')) {
+                $table->string('product_name_snapshot')->nullable()->after('product_id');
+            }
+
+            if (! Schema::hasColumn('transaction_items', 'selling_price_snapshot')) {
+                $table->decimal('selling_price_snapshot', 12, 2)->nullable()->after('subtotal');
+            }
+
+            if (! Schema::hasColumn('transaction_items', 'cost_price_snapshot')) {
+                $table->decimal('cost_price_snapshot', 12, 2)->nullable()->after('selling_price_snapshot');
+            }
+
+            if (! Schema::hasColumn('transaction_items', 'subtotal_revenue_snapshot')) {
+                $table->decimal('subtotal_revenue_snapshot', 12, 2)->nullable()->after('cost_price_snapshot');
+            }
+
+            if (! Schema::hasColumn('transaction_items', 'subtotal_cost_snapshot')) {
+                $table->decimal('subtotal_cost_snapshot', 12, 2)->nullable()->after('subtotal_revenue_snapshot');
+            }
+
+            if (! Schema::hasColumn('transaction_items', 'gross_profit_snapshot')) {
+                $table->decimal('gross_profit_snapshot', 12, 2)->nullable()->after('subtotal_cost_snapshot');
+            }
+
+            if (! Schema::hasColumn('transaction_items', 'gross_margin_snapshot')) {
+                $table->decimal('gross_margin_snapshot', 8, 2)->nullable()->after('gross_profit_snapshot');
+            }
         });
 
-        Schema::create('product_cost_histories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->decimal('previous_cost_price', 12, 2);
-            $table->decimal('new_cost_price', 12, 2);
-            $table->string('change_reason')->nullable();
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('product_cost_histories')) {
+            Schema::create('product_cost_histories', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->decimal('previous_cost_price', 12, 2);
+                $table->decimal('new_cost_price', 12, 2);
+                $table->string('change_reason')->nullable();
+                $table->timestamps();
+            });
+        }
 
         DB::table('app_settings')->update([
             'default_minimum_product_margin' => 20,
@@ -75,24 +101,32 @@ return new class extends Migration
     {
         Schema::dropIfExists('product_cost_histories');
 
-        Schema::table('transaction_items', function (Blueprint $table) {
-            $table->dropColumn([
-                'product_name_snapshot',
-                'selling_price_snapshot',
-                'cost_price_snapshot',
-                'subtotal_revenue_snapshot',
-                'subtotal_cost_snapshot',
-                'gross_profit_snapshot',
-                'gross_margin_snapshot',
-            ]);
-        });
+        $transactionItemColumns = array_values(array_filter([
+            Schema::hasColumn('transaction_items', 'product_name_snapshot') ? 'product_name_snapshot' : null,
+            Schema::hasColumn('transaction_items', 'selling_price_snapshot') ? 'selling_price_snapshot' : null,
+            Schema::hasColumn('transaction_items', 'cost_price_snapshot') ? 'cost_price_snapshot' : null,
+            Schema::hasColumn('transaction_items', 'subtotal_revenue_snapshot') ? 'subtotal_revenue_snapshot' : null,
+            Schema::hasColumn('transaction_items', 'subtotal_cost_snapshot') ? 'subtotal_cost_snapshot' : null,
+            Schema::hasColumn('transaction_items', 'gross_profit_snapshot') ? 'gross_profit_snapshot' : null,
+            Schema::hasColumn('transaction_items', 'gross_margin_snapshot') ? 'gross_margin_snapshot' : null,
+        ]));
 
-        Schema::table('app_settings', function (Blueprint $table) {
-            $table->dropColumn('default_minimum_product_margin');
-        });
+        if ($transactionItemColumns !== []) {
+            Schema::table('transaction_items', function (Blueprint $table) use ($transactionItemColumns) {
+                $table->dropColumn($transactionItemColumns);
+            });
+        }
 
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('minimum_margin');
-        });
+        if (Schema::hasColumn('app_settings', 'default_minimum_product_margin')) {
+            Schema::table('app_settings', function (Blueprint $table) {
+                $table->dropColumn('default_minimum_product_margin');
+            });
+        }
+
+        if (Schema::hasColumn('products', 'minimum_margin')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->dropColumn('minimum_margin');
+            });
+        }
     }
 };

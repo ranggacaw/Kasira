@@ -1,8 +1,4 @@
-# user-access-management Specification
-
-## Purpose
-TBD - created by archiving change add-business-modules. Update Purpose after archive.
-## Requirements
+## MODIFIED Requirements
 ### Requirement: User Administration
 Kasira SHALL allow authorized business users to create, update, and deactivate staff accounts for operational access. Owner and admin users SHALL be able to create, edit, activate, deactivate, and assign outlet-scoped staff accounts, including cashier accounts, from the operations management workflow.
 
@@ -44,15 +40,3 @@ Kasira SHALL enforce role-based access for Owner, Admin, Manager, and Cashier wo
 #### Scenario: Cashier requests staff administration
 - **WHEN** a cashier requests the operations workflow for staff administration
 - **THEN** the application denies access
-
-### Requirement: Role-Based Landing Pages
-Kasira SHALL route users to a role-appropriate landing page after authentication.
-
-#### Scenario: Cashier signs in
-- **WHEN** an authenticated cashier completes login
-- **THEN** the application redirects the cashier to `/pos`
-
-#### Scenario: Owner, admin, or manager signs in
-- **WHEN** an authenticated owner, admin, or manager completes login
-- **THEN** the application redirects the user to `/dashboard`
-

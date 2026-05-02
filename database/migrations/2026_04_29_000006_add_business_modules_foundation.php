@@ -126,9 +126,11 @@ return new class extends Migration
             $table->foreignId('cashier_shift_id')->nullable()->after('voucher_id')->constrained('cashier_shifts')->nullOnDelete();
         });
 
-        Schema::table('transaction_items', function (Blueprint $table) {
-            $table->decimal('unit_cost', 12, 2)->default(0)->after('unit_price');
-        });
+        if (! Schema::hasColumn('transaction_items', 'unit_cost')) {
+            Schema::table('transaction_items', function (Blueprint $table) {
+                $table->decimal('unit_cost', 12, 2)->default(0)->after('unit_price');
+            });
+        }
 
         Schema::create('receipt_deliveries', function (Blueprint $table) {
             $table->id();
@@ -178,10 +180,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('receipt_deliveries');
-
-        Schema::table('transaction_items', function (Blueprint $table) {
-            $table->dropColumn('unit_cost');
-        });
 
         Schema::table('transactions', function (Blueprint $table) {
             $table->dropConstrainedForeignId('cashier_shift_id');

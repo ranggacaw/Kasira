@@ -20,6 +20,17 @@ class DatabaseSeederTest extends TestCase
 
         $this->assertDatabaseHas('users', ['email' => 'owner@kasira.test']);
         $this->assertDatabaseHas('users', ['email' => 'admin@kasira.test']);
+        $this->assertDatabaseHas('users', ['email' => 'manager@kasira.test']);
+        $this->assertDatabaseHas('users', ['email' => 'cashier@kasira.test']);
+    }
+
+    public function test_staff_accounts_seeder_can_seed_default_role_users_directly(): void
+    {
+        $this->seed(\Database\Seeders\StaffAccountsSeeder::class);
+
+        $this->assertDatabaseHas('users', ['email' => 'owner@kasira.test']);
+        $this->assertDatabaseHas('users', ['email' => 'admin@kasira.test']);
+        $this->assertDatabaseHas('users', ['email' => 'manager@kasira.test']);
         $this->assertDatabaseHas('users', ['email' => 'cashier@kasira.test']);
     }
 }

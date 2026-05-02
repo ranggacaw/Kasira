@@ -6,12 +6,8 @@ use App\Models\Category;
 use App\Models\Outlet;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Models\Role;
-use App\Models\Subscription;
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,23 +18,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $roles = collect(Role::names())
-            ->mapWithKeys(fn (string $name) => [
-                $name => Role::query()->firstOrCreate(['name' => $name]),
-            ]);
+        $this->call(StaffAccountsSeeder::class);
 
-        $outlet = Outlet::query()->firstOrCreate(
-            ['code' => 'MAIN'],
-            [
-                'name' => 'Main Outlet',
-                'is_active' => true,
-                'is_primary' => true,
-            ],
-        );
-
-        $subscription = Subscription::current();
-        $subscription->billing_email = 'owner@kasira.test';
-        $subscription->save();
+        $outlet = Outlet::query()->where('code', 'MAIN')->firstOrFail();
 
         $categories = collect([
             ['name' => 'Coffee'],
@@ -47,54 +29,6 @@ class DatabaseSeeder extends Seeder
         ])->mapWithKeys(fn (array $category) => [
             $category['name'] => Category::query()->firstOrCreate(['name' => $category['name']], $category),
         ]);
-
-        User::query()->updateOrCreate(
-            ['email' => 'owner@kasira.test'],
-            [
-                'name' => 'Kasira Owner',
-                'email_verified_at' => now(),
-                'password' => Hash::make('password'),
-                'is_active' => true,
-                'role_id' => $roles[Role::OWNER]->id,
-                'outlet_id' => $outlet->id,
-            ],
-        );
-
-        User::query()->updateOrCreate(
-            ['email' => 'admin@kasira.test'],
-            [
-                'name' => 'Kasira Admin',
-                'email_verified_at' => now(),
-                'password' => Hash::make('password'),
-                'is_active' => true,
-                'role_id' => $roles[Role::ADMIN]->id,
-                'outlet_id' => $outlet->id,
-            ],
-        );
-
-        User::query()->updateOrCreate(
-            ['email' => 'manager@kasira.test'],
-            [
-                'name' => 'Kasira Manager',
-                'email_verified_at' => now(),
-                'password' => Hash::make('password'),
-                'is_active' => true,
-                'role_id' => $roles[Role::MANAGER]->id,
-                'outlet_id' => $outlet->id,
-            ],
-        );
-
-        User::query()->updateOrCreate(
-            ['email' => 'cashier@kasira.test'],
-            [
-                'name' => 'Kasira Cashier',
-                'email_verified_at' => now(),
-                'password' => Hash::make('password'),
-                'is_active' => true,
-                'role_id' => $roles[Role::CASHIER]->id,
-                'outlet_id' => $outlet->id,
-            ],
-        );
 
         $products = [
             ['name' => 'Espresso', 'sku' => 'ESP001', 'selling_price' => 15000, 'cost_price' => 7000, 'stock_quantity' => 40, 'minimum_stock' => 8, 'category_id' => $categories['Coffee']->id],

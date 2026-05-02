@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,15 +23,20 @@ class OperationsController extends Controller
         abort_unless($user->canManageOperations() || $user->canManageCustomers(), 403);
 
         $subscription = Subscription::current();
+        $manageableRoleNames = $this->manageableStaffRoleNames($user);
 
         return Inertia::render('Operations/Index', [
             'canManageOperations' => $user->canManageOperations(),
             'canManageCustomers' => $user->canManageCustomers(),
             'outlets' => Outlet::query()->orderByDesc('is_primary')->orderBy('name')->get(),
             'staffUsers' => $user->canManageOperations()
-                ? User::query()->with(['role:id,name', 'outlet:id,name'])->orderBy('name')->get()
+                ? User::query()
+                    ->with(['role:id,name', 'outlet:id,name'])
+                    ->whereHas('role', fn ($query) => $query->whereIn('name', $manageableRoleNames))
+                    ->orderBy('name')
+                    ->get()
                 : [],
-            'roles' => Role::query()->orderBy('name')->get(),
+            'roles' => Role::query()->whereIn('name', $manageableRoleNames)->orderBy('name')->get(),
             'customers' => Customer::query()->orderBy('name')->get(),
             'subscription' => $subscription,
             'usage' => [
@@ -94,14 +100,7 @@ class OperationsController extends Controller
     {
         abort_unless($request->user()->canManageOperations(), 403);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
-            'role_id' => ['required', 'exists:roles,id'],
-            'outlet_id' => ['nullable', 'exists:outlets,id'],
-            'is_active' => ['required', 'boolean'],
-        ]);
+        $validated = $this->validateStaffUser($request);
 
         if ($validated['is_active']) {
             $this->ensureUserCapacity();
@@ -119,15 +118,9 @@ class OperationsController extends Controller
     public function updateUser(Request $request, User $user): RedirectResponse
     {
         abort_unless($request->user()->canManageOperations(), 403);
+        $this->ensureCanManageStaffUser($request->user(), $user);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'password' => ['nullable', 'string', 'min:8'],
-            'role_id' => ['required', 'exists:roles,id'],
-            'outlet_id' => ['nullable', 'exists:outlets,id'],
-            'is_active' => ['required', 'boolean'],
-        ]);
+        $validated = $this->validateStaffUser($request, $user);
 
         if (! $user->is_active && $validated['is_active']) {
             $this->ensureUserCapacity();
@@ -176,13 +169,48 @@ class OperationsController extends Controller
         ]);
     }
 
+    protected function validateStaffUser(Request $request, ?User $staffUser = null): array
+    {
+        $manageableRoleIds = Role::query()
+            ->whereIn('name', $this->manageableStaffRoleNames($request->user()))
+            ->pluck('id')
+            ->all();
+
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($staffUser?->id)],
+            'password' => [$staffUser ? 'nullable' : 'required', 'string', 'min:8'],
+            'role_id' => ['required', Rule::exists('roles', 'id')->where(fn ($query) => $query->whereIn('id', $manageableRoleIds))],
+            'outlet_id' => ['nullable', 'exists:outlets,id'],
+            'is_active' => ['required', 'boolean'],
+        ]);
+    }
+
+    protected function manageableStaffRoleNames(User $user): array
+    {
+        if ($user->hasRole(Role::ADMIN)) {
+            return [Role::CASHIER];
+        }
+
+        return Role::names();
+    }
+
+    protected function ensureCanManageStaffUser(User $actor, User $staffUser): void
+    {
+        if ($actor->hasRole(Role::ADMIN) && ! $staffUser->hasRole(Role::CASHIER)) {
+            abort(403);
+        }
+    }
+
     protected function ensureOutletCapacity(): void
     {
         $subscription = Subscription::current();
         $activeOutlets = Outlet::query()->where('is_active', true)->count();
 
         if ($activeOutlets >= $subscription->outlet_limit) {
-            abort(422, 'Your current plan has reached the outlet limit.');
+            throw ValidationException::withMessages([
+                'is_active' => 'Your current plan has reached the outlet limit.',
+            ]);
         }
     }
 
@@ -192,7 +220,9 @@ class OperationsController extends Controller
         $activeUsers = User::query()->where('is_active', true)->count();
 
         if ($activeUsers >= $subscription->user_limit) {
-            abort(422, 'Your current plan has reached the active user limit.');
+            throw ValidationException::withMessages([
+                'is_active' => 'Your current plan has reached the active user limit.',
+            ]);
         }
     }
 }

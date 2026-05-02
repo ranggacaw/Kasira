@@ -23,5 +23,6 @@ Use `@/prompter/AGENTS.md` to learn:
 - Reuse `resources/js/Components/AppSidebar.jsx` for all authenticated app sidebar UI. When creating, recreating, or editing pages/layouts that need a sidebar, extend this shared component instead of building a new sidebar variant.
 - The POS checkout workspace lives under `resources/js/Pages/Pos`, while transaction totals remain authoritative on the server before sales are persisted.
 - The operational authorization model is role-based with `Owner`, `Admin`, `Manager`, and `Cashier` stored in the `roles` table.
+- In the operations workspace, user-facing branch management is implemented through the `outlets` model, and admins are limited to cashier account administration while owners retain broader staff management.
 - Outlet-aware pages should resolve their current outlet from the authenticated user context or the `outlet` query parameter before loading products, stock, transactions, or dashboard metrics.
 - Plan-aware features use the local `subscriptions` table as the source of Starter, Pro, and Business entitlements, including outlet and active-user limits.

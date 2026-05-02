@@ -1,8 +1,4 @@
-# outlet-management Specification
-
-## Purpose
-TBD - created by archiving change add-business-modules. Update Purpose after archive.
-## Requirements
+## MODIFIED Requirements
 ### Requirement: Outlet Administration
 Kasira SHALL support outlet records so businesses can manage one or more physical selling locations within the same account. For operational workflows, branch management SHALL be fulfilled through these outlet records, and owner and admin users SHALL be able to create, update, activate, deactivate, and mark a branch or outlet as primary from the operations management workflow.
 
@@ -25,15 +21,3 @@ Kasira SHALL support outlet records so businesses can manage one or more physica
 #### Scenario: Admin exceeds active outlet capacity
 - **WHEN** an active admin attempts to create or reactivate a branch after the business has reached its active-outlet limit
 - **THEN** the application rejects the request and explains that the current plan limit has been reached
-
-### Requirement: Outlet-Scoped Operations
-Kasira SHALL resolve the active outlet from the authenticated user context or the `outlet` query parameter before loading outlet-aware products, stock balances, transactions, POS data, or dashboard metrics.
-
-#### Scenario: User reviews outlet-specific activity
-- **WHEN** an authorized user filters operational data to a specific outlet
-- **THEN** the application returns only the products, stock, transactions, POS data, and reporting data for that outlet
-
-#### Scenario: User opens an outlet-aware workflow without an explicit filter
-- **WHEN** an authenticated user visits an outlet-aware page without providing the `outlet` query parameter
-- **THEN** the application resolves the current outlet from the signed-in user context before loading the page data
-
