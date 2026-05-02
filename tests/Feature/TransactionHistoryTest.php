@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class TransactionHistoryTest extends TestCase
@@ -88,6 +89,57 @@ class TransactionHistoryTest extends TestCase
         ]);
     }
 
+    public function test_cashier_transaction_detail_hides_profitability_fields(): void
+    {
+        $cashier = $this->createUserWithRole(Role::CASHIER);
+        $product = Product::query()->create([
+            'name' => 'Brownie',
+            'sku' => 'BRN001',
+            'selling_price' => 18000,
+            'cost_price' => 7000,
+            'stock_quantity' => 15,
+            'outlet_id' => $cashier->outlet_id,
+        ]);
+
+        $transaction = $this->createTransaction($cashier, $cashier->outlet_id, $product, Payment::METHOD_CASH, now());
+
+        $this->actingAs($cashier)
+            ->get('/transactions/'.$transaction->id)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Transactions/Show')
+                ->where('transaction.items.0.name', 'Brownie')
+                ->missing('transaction.items.0.cost_price')
+                ->missing('transaction.items.0.gross_profit')
+                ->where('canViewProfitability', false));
+    }
+
+    public function test_manager_transaction_detail_includes_profitability_snapshots(): void
+    {
+        $manager = $this->createUserWithRole(Role::MANAGER);
+        $product = Product::query()->create([
+            'name' => 'Brownie',
+            'sku' => 'BRN001',
+            'selling_price' => 18000,
+            'cost_price' => 7000,
+            'stock_quantity' => 15,
+            'outlet_id' => $manager->outlet_id,
+        ]);
+
+        $transaction = $this->createTransaction($manager, $manager->outlet_id, $product, Payment::METHOD_CASH, now());
+
+        $this->actingAs($manager)
+            ->get('/transactions/'.$transaction->id)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Transactions/Show')
+                ->where('transaction.items.0.name', 'Brownie')
+                ->where('transaction.items.0.cost_price', '7000.00')
+                ->where('transaction.items.0.gross_profit', '18000.00')
+                ->where('transaction.items.0.gross_margin', '72.00')
+                ->where('canViewProfitability', true));
+    }
+
     private function createTransaction(User $cashier, int $outletId, Product $product, string $paymentMethod, \DateTimeInterface $paidAt): Transaction
     {
         $transaction = Transaction::query()->create([
@@ -104,10 +156,17 @@ class TransactionHistoryTest extends TestCase
 
         $transaction->items()->create([
             'product_id' => $product->id,
+            'product_name_snapshot' => $product->name,
             'quantity' => 1,
             'unit_price' => 25000,
             'unit_cost' => $product->cost_price,
             'subtotal' => 25000,
+            'selling_price_snapshot' => 25000,
+            'cost_price_snapshot' => $product->cost_price,
+            'subtotal_revenue_snapshot' => 25000,
+            'subtotal_cost_snapshot' => $product->cost_price,
+            'gross_profit_snapshot' => 25000 - (float) $product->cost_price,
+            'gross_margin_snapshot' => round(((25000 - (float) $product->cost_price) / 25000) * 100, 2),
         ]);
 
         $transaction->payments()->create([

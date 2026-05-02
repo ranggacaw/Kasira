@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Outlet;
 use App\Models\Product;
@@ -9,6 +10,7 @@ use App\Models\StockMovement;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -27,6 +29,133 @@ class CatalogInventoryTest extends TestCase
         $this->actingAs($admin)->get('/products')->assertOk();
         $this->actingAs($manager)->get('/products')->assertOk();
         $this->actingAs($cashier)->get('/products')->assertForbidden();
+    }
+
+    public function test_product_management_exposes_margin_threshold_data_and_records_cost_history(): void
+    {
+        $admin = $this->createUserWithRole(Role::ADMIN);
+        $outlet = Outlet::query()->firstOrFail();
+
+        AppSetting::current()->update([
+            'default_minimum_product_margin' => 32,
+        ]);
+
+        $product = Product::query()->create([
+            'outlet_id' => $outlet->id,
+            'name' => 'Cold Brew',
+            'sku' => 'CB001',
+            'selling_price' => 18000,
+            'cost_price' => 15000,
+            'minimum_margin' => 35,
+            'stock_quantity' => 8,
+            'minimum_stock' => 2,
+            'is_active' => true,
+            'track_stock' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/products?outlet='.$outlet->id)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Products/Index')
+                ->where('defaultMinimumMargin', 32)
+                ->where('products.data.0.minimum_margin', '35.00'));
+
+        $this->actingAs($admin)->patch('/products/'.$product->id, [
+            'outlet_id' => $outlet->id,
+            'category_id' => null,
+            'unit_id' => $product->unit_id,
+            'name' => $product->name,
+            'sku' => $product->sku,
+            'barcode' => null,
+            'selling_price' => 18000,
+            'cost_price' => 16000,
+            'minimum_margin' => 35,
+            'stock_quantity' => 8,
+            'minimum_stock' => 2,
+            'image_path' => null,
+            'is_active' => true,
+            'track_stock' => true,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('product_cost_histories', [
+            'product_id' => $product->id,
+            'changed_by' => $admin->id,
+            'previous_cost_price' => 15000,
+            'new_cost_price' => 16000,
+        ]);
+    }
+
+    public function test_product_management_still_loads_when_cost_history_table_is_missing(): void
+    {
+        $admin = $this->createUserWithRole(Role::ADMIN);
+        $outlet = Outlet::query()->firstOrFail();
+
+        Product::query()->create([
+            'outlet_id' => $outlet->id,
+            'name' => 'Cold Brew',
+            'sku' => 'CB001',
+            'selling_price' => 18000,
+            'cost_price' => 15000,
+            'minimum_margin' => 35,
+            'stock_quantity' => 8,
+            'minimum_stock' => 2,
+            'is_active' => true,
+            'track_stock' => true,
+        ]);
+
+        Schema::drop('product_cost_histories');
+
+        $this->actingAs($admin)
+            ->get('/products?outlet='.$outlet->id)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Products/Index')
+                ->where('recentCostHistories', []));
+    }
+
+    public function test_product_update_still_succeeds_without_minimum_margin_column(): void
+    {
+        $admin = $this->createUserWithRole(Role::ADMIN);
+        $outlet = Outlet::query()->firstOrFail();
+
+        $product = Product::query()->create([
+            'outlet_id' => $outlet->id,
+            'name' => 'Americano',
+            'sku' => 'AME001',
+            'selling_price' => 20000,
+            'cost_price' => 7000,
+            'stock_quantity' => 8,
+            'minimum_stock' => 2,
+            'is_active' => true,
+            'track_stock' => true,
+        ]);
+
+        Schema::table('products', function ($table): void {
+            $table->dropColumn('minimum_margin');
+        });
+
+        $this->actingAs($admin)->patch('/products/'.$product->id, [
+            'outlet_id' => $outlet->id,
+            'category_id' => null,
+            'unit_id' => $product->unit_id,
+            'name' => $product->name,
+            'sku' => $product->sku,
+            'barcode' => null,
+            'selling_price' => 20000,
+            'cost_price' => 8000,
+            'minimum_margin' => 35,
+            'stock_quantity' => 8,
+            'minimum_stock' => 2,
+            'image_path' => null,
+            'is_active' => true,
+            'track_stock' => true,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'cost_price' => 8000,
+        ]);
     }
 
     public function test_admin_can_create_catalog_records_and_record_stock_movements(): void

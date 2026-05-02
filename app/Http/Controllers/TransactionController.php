@@ -10,6 +10,7 @@ use App\Models\ReceiptDelivery;
 use App\Models\StockMovement;
 use App\Models\Subscription;
 use App\Models\Transaction;
+use App\Models\TransactionItem;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -72,6 +73,7 @@ class TransactionController extends Controller
         abort_unless($request->user()->canViewTransactions(), 403);
 
         $subscription = Subscription::current();
+        $canViewProfitability = $request->user()->canViewReports();
 
         $transaction->load([
             'cashier:id,name',
@@ -85,7 +87,7 @@ class TransactionController extends Controller
         ]);
 
         return Inertia::render('Transactions/Show', [
-            'transaction' => $transaction,
+            'transaction' => $this->serializeTransaction($transaction, $canViewProfitability),
             'canSendDigitalReceipts' => $subscription->allowsFeature('connected_receipts'),
             'receiptChannels' => collect(ReceiptDelivery::channels())
                 ->filter(fn (string $channel) => $channel === ReceiptDelivery::CHANNEL_PRINT || $subscription->allowsFeature('connected_receipts'))
@@ -94,6 +96,7 @@ class TransactionController extends Controller
             'receiptSettings' => AppSetting::current(),
             'canRefund' => $transaction->status !== Transaction::STATUS_REFUNDED,
             'canUseThermalPrinting' => $subscription->allowsFeature('thermal_printing'),
+            'canViewProfitability' => $canViewProfitability,
         ]);
     }
 
@@ -185,5 +188,55 @@ class TransactionController extends Controller
         });
 
         return back()->with('success', 'Refund workflow completed.');
+    }
+
+    protected function serializeTransaction(Transaction $transaction, bool $canViewProfitability): array
+    {
+        return [
+            'id' => $transaction->id,
+            'invoice_number' => $transaction->invoice_number,
+            'subtotal' => $transaction->subtotal,
+            'discount_amount' => $transaction->discount_amount,
+            'tax_amount' => $transaction->tax_amount,
+            'service_fee_amount' => $transaction->service_fee_amount,
+            'total' => $transaction->total,
+            'status' => $transaction->status,
+            'paid_at' => optional($transaction->paid_at)->toDateTimeString(),
+            'cashier' => $transaction->cashier,
+            'outlet' => $transaction->outlet,
+            'customer' => $transaction->customer,
+            'promotion' => $transaction->promotion,
+            'voucher' => $transaction->voucher,
+            'payments' => $transaction->payments,
+            'receipt_deliveries' => $transaction->receiptDeliveries,
+            'items' => $transaction->items
+                ->map(fn (TransactionItem $item) => $this->serializeTransactionItem($item, $canViewProfitability))
+                ->values()
+                ->all(),
+        ];
+    }
+
+    protected function serializeTransactionItem(TransactionItem $item, bool $canViewProfitability): array
+    {
+        $serialized = [
+            'id' => $item->id,
+            'name' => $item->product_name_snapshot ?: $item->product?->name,
+            'quantity' => $item->quantity,
+            'unit_price' => $item->selling_price_snapshot ?: $item->unit_price,
+            'subtotal' => $item->subtotal_revenue_snapshot ?: $item->subtotal,
+        ];
+
+        if ($canViewProfitability) {
+            $serialized['cost_price'] = $item->cost_price_snapshot ?: $item->unit_cost;
+            $serialized['subtotal_cost'] = $item->subtotal_cost_snapshot ?: round((float) $item->unit_cost * $item->quantity, 2);
+            $serialized['gross_profit'] = $item->gross_profit_snapshot
+                ?: round((float) $serialized['subtotal'] - (float) $serialized['subtotal_cost'], 2);
+            $serialized['gross_margin'] = $item->gross_margin_snapshot
+                ?: ((float) $serialized['subtotal'] > 0
+                    ? round(((float) $serialized['gross_profit'] / (float) $serialized['subtotal']) * 100, 2)
+                    : 0);
+        }
+
+        return $serialized;
     }
 }

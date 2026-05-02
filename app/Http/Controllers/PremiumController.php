@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesOutletContext;
+use App\Models\Category;
 use App\Models\CashierShift;
 use App\Models\Product;
 use App\Models\Outlet;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Response as ResponseFactory;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -104,6 +106,146 @@ class PremiumController extends Controller
             'recentVouchers' => Voucher::query()->with('outlet:id,name')->latest()->limit(5)->get(),
             'recentShifts' => CashierShift::query()->with(['user:id,name', 'outlet:id,name'])->latest('opened_at')->limit(5)->get(),
             'canManagePremium' => $request->user()->canManagePremium(),
+        ]);
+    }
+
+    public function cogs(Request $request): Response
+    {
+        abort_unless($request->user()->canViewReports(), 403);
+
+        $filters = $request->validate([
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date'],
+            'cashier_id' => ['nullable', 'exists:users,id'],
+            'category_id' => ['nullable', 'exists:categories,id'],
+            'product_id' => ['nullable', 'exists:products,id'],
+            'payment_method' => ['nullable', Rule::in(Payment::methods())],
+            'sort' => ['nullable', Rule::in([
+                'highest_revenue',
+                'highest_profit',
+                'lowest_profit',
+                'highest_margin',
+                'lowest_margin',
+                'most_sold',
+                'least_sold',
+            ])],
+        ]);
+
+        $currentOutlet = $this->resolveCurrentOutlet($request);
+        $filters['date_from'] ??= now()->subDays(29)->toDateString();
+        $filters['date_to'] ??= now()->toDateString();
+        $filters['sort'] ??= 'highest_revenue';
+
+        $hasSellingPriceSnapshot = Schema::hasColumn('transaction_items', 'selling_price_snapshot');
+        $hasCostPriceSnapshot = Schema::hasColumn('transaction_items', 'cost_price_snapshot');
+        $hasRevenueSnapshot = Schema::hasColumn('transaction_items', 'subtotal_revenue_snapshot');
+        $hasCostSnapshot = Schema::hasColumn('transaction_items', 'subtotal_cost_snapshot');
+        $hasProfitSnapshot = Schema::hasColumn('transaction_items', 'gross_profit_snapshot');
+        $hasProductNameSnapshot = Schema::hasColumn('transaction_items', 'product_name_snapshot');
+
+        $revenueExpression = $hasRevenueSnapshot
+            ? 'COALESCE(transaction_items.subtotal_revenue_snapshot, transaction_items.subtotal)'
+            : 'transaction_items.subtotal';
+        $costExpression = $hasCostSnapshot
+            ? 'COALESCE(transaction_items.subtotal_cost_snapshot, transaction_items.quantity * transaction_items.unit_cost)'
+            : '(transaction_items.quantity * transaction_items.unit_cost)';
+        $profitExpression = $hasProfitSnapshot
+            ? 'COALESCE(transaction_items.gross_profit_snapshot, ('.$revenueExpression.' - '.$costExpression.'))'
+            : '('.$revenueExpression.' - '.$costExpression.')';
+        $sellingPriceExpression = $hasSellingPriceSnapshot
+            ? 'COALESCE(transaction_items.selling_price_snapshot, transaction_items.unit_price)'
+            : 'transaction_items.unit_price';
+        $costPriceExpression = $hasCostPriceSnapshot
+            ? 'COALESCE(transaction_items.cost_price_snapshot, transaction_items.unit_cost)'
+            : 'transaction_items.unit_cost';
+        $productNameExpression = $hasProductNameSnapshot
+            ? "COALESCE(transaction_items.product_name_snapshot, products.name, 'Unknown product')"
+            : "COALESCE(products.name, 'Unknown product')";
+
+        $itemQuery = TransactionItem::query()
+            ->join('transactions', 'transactions.id', '=', 'transaction_items.transaction_id')
+            ->leftJoin('products', 'products.id', '=', 'transaction_items.product_id')
+            ->where('transactions.status', Transaction::STATUS_COMPLETED)
+            ->when($currentOutlet, fn ($query) => $query->where('transactions.outlet_id', $currentOutlet->id))
+            ->whereDate('transactions.paid_at', '>=', $filters['date_from'])
+            ->whereDate('transactions.paid_at', '<=', $filters['date_to'])
+            ->when($filters['cashier_id'] ?? null, fn ($query, $value) => $query->where('transactions.cashier_id', $value))
+            ->when($filters['category_id'] ?? null, fn ($query, $value) => $query->where('products.category_id', $value))
+            ->when($filters['product_id'] ?? null, fn ($query, $value) => $query->where('transaction_items.product_id', $value))
+            ->when(
+                $filters['payment_method'] ?? null,
+                fn ($query, $value) => $query->whereHas('transaction.payments', fn ($paymentQuery) => $paymentQuery->where('method', $value))
+            );
+
+        $summary = (clone $itemQuery)
+            ->selectRaw('COALESCE(SUM('.$revenueExpression.'), 0) as revenue')
+            ->selectRaw('COALESCE(SUM('.$costExpression.'), 0) as cogs')
+            ->selectRaw('COALESCE(SUM('.$profitExpression.'), 0) as gross_profit')
+            ->selectRaw('COUNT(DISTINCT transaction_items.transaction_id) as transaction_count')
+            ->first();
+
+        $productProfitability = (clone $itemQuery)
+            ->selectRaw("transaction_items.product_id")
+            ->selectRaw($productNameExpression.' as product_name')
+            ->selectRaw('SUM(transaction_items.quantity) as quantity_sold')
+            ->selectRaw('COALESCE(SUM('.$revenueExpression.'), 0) as revenue')
+            ->selectRaw('COALESCE(SUM('.$costExpression.'), 0) as cogs')
+            ->selectRaw('COALESCE(SUM('.$profitExpression.'), 0) as gross_profit')
+            ->selectRaw('AVG('.$sellingPriceExpression.') as average_selling_price')
+            ->selectRaw('AVG('.$costPriceExpression.') as average_cost_price')
+            ->selectRaw('CASE WHEN SUM('.$revenueExpression.') = 0 THEN 0 ELSE (SUM('.$profitExpression.') / SUM('.$revenueExpression.')) * 100 END as gross_margin')
+            ->groupBy('transaction_items.product_id', 'products.name');
+
+        if ($hasProductNameSnapshot) {
+            $productProfitability->groupBy('transaction_items.product_name_snapshot');
+        }
+
+        match ($filters['sort']) {
+            'highest_profit' => $productProfitability->orderByDesc('gross_profit'),
+            'lowest_profit' => $productProfitability->orderBy('gross_profit'),
+            'highest_margin' => $productProfitability->orderByDesc('gross_margin'),
+            'lowest_margin' => $productProfitability->orderBy('gross_margin'),
+            'most_sold' => $productProfitability->orderByDesc('quantity_sold'),
+            'least_sold' => $productProfitability->orderBy('quantity_sold'),
+            default => $productProfitability->orderByDesc('revenue'),
+        };
+
+        $productProfitability = $productProfitability
+            ->orderBy('product_name')
+            ->limit(100)
+            ->get();
+
+        $revenue = (float) ($summary->revenue ?? 0);
+        $grossProfit = (float) ($summary->gross_profit ?? 0);
+        $transactionCount = (int) ($summary->transaction_count ?? 0);
+
+        return Inertia::render('Reports/Cogs', [
+            'filters' => [
+                'outlet' => $currentOutlet?->id,
+                ...$filters,
+            ],
+            'outlets' => $this->availableOutletsFor($request->user()),
+            'cashiers' => User::query()
+                ->where('is_active', true)
+                ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'categories' => Category::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
+            'products' => Product::query()
+                ->where('is_active', true)
+                ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'paymentMethods' => Payment::methods(),
+            'summary' => [
+                'revenue' => $revenue,
+                'cogs' => (float) ($summary->cogs ?? 0),
+                'gross_profit' => $grossProfit,
+                'gross_margin' => $revenue > 0 ? round(($grossProfit / $revenue) * 100, 2) : 0,
+                'transaction_count' => $transactionCount,
+                'average_transaction_value' => $transactionCount > 0 ? round($revenue / $transactionCount, 2) : 0,
+            ],
+            'productProfitability' => $productProfitability,
         ]);
     }
 

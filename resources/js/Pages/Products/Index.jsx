@@ -10,6 +10,14 @@ const formatCurrency = (value) =>
         minimumFractionDigits: 0,
     }).format(value || 0);
 
+const formatPercentage = (value) => `${Number(value || 0).toFixed(2)}%`;
+
+const toNumber = (value) => {
+    const parsed = Number(value);
+
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
 const emptyForm = (outletId = '', unitId = '') => ({
     outlet_id: outletId,
     category_id: '',
@@ -19,6 +27,7 @@ const emptyForm = (outletId = '', unitId = '') => ({
     barcode: '',
     selling_price: '',
     cost_price: '',
+    minimum_margin: '',
     stock_quantity: 0,
     minimum_stock: 0,
     image_path: '',
@@ -32,7 +41,9 @@ export default function ProductsIndex({
     filters,
     categories,
     units,
+    defaultMinimumMargin,
     products,
+    recentCostHistories,
 }) {
     const flash = usePage().props.flash || {};
     const [editingProduct, setEditingProduct] = useState(null);
@@ -104,6 +115,7 @@ export default function ProductsIndex({
             barcode: product.barcode || '',
             selling_price: product.selling_price,
             cost_price: product.cost_price,
+            minimum_margin: product.minimum_margin ?? '',
             stock_quantity: product.stock_quantity,
             minimum_stock: product.minimum_stock,
             image_path: product.image_path || '',
@@ -134,6 +146,14 @@ export default function ProductsIndex({
 
     const activeCount = products.data.filter((p) => p.is_active).length;
     const formErrors = Object.values(productForm.errors);
+    const sellingPrice = toNumber(productForm.data.selling_price);
+    const costPrice = toNumber(productForm.data.cost_price);
+    const estimatedProfit = sellingPrice - costPrice;
+    const estimatedMargin = sellingPrice > 0 ? (estimatedProfit / sellingPrice) * 100 : 0;
+    const effectiveMinimumMargin = productForm.data.minimum_margin === ''
+        ? Number(defaultMinimumMargin || 0)
+        : toNumber(productForm.data.minimum_margin);
+    const isLowMargin = sellingPrice > 0 && estimatedMargin < effectiveMinimumMargin;
 
     return (
         <AuthenticatedLayout
@@ -308,6 +328,40 @@ export default function ProductsIndex({
                                     className="rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                                 />
                             </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    value={productForm.data.minimum_margin}
+                                    onChange={(event) => productForm.setData('minimum_margin', event.target.value)}
+                                    placeholder="Minimum margin override %"
+                                    className="rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
+                                />
+                                <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                                    Uses {formatPercentage(effectiveMinimumMargin)} minimum margin threshold.
+                                </div>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3">
+                                    <p className="text-xs uppercase tracking-wide text-on-surface-variant">Estimated profit</p>
+                                    <p className={`mt-1 text-lg font-semibold ${estimatedProfit < 0 ? 'text-on-error-container' : 'text-on-surface'}`}>
+                                        {formatCurrency(estimatedProfit)}
+                                    </p>
+                                </div>
+                                <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3">
+                                    <p className="text-xs uppercase tracking-wide text-on-surface-variant">Estimated gross margin</p>
+                                    <p className={`mt-1 text-lg font-semibold ${isLowMargin ? 'text-on-error-container' : 'text-on-surface'}`}>
+                                        {formatPercentage(estimatedMargin)}
+                                    </p>
+                                </div>
+                            </div>
+                            {isLowMargin && (
+                                <div className="rounded-xl border border-error-container bg-error-container/60 px-4 py-3 text-sm text-on-error-container">
+                                    Estimated gross margin is below the active minimum threshold of {formatPercentage(effectiveMinimumMargin)}.
+                                </div>
+                            )}
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <input
                                     type="number"
@@ -497,6 +551,49 @@ export default function ProductsIndex({
                                 </button>
                             </div>
                         )}
+
+                        <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">
+                                        Cost Change History
+                                    </h3>
+                                    <p className="mt-1 text-body-md text-on-surface-variant">
+                                        Recent manual cost updates for this outlet.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 space-y-3">
+                                {recentCostHistories.length === 0 ? (
+                                    <div className="rounded-xl border border-dashed border-outline-variant px-4 py-6 text-sm text-on-surface-variant">
+                                        No cost changes have been recorded yet.
+                                    </div>
+                                ) : (
+                                    recentCostHistories.map((history) => (
+                                        <div
+                                            key={history.id}
+                                            className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3"
+                                        >
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                <div>
+                                                    <p className="font-medium text-on-surface">
+                                                        {history.product?.name || 'Unknown product'}
+                                                    </p>
+                                                    <p className="text-sm text-on-surface-variant">
+                                                        {formatCurrency(history.previous_cost_price)} to {formatCurrency(history.new_cost_price)}
+                                                    </p>
+                                                </div>
+                                                <div className="text-sm text-on-surface-variant sm:text-right">
+                                                    <p>{history.changed_by?.name || 'System'}</p>
+                                                    <p>{new Date(history.created_at).toLocaleString('id-ID')}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

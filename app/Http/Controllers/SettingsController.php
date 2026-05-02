@@ -87,6 +87,19 @@ class SettingsController extends Controller
         return back()->with('success', 'Payment methods updated.');
     }
 
+    public function updateMargins(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->canManageSettings(), 403);
+
+        $validated = $request->validate([
+            'default_minimum_product_margin' => ['required', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        AppSetting::current()->update($validated);
+
+        return back()->with('success', 'Default product margin updated.');
+    }
+
     public function updatePwa(Request $request): RedirectResponse
     {
         abort_unless($request->user()->canManageSettings(), 403);

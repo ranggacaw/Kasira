@@ -24,3 +24,10 @@ Kasira SHALL provide settings for the PWA name, short name, theme color, and ins
 - **WHEN** an authorized user saves PWA display values or install assets
 - **THEN** the next manifest and protected app shell reflect the saved appearance configuration
 
+### Requirement: Product Margin Settings
+Kasira SHALL allow authorized settings users to configure a default minimum product margin percentage used by catalog workflows when a product does not provide its own override.
+
+#### Scenario: Owner updates the default margin threshold
+- **WHEN** an authorized settings user saves a new default minimum product margin percentage
+- **THEN** subsequent product editing and low-margin warning workflows use the saved value as the fallback threshold
+

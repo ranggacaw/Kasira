@@ -14,6 +14,7 @@ use App\Models\Promotion;
 use App\Models\ReceiptDelivery;
 use App\Models\Subscription;
 use App\Models\Transaction;
+use App\Models\TransactionItem;
 use App\Models\Voucher;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
@@ -42,7 +43,16 @@ class CheckoutController extends Controller
             ->where('is_active', true)
             ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
             ->orderBy('name')
-            ->get();
+            ->get([
+                'id',
+                'category_id',
+                'unit_id',
+                'name',
+                'selling_price',
+                'stock_quantity',
+                'track_stock',
+                'is_active',
+            ]);
 
         $currentShift = $subscription->allowsFeature('cashier_shifts')
             ? CashierShift::query()
@@ -190,14 +200,26 @@ class CheckoutController extends Controller
             }
 
             $unitPrice = round((float) $product->selling_price, 2);
+            $unitCost = round((float) $product->cost_price, 2);
             $subtotal = round($unitPrice * $item['quantity'], 2);
+            $subtotalCost = round($unitCost * $item['quantity'], 2);
+            $grossProfit = round($subtotal - $subtotalCost, 2);
 
             return [
                 'product_id' => $product->id,
+                'product_name_snapshot' => $product->name,
                 'quantity' => $item['quantity'],
                 'unit_price' => $unitPrice,
-                'unit_cost' => round((float) $product->cost_price, 2),
+                'unit_cost' => $unitCost,
                 'subtotal' => $subtotal,
+                'selling_price_snapshot' => $unitPrice,
+                'cost_price_snapshot' => $unitCost,
+                'subtotal_revenue_snapshot' => $subtotal,
+                'subtotal_cost_snapshot' => $subtotalCost,
+                'gross_profit_snapshot' => $grossProfit,
+                'gross_margin_snapshot' => $subtotal > 0
+                    ? round(($grossProfit / $subtotal) * 100, 2)
+                    : 0,
             ];
         });
 
@@ -340,10 +362,17 @@ class CheckoutController extends Controller
             foreach ($items as $item) {
                 $transaction->items()->create([
                     'product_id' => $item['product_id'],
+                    'product_name_snapshot' => $item['product_name_snapshot'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'unit_cost' => $item['unit_cost'],
                     'subtotal' => $item['subtotal'],
+                    'selling_price_snapshot' => $item['selling_price_snapshot'],
+                    'cost_price_snapshot' => $item['cost_price_snapshot'],
+                    'subtotal_revenue_snapshot' => $item['subtotal_revenue_snapshot'],
+                    'subtotal_cost_snapshot' => $item['subtotal_cost_snapshot'],
+                    'gross_profit_snapshot' => $item['gross_profit_snapshot'],
+                    'gross_margin_snapshot' => $item['gross_margin_snapshot'],
                 ]);
 
                 $product = $products->get($item['product_id']);
@@ -405,6 +434,7 @@ class CheckoutController extends Controller
         abort_unless($request->user()->canUseCheckout(), 403);
 
         $subscription = Subscription::current();
+        $canViewProfitability = $request->user()->canViewReports();
 
         $transaction->load([
             'cashier:id,name',
@@ -415,7 +445,7 @@ class CheckoutController extends Controller
         ]);
 
         return Inertia::render('Pos/Success', [
-            'transaction' => $transaction,
+            'transaction' => $this->serializeTransaction($transaction, $canViewProfitability),
             'receiptChannels' => collect(ReceiptDelivery::channels())
                 ->filter(fn (string $channel) => $channel === ReceiptDelivery::CHANNEL_PRINT || $subscription->allowsFeature('connected_receipts'))
                 ->values()
@@ -426,6 +456,7 @@ class CheckoutController extends Controller
             ],
             'canSendDigitalReceipts' => $subscription->allowsFeature('connected_receipts'),
             'canUseThermalPrinting' => $subscription->allowsFeature('thermal_printing'),
+            'canViewProfitability' => $canViewProfitability,
         ]);
     }
 
@@ -466,5 +497,51 @@ class CheckoutController extends Controller
             : round($value, 2);
 
         return round(min($reduction, $amount), 2);
+    }
+
+    protected function serializeTransaction(Transaction $transaction, bool $canViewProfitability): array
+    {
+        return [
+            'id' => $transaction->id,
+            'invoice_number' => $transaction->invoice_number,
+            'subtotal' => $transaction->subtotal,
+            'discount_amount' => $transaction->discount_amount,
+            'tax_amount' => $transaction->tax_amount,
+            'service_fee_amount' => $transaction->service_fee_amount,
+            'total' => $transaction->total,
+            'paid_at' => optional($transaction->paid_at)->toDateTimeString(),
+            'cashier' => $transaction->cashier,
+            'outlet' => $transaction->outlet,
+            'payments' => $transaction->payments,
+            'receipt_deliveries' => $transaction->receiptDeliveries,
+            'items' => $transaction->items
+                ->map(fn (TransactionItem $item) => $this->serializeTransactionItem($item, $canViewProfitability))
+                ->values()
+                ->all(),
+        ];
+    }
+
+    protected function serializeTransactionItem(TransactionItem $item, bool $canViewProfitability): array
+    {
+        $serialized = [
+            'id' => $item->id,
+            'name' => $item->product_name_snapshot ?: $item->product?->name,
+            'quantity' => $item->quantity,
+            'unit_price' => $item->selling_price_snapshot ?: $item->unit_price,
+            'subtotal' => $item->subtotal_revenue_snapshot ?: $item->subtotal,
+        ];
+
+        if ($canViewProfitability) {
+            $serialized['cost_price'] = $item->cost_price_snapshot ?: $item->unit_cost;
+            $serialized['subtotal_cost'] = $item->subtotal_cost_snapshot ?: round((float) $item->unit_cost * $item->quantity, 2);
+            $serialized['gross_profit'] = $item->gross_profit_snapshot
+                ?: round((float) $serialized['subtotal'] - (float) $serialized['subtotal_cost'], 2);
+            $serialized['gross_margin'] = $item->gross_margin_snapshot
+                ?: ((float) $serialized['subtotal'] > 0
+                    ? round(((float) $serialized['gross_profit'] / (float) $serialized['subtotal']) * 100, 2)
+                    : 0);
+        }
+
+        return $serialized;
     }
 }

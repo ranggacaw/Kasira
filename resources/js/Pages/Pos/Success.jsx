@@ -10,12 +10,15 @@ const formatCurrency = (value) =>
         minimumFractionDigits: 0,
     }).format(value || 0);
 
+const formatPercentage = (value) => `${Number(value || 0).toFixed(2)}%`;
+
 export default function Success({
     transaction,
     receiptChannels,
     receiptSettings,
     canSendDigitalReceipts,
     canUseThermalPrinting,
+    canViewProfitability,
 }) {
     const receiptForm = useForm({
         channel: receiptChannels[0] || 'print',
@@ -23,6 +26,16 @@ export default function Success({
     });
     const [shareCopied, setShareCopied] = useState(false);
     const [formStatus, setFormStatus] = useState(null);
+    const profitabilityTotals = transaction.items.reduce(
+        (totals, item) => ({
+            subtotalCost: totals.subtotalCost + Number(item.subtotal_cost || 0),
+            grossProfit: totals.grossProfit + Number(item.gross_profit || 0),
+        }),
+        { subtotalCost: 0, grossProfit: 0 },
+    );
+    const grossMargin = transaction.subtotal > 0
+        ? (profitabilityTotals.grossProfit / transaction.subtotal) * 100
+        : 0;
 
     return (
         <PosLayout
@@ -84,10 +97,17 @@ export default function Success({
                                     className="flex flex-col gap-3 p-4 transition hover:bg-surface-container-low sm:flex-row sm:items-center sm:justify-between"
                                 >
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-on-surface">{item.product?.name}</p>
+                                        <p className="font-semibold text-on-surface">{item.name}</p>
                                         <p className="text-sm text-on-surface-variant">
                                             {item.quantity} x {formatCurrency(item.unit_price)}
                                         </p>
+                                        {canViewProfitability && (
+                                            <div className="mt-2 space-y-1 text-xs text-on-surface-variant">
+                                                <p>Cost: {formatCurrency(item.cost_price)} per item</p>
+                                                <p>COGS: {formatCurrency(item.subtotal_cost)}</p>
+                                                <p>Gross profit: {formatCurrency(item.gross_profit)} ({formatPercentage(item.gross_margin)})</p>
+                                            </div>
+                                        )}
                                     </div>
                                     <p className="font-semibold text-on-surface">{formatCurrency(item.subtotal)}</p>
                                 </div>
@@ -181,6 +201,30 @@ export default function Success({
                                 </button>
                             </div>
                         </div>
+
+                        {canViewProfitability && (
+                            <div className="rounded-2xl border border-outline-variant bg-white p-6">
+                                <h3 className="mb-4 text-lg font-bold text-on-surface">Profitability Snapshot</h3>
+                                <div className="space-y-3 text-sm text-on-surface-variant">
+                                    <div className="flex justify-between gap-4">
+                                        <span>Revenue</span>
+                                        <span className="font-semibold text-on-surface">{formatCurrency(transaction.subtotal)}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span>COGS</span>
+                                        <span className="font-semibold text-on-surface">{formatCurrency(profitabilityTotals.subtotalCost)}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span>Gross profit</span>
+                                        <span className="font-semibold text-on-surface">{formatCurrency(profitabilityTotals.grossProfit)}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span>Gross margin</span>
+                                        <span className="font-semibold text-on-surface">{formatPercentage(grossMargin)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Delivery Log Card */}
                         <div className="rounded-2xl border border-outline-variant bg-white p-6">

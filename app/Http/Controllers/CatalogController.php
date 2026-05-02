@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesOutletContext;
+use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\ProductCostHistory;
 use App\Models\StockMovement;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -38,6 +41,11 @@ class CatalogController extends Controller
 
         $outlets = Outlet::query()->orderByDesc('is_primary')->orderBy('name')->get();
         $currentOutlet = $this->resolveCurrentOutlet($request);
+        $hasProductCostHistories = Schema::hasTable('product_cost_histories');
+        $hasMinimumMargin = Schema::hasColumn('products', 'minimum_margin');
+        $defaultMinimumMargin = $hasMinimumMargin
+            ? (float) AppSetting::current()->default_minimum_product_margin
+            : 20.0;
 
         $products = Product::query()
             ->with(['category:id,name', 'outlet:id,name', 'unit:id,name,short_name'])
@@ -65,7 +73,16 @@ class CatalogController extends Controller
             'filters' => $filters,
             'categories' => Category::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'units' => Unit::query()->orderBy('name')->get(),
+            'defaultMinimumMargin' => $defaultMinimumMargin,
             'products' => $products,
+            'recentCostHistories' => $hasProductCostHistories
+                ? ProductCostHistory::query()
+                    ->with(['product:id,name,outlet_id', 'changedBy:id,name'])
+                    ->whereHas('product', fn ($query) => $query->when($currentOutlet, fn ($outletQuery) => $outletQuery->where('outlet_id', $currentOutlet->id)))
+                    ->latest()
+                    ->limit(10)
+                    ->get()
+                : collect(),
         ]);
     }
 
@@ -228,8 +245,9 @@ class CatalogController extends Controller
         $validated = $this->validateProduct($request, $product);
         $validated['sku'] = $validated['sku'] ?: $this->generateProductSku($validated['name']);
         $originalStock = $product->stock_quantity;
+        $originalCostPrice = round((float) $product->cost_price, 2);
 
-        DB::transaction(function () use ($request, $product, $validated, $originalStock): void {
+        DB::transaction(function () use ($request, $product, $validated, $originalStock, $originalCostPrice): void {
             $product->update($validated);
 
             $difference = $product->stock_quantity - $originalStock;
@@ -243,6 +261,16 @@ class CatalogController extends Controller
                     'quantity' => abs($difference),
                     'balance_after' => $product->stock_quantity,
                     'notes' => 'Catalog stock adjustment.',
+                ]);
+            }
+
+            if (Schema::hasTable('product_cost_histories') && round((float) $product->cost_price, 2) !== $originalCostPrice) {
+                ProductCostHistory::query()->create([
+                    'product_id' => $product->id,
+                    'changed_by' => $request->user()->id,
+                    'previous_cost_price' => $originalCostPrice,
+                    'new_cost_price' => $product->cost_price,
+                    'change_reason' => 'Catalog product update.',
                 ]);
             }
         });
@@ -296,7 +324,7 @@ class CatalogController extends Controller
 
     protected function validateProduct(Request $request, ?Product $product = null): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'outlet_id' => ['required', 'exists:outlets,id'],
             'category_id' => ['nullable', 'exists:categories,id'],
             'unit_id' => ['nullable', 'exists:units,id'],
@@ -305,12 +333,19 @@ class CatalogController extends Controller
             'barcode' => ['nullable', 'string', 'max:255', Rule::unique('products', 'barcode')->ignore($product?->id)],
             'selling_price' => ['required', 'numeric', 'min:0'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
+            'minimum_margin' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
             'minimum_stock' => ['required', 'integer', 'min:0'],
             'image_path' => ['nullable', 'string', 'max:255'],
             'is_active' => ['required', 'boolean'],
             'track_stock' => ['required', 'boolean'],
         ]);
+
+        if (! Schema::hasColumn('products', 'minimum_margin')) {
+            unset($validated['minimum_margin']);
+        }
+
+        return $validated;
     }
 
     protected function generateProductSku(string $name): string

@@ -86,6 +86,28 @@ class CheckoutTest extends TestCase
         $response->assertDontSee('Inactive Product');
     }
 
+    public function test_checkout_payload_excludes_product_cost_fields(): void
+    {
+        $user = User::factory()->create();
+
+        Product::query()->create([
+            'name' => 'Espresso',
+            'sku' => 'ESP001',
+            'selling_price' => 15000,
+            'cost_price' => 7000,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/pos')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Pos/Checkout')
+                ->has('products', 1)
+                ->missing('products.0.cost_price')
+                ->missing('products.0.minimum_margin'));
+    }
+
     public function test_checkout_requires_at_least_one_item(): void
     {
         $user = User::factory()->create();
@@ -138,6 +160,7 @@ class CheckoutTest extends TestCase
             'name' => 'Espresso',
             'sku' => 'ESP001',
             'selling_price' => 15000,
+            'cost_price' => 8000,
             'is_active' => true,
         ]);
 
@@ -174,6 +197,58 @@ class CheckoutTest extends TestCase
         $this->assertDatabaseHas('payments', [
             'method' => 'Cash',
             'amount' => 30000,
+        ]);
+    }
+
+    public function test_checkout_persists_immutable_profitability_snapshots(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::query()->create([
+            'name' => 'Latte',
+            'sku' => 'LAT001',
+            'selling_price' => 20000,
+            'cost_price' => 9000,
+            'stock_quantity' => 10,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)->post('/pos/checkout', [
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 2,
+                ],
+            ],
+            'discount_type' => 'fixed',
+            'discount_value' => 0,
+            'tax_rate' => 0,
+            'service_fee_rate' => 0,
+            'payment_method' => 'Cash',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('transaction_items', [
+            'product_id' => $product->id,
+            'product_name_snapshot' => 'Latte',
+            'selling_price_snapshot' => 20000,
+            'cost_price_snapshot' => 9000,
+            'subtotal_revenue_snapshot' => 40000,
+            'subtotal_cost_snapshot' => 18000,
+            'gross_profit_snapshot' => 22000,
+            'gross_margin_snapshot' => 55,
+        ]);
+
+        $product->update([
+            'name' => 'Iced Latte',
+            'selling_price' => 24000,
+            'cost_price' => 12000,
+        ]);
+
+        $this->assertDatabaseHas('transaction_items', [
+            'product_id' => $product->id,
+            'product_name_snapshot' => 'Latte',
+            'selling_price_snapshot' => 20000,
+            'cost_price_snapshot' => 9000,
+            'gross_profit_snapshot' => 22000,
         ]);
     }
 

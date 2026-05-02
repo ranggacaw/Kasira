@@ -60,11 +60,11 @@
             @foreach($transaction->items as $item)
                 <div class="item">
                     <div class="row">
-                        <strong>{{ $item->product?->name }}</strong>
-                        <strong>{{ number_format($item->subtotal, 0, ',', '.') }}</strong>
+                        <strong>{{ $item->product_name_snapshot ?: $item->product?->name }}</strong>
+                        <strong>{{ number_format($item->subtotal_revenue_snapshot ?: $item->subtotal, 0, ',', '.') }}</strong>
                     </div>
                     <div class="row muted">
-                        <span>{{ $item->quantity }} x {{ number_format($item->unit_price, 0, ',', '.') }}</span>
+                        <span>{{ $item->quantity }} x {{ number_format($item->selling_price_snapshot ?: $item->unit_price, 0, ',', '.') }}</span>
                         <span></span>
                     </div>
                 </div>

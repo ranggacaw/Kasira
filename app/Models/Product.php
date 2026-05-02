@@ -35,6 +35,7 @@ class Product extends Model
         'barcode',
         'selling_price',
         'cost_price',
+        'minimum_margin',
         'stock_quantity',
         'minimum_stock',
         'image_path',
@@ -47,6 +48,7 @@ class Product extends Model
         return [
             'selling_price' => 'decimal:2',
             'cost_price' => 'decimal:2',
+            'minimum_margin' => 'decimal:2',
             'stock_quantity' => 'integer',
             'minimum_stock' => 'integer',
             'is_active' => 'boolean',
@@ -72,6 +74,11 @@ class Product extends Model
     public function transactionItems(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
+    }
+
+    public function costHistories(): HasMany
+    {
+        return $this->hasMany(ProductCostHistory::class)->latest();
     }
 
     public function stockMovements(): HasMany

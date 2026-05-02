@@ -9,6 +9,8 @@ const formatCurrency = (value) =>
         minimumFractionDigits: 0,
     }).format(value || 0);
 
+const formatPercentage = (value) => `${Number(value || 0).toFixed(2)}%`;
+
 export default function TransactionShow({
     transaction,
     canSendDigitalReceipts,
@@ -16,12 +18,23 @@ export default function TransactionShow({
     receiptSettings,
     canRefund,
     canUseThermalPrinting,
+    canViewProfitability,
 }) {
     const flash = usePage().props.flash || {};
     const receiptForm = useForm({
         channel: receiptChannels[0] || 'print',
         recipient: '',
     });
+    const profitabilityTotals = transaction.items.reduce(
+        (totals, item) => ({
+            subtotalCost: totals.subtotalCost + Number(item.subtotal_cost || 0),
+            grossProfit: totals.grossProfit + Number(item.gross_profit || 0),
+        }),
+        { subtotalCost: 0, grossProfit: 0 },
+    );
+    const grossMargin = transaction.subtotal > 0
+        ? (profitabilityTotals.grossProfit / transaction.subtotal) * 100
+        : 0;
 
     return (
         <AuthenticatedLayout
@@ -85,11 +98,18 @@ export default function TransactionShow({
                                     >
                                         <div>
                                             <p className="font-medium text-on-surface">
-                                                {item.product?.name}
+                                                {item.name}
                                             </p>
                                             <p className="text-sm text-outline">
                                                 {item.quantity} x {formatCurrency(item.unit_price)}
                                             </p>
+                                            {canViewProfitability && (
+                                                <div className="mt-2 space-y-1 text-xs text-outline">
+                                                    <p>Cost: {formatCurrency(item.cost_price)} per item</p>
+                                                    <p>COGS: {formatCurrency(item.subtotal_cost)}</p>
+                                                    <p>Gross profit: {formatCurrency(item.gross_profit)} ({formatPercentage(item.gross_margin)})</p>
+                                                </div>
+                                            )}
                                         </div>
                                         <p className="font-medium text-on-surface">
                                             {formatCurrency(item.subtotal)}
@@ -160,6 +180,32 @@ export default function TransactionShow({
                                     </div>
                                 </dl>
                             </div>
+
+                            {canViewProfitability && (
+                                <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-outline">
+                                        Profitability snapshot
+                                    </h3>
+                                    <dl className="mt-4 space-y-3 text-sm text-on-surface-variant">
+                                        <div className="flex justify-between gap-4">
+                                            <dt>Revenue</dt>
+                                            <dd className="font-medium text-on-surface">{formatCurrency(transaction.subtotal)}</dd>
+                                        </div>
+                                        <div className="flex justify-between gap-4">
+                                            <dt>COGS</dt>
+                                            <dd className="font-medium text-on-surface">{formatCurrency(profitabilityTotals.subtotalCost)}</dd>
+                                        </div>
+                                        <div className="flex justify-between gap-4">
+                                            <dt>Gross profit</dt>
+                                            <dd className="font-medium text-on-surface">{formatCurrency(profitabilityTotals.grossProfit)}</dd>
+                                        </div>
+                                        <div className="flex justify-between gap-4">
+                                            <dt>Gross margin</dt>
+                                            <dd className="font-medium text-on-surface">{formatPercentage(grossMargin)}</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                            )}
 
                             <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-outline">

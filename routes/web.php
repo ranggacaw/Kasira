@@ -62,6 +62,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::patch('/operations/customers/{customer}', [OperationsController::class, 'updateCustomer'])->name('operations.customers.update');
 
     Route::get('/reports', [PremiumController::class, 'index'])->name('reports.index');
+    Route::get('/reports/cogs', [PremiumController::class, 'cogs'])->name('reports.cogs');
     Route::get('/reports/export', [PremiumController::class, 'exportReport'])->name('reports.export');
     Route::get('/premium', fn () => redirect()->route('reports.index'))->name('premium.index');
     Route::get('/premium/reports/export', [PremiumController::class, 'exportReport'])->name('premium.reports.export');
@@ -75,6 +76,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::patch('/settings/business', [SettingsController::class, 'updateBusiness'])->name('settings.business.update');
     Route::patch('/settings/receipt', [SettingsController::class, 'updateReceipt'])->name('settings.receipt.update');
     Route::patch('/settings/payments', [SettingsController::class, 'updatePayments'])->name('settings.payments.update');
+    Route::patch('/settings/margins', [SettingsController::class, 'updateMargins'])->name('settings.margins.update');
     Route::patch('/settings/pwa', [SettingsController::class, 'updatePwa'])->name('settings.pwa.update');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

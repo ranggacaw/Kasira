@@ -20,6 +20,9 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
     const paymentForm = useForm({
         enabled_payment_methods: settings.enabled_payment_methods || paymentMethods,
     });
+    const marginForm = useForm({
+        default_minimum_product_margin: settings.default_minimum_product_margin || 20,
+    });
     const pwaForm = useForm({
         pwa_name: settings.pwa_name || '',
         pwa_short_name: settings.pwa_short_name || '',
@@ -41,7 +44,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                 <div>
                     <h2 className="text-headline-md text-on-surface">Settings</h2>
                     <p className="mt-1 text-body-md text-on-surface-variant">
-                        Business identity, receipt content, manual payment methods, and PWA appearance.
+                        Business identity, receipt content, pricing guardrails, manual payment methods, and PWA appearance.
                     </p>
                 </div>
             }
@@ -73,6 +76,36 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                 </div>
 
                 <div className="grid gap-6 xl:grid-cols-2">
+                    <form
+                        className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            marginForm.patch(route('settings.margins.update'));
+                        }}
+                    >
+                        <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">Product margin default</h3>
+                        <div className="mt-5 space-y-4">
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value={marginForm.data.default_minimum_product_margin}
+                                onChange={(event) =>
+                                    marginForm.setData('default_minimum_product_margin', event.target.value)
+                                }
+                                placeholder="20"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
+                            />
+                            <p className="text-sm text-on-surface-variant">
+                                Products without their own override use this gross margin threshold for low-margin warnings.
+                            </p>
+                        </div>
+                        <button className="mt-5 w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:opacity-90">
+                            Save default margin
+                        </button>
+                    </form>
+
                     <form
                         className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
                         onSubmit={(event) => {
