@@ -11,6 +11,7 @@ use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -29,18 +30,39 @@ class CatalogController extends Controller
     {
         abort_unless($request->user()->canManageCatalog(), 403);
 
+        $filters = $request->validate([
+            'search' => ['nullable', 'string'],
+            'category' => ['nullable', 'exists:categories,id'],
+            'status' => ['nullable', Rule::in(['active', 'inactive'])],
+        ]);
+
         $outlets = Outlet::query()->orderByDesc('is_primary')->orderBy('name')->get();
         $currentOutlet = $this->resolveCurrentOutlet($request);
 
         $products = Product::query()
             ->with(['category:id,name', 'outlet:id,name', 'unit:id,name,short_name'])
             ->when($currentOutlet, fn ($query) => $query->where('outlet_id', $currentOutlet->id))
+            ->when($filters['search'] ?? null, function ($query, $value) {
+                $query->where(function ($searchQuery) use ($value): void {
+                    $searchQuery
+                        ->where('name', 'like', "%{$value}%")
+                        ->orWhere('sku', 'like', "%{$value}%")
+                        ->orWhere('barcode', 'like', "%{$value}%");
+                });
+            })
+            ->when($filters['category'] ?? null, fn ($query, $value) => $query->where('category_id', $value))
+            ->when(
+                $filters['status'] ?? null,
+                fn ($query, $value) => $query->where('is_active', $value === 'active')
+            )
             ->orderBy('name')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Products/Index', [
             'outlets' => $outlets,
             'selectedOutletId' => $currentOutlet?->id,
+            'filters' => $filters,
             'categories' => Category::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'units' => Unit::query()->orderBy('name')->get(),
             'products' => $products,
@@ -178,6 +200,7 @@ class CatalogController extends Controller
         abort_unless($request->user()->canManageCatalog(), 403);
 
         $validated = $this->validateProduct($request);
+        $validated['sku'] = $validated['sku'] ?: $this->generateProductSku($validated['name']);
 
         DB::transaction(function () use ($request, $validated): void {
             $product = Product::query()->create($validated);
@@ -203,6 +226,7 @@ class CatalogController extends Controller
         abort_unless($request->user()->canManageCatalog(), 403);
 
         $validated = $this->validateProduct($request, $product);
+        $validated['sku'] = $validated['sku'] ?: $this->generateProductSku($validated['name']);
         $originalStock = $product->stock_quantity;
 
         DB::transaction(function () use ($request, $product, $validated, $originalStock): void {
@@ -280,12 +304,29 @@ class CatalogController extends Controller
             'sku' => ['nullable', 'string', 'max:255', Rule::unique('products', 'sku')->ignore($product?->id)],
             'barcode' => ['nullable', 'string', 'max:255', Rule::unique('products', 'barcode')->ignore($product?->id)],
             'selling_price' => ['required', 'numeric', 'min:0'],
-            'cost_price' => ['required', 'numeric', 'min:0'],
+            'cost_price' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
             'minimum_stock' => ['required', 'integer', 'min:0'],
             'image_path' => ['nullable', 'string', 'max:255'],
             'is_active' => ['required', 'boolean'],
             'track_stock' => ['required', 'boolean'],
         ]);
+    }
+
+    protected function generateProductSku(string $name): string
+    {
+        $prefix = Str::of($name)
+            ->upper()
+            ->replaceMatches('/[^A-Z0-9]+/', '')
+            ->substr(0, 6)
+            ->toString();
+
+        $prefix = $prefix !== '' ? $prefix : 'PRD';
+
+        do {
+            $sku = $prefix.'-'.Str::upper(Str::random(6));
+        } while (Product::query()->where('sku', $sku)->exists());
+
+        return $sku;
     }
 }

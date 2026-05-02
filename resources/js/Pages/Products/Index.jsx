@@ -29,15 +29,16 @@ const emptyForm = (outletId = '', unitId = '') => ({
 export default function ProductsIndex({
     outlets,
     selectedOutletId,
+    filters,
     categories,
     units,
     products,
 }) {
     const flash = usePage().props.flash || {};
     const [editingProduct, setEditingProduct] = useState(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filterCategory, setFilterCategory] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [filterCategory, setFilterCategory] = useState(filters.category || '');
+    const [filterStatus, setFilterStatus] = useState(filters.status || '');
     const defaultUnitId = units[0]?.id || '';
     const productForm = useForm(emptyForm(selectedOutletId || outlets[0]?.id || '', defaultUnitId));
 
@@ -47,54 +48,49 @@ export default function ProductsIndex({
         }
     }, [selectedOutletId]);
 
-    const changeOutlet = (event) => {
+    const applyFilters = (nextFilters = {}) => {
+        const outlet = nextFilters.outlet ?? selectedOutletId ?? '';
+        const search = nextFilters.search ?? searchQuery;
+        const category = nextFilters.category ?? filterCategory;
+        const status = nextFilters.status ?? filterStatus;
+
         router.get(
             route('products.index'),
-            { outlet: event.target.value || undefined },
+            {
+                outlet: outlet || undefined,
+                search: search || undefined,
+                category: category || undefined,
+                status: status || undefined,
+                page: nextFilters.page || undefined,
+            },
             { preserveState: true, replace: true },
         );
+    };
+
+    const changeOutlet = (event) => {
+        applyFilters({ outlet: event.target.value });
     };
 
     const handleSearch = (event) => {
-        setSearchQuery(event.target.value);
-        router.get(
-            route('products.index'),
-            {
-                outlet: selectedOutletId || undefined,
-                search: event.target.value || undefined,
-                category: filterCategory || undefined,
-                status: filterStatus || undefined,
-            },
-            { preserveState: true, replace: true },
-        );
+        const value = event.target.value;
+        setSearchQuery(value);
+        applyFilters({ search: value });
     };
 
     const handleCategoryFilter = (event) => {
-        setFilterCategory(event.target.value);
-        router.get(
-            route('products.index'),
-            {
-                outlet: selectedOutletId || undefined,
-                search: searchQuery || undefined,
-                category: event.target.value || undefined,
-                status: filterStatus || undefined,
-            },
-            { preserveState: true, replace: true },
-        );
+        const value = event.target.value;
+        setFilterCategory(value);
+        applyFilters({ category: value });
     };
 
     const handleStatusFilter = (event) => {
-        setFilterStatus(event.target.value);
-        router.get(
-            route('products.index'),
-            {
-                outlet: selectedOutletId || undefined,
-                search: searchQuery || undefined,
-                category: filterCategory || undefined,
-                status: event.target.value || undefined,
-            },
-            { preserveState: true, replace: true },
-        );
+        const value = event.target.value;
+        setFilterStatus(value);
+        applyFilters({ status: value });
+    };
+
+    const handlePageChange = (page) => {
+        applyFilters({ page });
     };
 
     const beginEdit = (product) => {
@@ -136,8 +132,8 @@ export default function ProductsIndex({
         });
     };
 
-    const activeCount = products.filter((p) => p.is_active).length;
-    const totalCount = products.length;
+    const activeCount = products.data.filter((p) => p.is_active).length;
+    const formErrors = Object.values(productForm.errors);
 
     return (
         <AuthenticatedLayout
@@ -241,6 +237,13 @@ export default function ProductsIndex({
                         </div>
 
                         <div className="space-y-3">
+                            {formErrors.length > 0 && (
+                                <div className="rounded-xl border border-error-container bg-error-container/60 px-4 py-3 text-sm text-on-error-container">
+                                    {formErrors.map((error, index) => (
+                                        <div key={index}>{error}</div>
+                                    ))}
+                                </div>
+                            )}
                             <input
                                 value={productForm.data.name}
                                 onChange={(event) => productForm.setData('name', event.target.value)}
@@ -276,7 +279,7 @@ export default function ProductsIndex({
                                 <input
                                     value={productForm.data.sku}
                                     onChange={(event) => productForm.setData('sku', event.target.value)}
-                                    placeholder="SKU"
+                                    placeholder="SKU (optional)"
                                     className="rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                                 />
                                 <input
@@ -286,6 +289,9 @@ export default function ProductsIndex({
                                     className="rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
                                 />
                             </div>
+                            <p className="-mt-1 text-xs text-on-surface-variant">
+                                Leave SKU empty to generate one automatically.
+                            </p>
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <input
                                     type="number"
@@ -372,7 +378,7 @@ export default function ProductsIndex({
                                 Current Products
                             </h3>
                             <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
-                                {activeCount}/{totalCount} active
+                                {products.total} total
                             </span>
                         </div>
 
@@ -388,7 +394,7 @@ export default function ProductsIndex({
                             </div>
 
                             {/* Table Rows */}
-                            {products.length === 0 ? (
+                            {products.data.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-16 text-center">
                                     <svg className="w-12 h-12 text-outline mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -397,11 +403,11 @@ export default function ProductsIndex({
                                     <p className="mt-1 text-sm text-outline">Try adjusting your search or filters.</p>
                                 </div>
                             ) : (
-                                products.map((product, index) => (
+                                products.data.map((product, index) => (
                                     <div
                                         key={product.id}
                                         className={`grid grid-cols-1 items-center gap-4 border-b border-outline-variant px-4 py-4 transition hover:bg-surface-container-low lg:grid lg:grid-cols-12 ${
-                                            index === products.length - 1 ? 'border-b-0' : ''
+                                            index === products.data.length - 1 ? 'border-b-0' : ''
                                         }`}
                                     >
                                         <div className="col-span-5 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -454,6 +460,43 @@ export default function ProductsIndex({
                                 ))
                             )}
                         </div>
+
+                        {products.last_page > 1 && (
+                            <div className="flex items-center justify-between gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handlePageChange(products.current_page - 1)}
+                                    disabled={!products.prev_page_url}
+                                    className="rounded-lg border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Previous
+                                </button>
+                                <div className="flex items-center gap-1">
+                                    {Array.from({ length: products.last_page }, (_, i) => i + 1).map((page) => (
+                                        <button
+                                            key={page}
+                                            type="button"
+                                            onClick={() => handlePageChange(page)}
+                                            className={`rounded-lg px-3 py-1 text-sm font-medium ${
+                                                products.current_page === page
+                                                    ? 'bg-primary text-on-primary'
+                                                    : 'text-on-surface-variant hover:bg-surface-container-low'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handlePageChange(products.current_page + 1)}
+                                    disabled={!products.next_page_url}
+                                    className="rounded-lg border border-outline px-4 py-2 text-sm font-medium text-on-surface-variant disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

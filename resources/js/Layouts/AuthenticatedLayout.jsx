@@ -133,11 +133,17 @@ export default function AuthenticatedLayout({ header, children }) {
         },
     ];
 
+    const sidebarActionLabel = isDesktop
+        ? isSidebarCollapsed
+            ? 'Expand sidebar'
+            : 'Collapse sidebar'
+        : 'Close sidebar';
+
     return (
-        <div className="min-h-screen overflow-x-hidden bg-surface text-on-surface">
+        <div className="h-dvh overflow-hidden bg-surface text-on-surface">
             <PwaInstallPrompt />
 
-            <div className="flex min-h-screen">
+            <div className="flex h-full min-h-0">
                 <div
                     className={`fixed inset-0 z-40 bg-surface-variant/50 backdrop-blur-sm transition md:hidden ${
                         isDrawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
@@ -146,7 +152,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 />
 
                 <AppSidebar
-                    className={`fixed inset-y-0 left-0 z-50 h-dvh w-72 shadow-lg transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 ${
+                    className={`fixed inset-y-0 left-0 z-50 h-dvh w-72 shadow-lg transition-transform md:static md:h-full md:shrink-0 md:translate-x-0 md:shadow-none ${
                         isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
                     } ${isSidebarCollapsed ? 'md:w-24' : 'md:w-72'}`}
                     brandHref={route('dashboard')}
@@ -169,60 +175,78 @@ export default function AuthenticatedLayout({ header, children }) {
                                     ? setIsSidebarCollapsed((value) => !value)
                                     : setIsDrawerOpen(false)
                             }
-                            className="rounded-lg border border-outline-variant px-3 py-2 text-sm font-medium text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface"
+                            aria-label={sidebarActionLabel}
+                            title={sidebarActionLabel}
+                            className="touch-target inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-outline-variant text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface"
                         >
-                            {isDesktop ? 'Collapse' : 'Close'}
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d={
+                                        isDesktop
+                                            ? isSidebarCollapsed
+                                                ? 'M9 5l7 7-7 7'
+                                                : 'M15 19l-7-7 7-7'
+                                            : 'M6 6l12 12M18 6L6 18'
+                                    }
+                                />
+                            </svg>
+                            <span className="sr-only">{sidebarActionLabel}</span>
                         </button>
                     )}
                 />
 
-                <div className="min-w-0 flex-1 overflow-x-hidden">
-                    {!isOnline && (
-                        <div className="safe-area-x bg-secondary-container px-md py-sm text-body-md font-medium text-on-secondary-container">
-                            Offline mode: cached pages stay available, but sync and network actions wait for reconnection.
-                        </div>
-                    )}
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <div className="touch-scroll flex-1 overflow-x-hidden overflow-y-auto">
+                        {!isOnline && (
+                            <div className="safe-area-x bg-secondary-container px-md py-sm text-body-md font-medium text-on-secondary-container">
+                                Offline mode: cached pages stay available, but sync and network actions wait for reconnection.
+                            </div>
+                        )}
 
-                    <div className="safe-area-top sticky top-0 z-30 border-b border-outline-variant bg-surface-container-lowest/90 backdrop-blur">
-                        <div className="safe-area-x flex flex-col gap-4 px-md py-md lg:px-lg">
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsDrawerOpen(true)}
-                                        className="touch-target rounded-xl border border-outline-variant px-4 py-2 text-label-bold text-on-surface-variant md:hidden"
-                                    >
-                                        Menu
-                                    </button>
-                                    <div>
-                                        <p className="text-label-bold uppercase tracking-[0.24em] text-on-surface-variant">
-                                            Back office
-                                        </p>
-                                        <p className="text-headline-md text-on-surface">
-                                            {activeRoute || 'Workspace'}
-                                        </p>
+                        <div className="safe-area-top sticky top-0 z-30 border-b border-outline-variant bg-surface-container-lowest/90 backdrop-blur">
+                            <div className="safe-area-x flex flex-col gap-4 px-md py-md lg:px-lg">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsDrawerOpen(true)}
+                                            className="touch-target rounded-xl border border-outline-variant px-4 py-2 text-label-bold text-on-surface-variant md:hidden"
+                                        >
+                                            Menu
+                                        </button>
+                                        <div>
+                                            <p className="text-label-bold uppercase tracking-[0.24em] text-on-surface-variant">
+                                                Back office
+                                            </p>
+                                            <p className="text-headline-md text-on-surface">
+                                                {activeRoute || 'Workspace'}
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {user?.abilities?.checkout && (
-                                    <Link
-                                        href={route('pos.index')}
-                                        className="touch-target inline-flex items-center justify-center rounded-full border border-outline px-lg py-sm text-label-bold text-on-surface transition hover:border-outline-variant hover:bg-surface-container"
-                                    >
-                                        Open POS
-                                    </Link>
-                                )}
+                                    {user?.abilities?.checkout && (
+                                        <Link
+                                            href={route('pos.index')}
+                                            className="touch-target inline-flex items-center justify-center rounded-full border border-outline px-lg py-sm text-label-bold text-on-surface transition hover:border-outline-variant hover:bg-surface-container"
+                                        >
+                                            Open POS
+                                        </Link>
+                                    )}
+                                </div>
                             </div>
                         </div>
+
+                        {header && (
+                            <header className="safe-area-x px-md py-6 lg:px-lg">{header}</header>
+                        )}
+
+                        <main className="safe-area-x safe-area-bottom px-md pb-24 lg:px-lg">
+                            {children}
+                        </main>
                     </div>
-
-                    {header && (
-                        <header className="safe-area-x px-md py-6 lg:px-lg">{header}</header>
-                    )}
-
-                    <main className="safe-area-x safe-area-bottom px-md pb-24 lg:px-lg">
-                        {children}
-                    </main>
                 </div>
             </div>
         </div>
