@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Outlet;
 use App\Models\Role;
 use App\Models\Subscription;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,32 @@ class OperationsController extends Controller
 
         $subscription = Subscription::current();
         $manageableRoleNames = $this->manageableStaffRoleNames($user);
+        $customers = Customer::query()
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'email',
+                'phone',
+                'membership_number',
+                'membership_tier',
+                'membership_discount_rate',
+                'is_active',
+            ]);
+        $recentTransactionsByCustomer = Transaction::query()
+            ->with('outlet:id,name')
+            ->whereIn('customer_id', $customers->pluck('id'))
+            ->orderByDesc('paid_at')
+            ->get([
+                'id',
+                'customer_id',
+                'outlet_id',
+                'invoice_number',
+                'total',
+                'status',
+                'paid_at',
+            ])
+            ->groupBy('customer_id');
 
         return Inertia::render('Operations/Index', [
             'canManageOperations' => $user->canManageOperations(),
@@ -37,7 +64,33 @@ class OperationsController extends Controller
                     ->get()
                 : [],
             'roles' => Role::query()->whereIn('name', $manageableRoleNames)->orderBy('name')->get(),
-            'customers' => Customer::query()->orderBy('name')->get(),
+            'customers' => $customers
+                ->map(function (Customer $customer) use ($recentTransactionsByCustomer): array {
+                    return [
+                        'id' => $customer->id,
+                        'name' => $customer->name,
+                        'email' => $customer->email,
+                        'phone' => $customer->phone,
+                        'membership_number' => $customer->membership_number,
+                        'membership_tier' => $customer->membership_tier,
+                        'membership_discount_rate' => $customer->membership_discount_rate,
+                        'is_active' => $customer->is_active,
+                        'recent_transactions' => $recentTransactionsByCustomer
+                            ->get($customer->id, collect())
+                            ->take(5)
+                            ->map(fn (Transaction $transaction) => [
+                                'id' => $transaction->id,
+                                'invoice_number' => $transaction->invoice_number,
+                                'outlet' => $transaction->outlet,
+                                'total' => $transaction->total,
+                                'status' => $transaction->status,
+                                'paid_at' => optional($transaction->paid_at)->toDateTimeString(),
+                            ])
+                            ->values()
+                            ->all(),
+                    ];
+                })
+                ->values(),
             'subscription' => $subscription,
             'usage' => [
                 'activeUsers' => User::query()->where('is_active', true)->count(),

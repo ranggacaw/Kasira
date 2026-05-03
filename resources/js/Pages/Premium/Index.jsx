@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -120,7 +121,9 @@ export default function PremiumIndex({
     selectedOutletId,
     filters = {},
 }) {
-    const flash = usePage().props.flash || {};
+    const page = usePage();
+    const flash = page.props.flash || {};
+    const currentSection = new URLSearchParams(String(page.url || '').split('?')[1] || '').get('section');
     const subscriptionPlan = subscription?.plan || 'Starter';
     const userLimit = toNumber(subscription?.user_limit);
     const outletLimit = toNumber(subscription?.outlet_limit);
@@ -140,6 +143,16 @@ export default function PremiumIndex({
         date_to: filters?.date_to || '',
     };
     const hasExports = featureList.includes('exports');
+
+    useEffect(() => {
+        if (!currentSection) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            document.getElementById(currentSection)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }, [currentSection]);
 
     const buildFilterParams = (overrides = {}) => {
         const nextFilters = {
@@ -448,8 +461,9 @@ export default function PremiumIndex({
                                             <ListItem
                                                 key={shift.id || index}
                                                 label={shift.user?.name || 'Unknown cashier'}
-                                                sublabel={`${shift.outlet?.name || 'Unknown outlet'} • ${formatDateTime(shift.opened_at)}`}
-                                                amount={shift.status || 'Unknown'}
+                                                sublabel={`${shift.outlet?.name || 'Unknown outlet'} • ${formatDateTime(shift.opened_at)} • ${toNumber(shift.sales_summary?.transaction_count)} sales • Expected ${formatCurrency(shift.expected_cash)}`}
+                                                amount={shift.status === 'closed' ? `Diff ${formatCurrency(shift.cash_difference)}` : (shift.status || 'Unknown')}
+                                                variant={toNumber(shift.cash_difference) !== 0 ? 'alert' : 'default'}
                                             />
                                         ))
                                     ) : (

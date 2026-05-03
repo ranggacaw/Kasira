@@ -48,6 +48,8 @@ class CheckoutController extends Controller
                 'category_id',
                 'unit_id',
                 'name',
+                'sku',
+                'barcode',
                 'selling_price',
                 'stock_quantity',
                 'track_stock',
@@ -99,6 +101,7 @@ class CheckoutController extends Controller
                 'thermalPrinting' => $subscription->allowsFeature('thermal_printing'),
             ],
             'currentShift' => $currentShift,
+            'defaultTaxRate' => (float) $settings->default_checkout_tax_rate,
             'draftOrders' => PosDraftOrder::query()
                 ->with('customer:id,name')
                 ->where('user_id', $request->user()->id)

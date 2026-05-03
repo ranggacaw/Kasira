@@ -17,6 +17,7 @@ export default function TransactionShow({
     receiptChannels,
     receiptSettings,
     canRefund,
+    canVoid,
     canUseThermalPrinting,
     canViewProfitability,
 }) {
@@ -47,6 +48,17 @@ export default function TransactionShow({
                         <p className="mt-1 text-sm text-outline">
                             Reprint and connected receipt delivery history.
                         </p>
+                        <div className="mt-3">
+                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                                transaction.status === 'cancelled'
+                                    ? 'bg-secondary-container text-on-secondary-container'
+                                    : transaction.status === 'refunded'
+                                      ? 'bg-error-container text-on-error-container'
+                                      : 'bg-tertiary-fixed-dim text-on-tertiary-fixed'
+                            }`}>
+                                {transaction.status}
+                            </span>
+                        </div>
                     </div>
                     <button
                         type="button"
@@ -160,16 +172,24 @@ export default function TransactionShow({
                                             {transaction.customer?.name || 'Walk-in customer'}
                                         </dd>
                                     </div>
-                                    <div>
-                                        <dt className="text-outline">Payment</dt>
-                                        <dd className="mt-1 font-medium text-on-surface">
-                                            {transaction.payments[0]?.method || '-'}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt className="text-outline">Promotion</dt>
-                                        <dd className="mt-1 font-medium text-on-surface">
-                                            {transaction.promotion?.name || 'None'}
+                                     <div>
+                                         <dt className="text-outline">Payment</dt>
+                                         <dd className="mt-1 font-medium text-on-surface">
+                                             {transaction.payments[0]?.method || '-'}
+                                         </dd>
+                                     </div>
+                                     {transaction.cancelled_at && (
+                                         <div>
+                                             <dt className="text-outline">Voided at</dt>
+                                             <dd className="mt-1 font-medium text-on-surface">
+                                                 {transaction.cancelled_at}
+                                             </dd>
+                                         </div>
+                                     )}
+                                     <div>
+                                         <dt className="text-outline">Promotion</dt>
+                                         <dd className="mt-1 font-medium text-on-surface">
+                                             {transaction.promotion?.name || 'None'}
                                         </dd>
                                     </div>
                                     <div>
@@ -246,6 +266,17 @@ export default function TransactionShow({
                                             className="touch-target rounded-full border border-rose-200 bg-error-container px-4 py-2 text-sm font-medium text-rose-700"
                                         >
                                             Refund transaction
+                                        </button>
+                                    )}
+                                    {canVoid && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.post(route('transactions.void', transaction.id))
+                                            }
+                                            className="touch-target rounded-full border border-outline bg-surface-container px-4 py-2 text-sm font-medium text-on-surface-variant"
+                                        >
+                                            Void transaction
                                         </button>
                                     )}
                                 </div>

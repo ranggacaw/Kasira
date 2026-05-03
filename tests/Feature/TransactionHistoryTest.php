@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ReceiptDelivery;
 use App\Models\Role;
+use App\Models\StockMovement;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -138,6 +139,62 @@ class TransactionHistoryTest extends TestCase
                 ->where('transaction.items.0.gross_profit', '18000.00')
                 ->where('transaction.items.0.gross_margin', '72.00')
                 ->where('canViewProfitability', true));
+    }
+
+    public function test_voiding_transaction_restores_stock_and_keeps_cancelled_history_state(): void
+    {
+        $cashier = $this->createUserWithRole(Role::CASHIER);
+        $product = Product::query()->create([
+            'name' => 'Brownie',
+            'sku' => 'BRN001',
+            'selling_price' => 18000,
+            'cost_price' => 7000,
+            'stock_quantity' => 10,
+            'outlet_id' => $cashier->outlet_id,
+            'track_stock' => true,
+        ]);
+
+        $this->actingAs($cashier)->post('/pos/checkout', [
+            'outlet_id' => $cashier->outlet_id,
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 2,
+                ],
+            ],
+            'discount_type' => 'fixed',
+            'discount_value' => 0,
+            'tax_rate' => 0,
+            'service_fee_rate' => 0,
+            'payment_method' => Payment::METHOD_CASH,
+        ])->assertRedirect();
+
+        $transaction = Transaction::query()->firstOrFail();
+
+        $this->actingAs($cashier)
+            ->post('/transactions/'.$transaction->id.'/void')
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => Transaction::STATUS_CANCELLED,
+        ]);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'stock_quantity' => 10,
+        ]);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'type' => StockMovement::TYPE_VOID,
+            'quantity' => 2,
+        ]);
+
+        $this->actingAs($cashier)
+            ->get('/transactions?status=cancelled')
+            ->assertOk()
+            ->assertSee($transaction->invoice_number);
     }
 
     private function createTransaction(User $cashier, int $outletId, Product $product, string $paymentMethod, \DateTimeInterface $paidAt): Transaction

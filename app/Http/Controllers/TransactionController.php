@@ -34,7 +34,11 @@ class TransactionController extends Controller
             'cashier_id' => ['nullable', 'exists:users,id'],
             'outlet_id' => ['nullable', 'exists:outlets,id'],
             'payment_method' => ['nullable', Rule::in(Payment::methods())],
-            'status' => ['nullable', Rule::in([Transaction::STATUS_COMPLETED, Transaction::STATUS_REFUNDED])],
+            'status' => ['nullable', Rule::in([
+                Transaction::STATUS_COMPLETED,
+                Transaction::STATUS_REFUNDED,
+                Transaction::STATUS_CANCELLED,
+            ])],
         ]);
 
         $currentOutlet = $this->resolveCurrentOutlet($request);
@@ -94,7 +98,8 @@ class TransactionController extends Controller
                 ->values()
                 ->all(),
             'receiptSettings' => AppSetting::current(),
-            'canRefund' => $transaction->status !== Transaction::STATUS_REFUNDED,
+            'canRefund' => $transaction->status === Transaction::STATUS_COMPLETED,
+            'canVoid' => $transaction->status === Transaction::STATUS_COMPLETED,
             'canUseThermalPrinting' => $subscription->allowsFeature('thermal_printing'),
             'canViewProfitability' => $canViewProfitability,
         ]);
@@ -155,31 +160,19 @@ class TransactionController extends Controller
             return back()->with('success', 'Transaction already refunded.');
         }
 
+        if ($transaction->status !== Transaction::STATUS_COMPLETED) {
+            return back()->with('success', 'Only completed transactions can be refunded.');
+        }
+
         $transaction->load('items.product');
 
         DB::transaction(function () use ($request, $transaction): void {
-            foreach ($transaction->items as $item) {
-                $product = $item->product;
-
-                if (! $product || ! $product->track_stock) {
-                    continue;
-                }
-
-                $balanceAfter = $product->stock_quantity + $item->quantity;
-
-                $product->update([
-                    'stock_quantity' => $balanceAfter,
-                ]);
-
-                $product->stockMovements()->create([
-                    'outlet_id' => $transaction->outlet_id,
-                    'user_id' => $request->user()->id,
-                    'type' => StockMovement::TYPE_REFUND,
-                    'quantity' => $item->quantity,
-                    'balance_after' => $balanceAfter,
-                    'notes' => "Refunded from {$transaction->invoice_number}.",
-                ]);
-            }
+            $this->restoreStockForTransaction(
+                $request,
+                $transaction,
+                StockMovement::TYPE_REFUND,
+                "Refunded from {$transaction->invoice_number}.",
+            );
 
             $transaction->update([
                 'status' => Transaction::STATUS_REFUNDED,
@@ -188,6 +181,37 @@ class TransactionController extends Controller
         });
 
         return back()->with('success', 'Refund workflow completed.');
+    }
+
+    public function voidTransaction(Request $request, Transaction $transaction): RedirectResponse
+    {
+        abort_unless($request->user()->canViewTransactions(), 403);
+
+        if ($transaction->status === Transaction::STATUS_CANCELLED) {
+            return back()->with('success', 'Transaction already voided.');
+        }
+
+        if ($transaction->status !== Transaction::STATUS_COMPLETED) {
+            return back()->with('success', 'Only completed transactions can be voided.');
+        }
+
+        $transaction->load('items.product');
+
+        DB::transaction(function () use ($request, $transaction): void {
+            $this->restoreStockForTransaction(
+                $request,
+                $transaction,
+                StockMovement::TYPE_VOID,
+                "Voided from {$transaction->invoice_number}.",
+            );
+
+            $transaction->update([
+                'status' => Transaction::STATUS_CANCELLED,
+                'cancelled_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Transaction voided.');
     }
 
     protected function serializeTransaction(Transaction $transaction, bool $canViewProfitability): array
@@ -202,6 +226,7 @@ class TransactionController extends Controller
             'total' => $transaction->total,
             'status' => $transaction->status,
             'paid_at' => optional($transaction->paid_at)->toDateTimeString(),
+            'cancelled_at' => optional($transaction->cancelled_at)->toDateTimeString(),
             'cashier' => $transaction->cashier,
             'outlet' => $transaction->outlet,
             'customer' => $transaction->customer,
@@ -238,5 +263,35 @@ class TransactionController extends Controller
         }
 
         return $serialized;
+    }
+
+    protected function restoreStockForTransaction(
+        Request $request,
+        Transaction $transaction,
+        string $movementType,
+        string $notes,
+    ): void {
+        foreach ($transaction->items as $item) {
+            $product = $item->product;
+
+            if (! $product || ! $product->track_stock) {
+                continue;
+            }
+
+            $balanceAfter = $product->stock_quantity + $item->quantity;
+
+            $product->update([
+                'stock_quantity' => $balanceAfter,
+            ]);
+
+            $product->stockMovements()->create([
+                'outlet_id' => $transaction->outlet_id,
+                'user_id' => $request->user()->id,
+                'type' => $movementType,
+                'quantity' => $item->quantity,
+                'balance_after' => $balanceAfter,
+                'notes' => $notes,
+            ]);
+        }
     }
 }

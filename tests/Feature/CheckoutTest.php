@@ -108,6 +108,34 @@ class CheckoutTest extends TestCase
                 ->missing('products.0.minimum_margin'));
     }
 
+    public function test_checkout_payload_includes_sku_barcode_and_default_tax_rate_for_cashier_search_and_new_sales(): void
+    {
+        $user = User::factory()->create();
+
+        Product::query()->create([
+            'name' => 'Espresso',
+            'sku' => 'ESP001',
+            'barcode' => '89900001',
+            'selling_price' => 15000,
+            'cost_price' => 7000,
+            'is_active' => true,
+            'outlet_id' => $user->outlet_id,
+        ]);
+
+        \App\Models\AppSetting::current()->update([
+            'default_checkout_tax_rate' => 10.5,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/pos')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Pos/Checkout')
+                ->where('products.0.sku', 'ESP001')
+                ->where('products.0.barcode', '89900001')
+                ->where('defaultTaxRate', 10.5));
+    }
+
     public function test_checkout_requires_at_least_one_item(): void
     {
         $user = User::factory()->create();

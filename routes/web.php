@@ -51,6 +51,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
     Route::post('/transactions/{transaction}/receipts', [TransactionController::class, 'queueReceipt'])->name('transactions.receipts.store');
     Route::get('/transactions/{transaction}/download', [TransactionController::class, 'downloadReceipt'])->name('transactions.download');
+    Route::post('/transactions/{transaction}/void', [TransactionController::class, 'voidTransaction'])->name('transactions.void');
     Route::post('/transactions/{transaction}/refund', [TransactionController::class, 'refund'])->name('transactions.refund');
 
     Route::get('/operations', [OperationsController::class, 'index'])->name('operations.index');
@@ -77,6 +78,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::patch('/settings/receipt', [SettingsController::class, 'updateReceipt'])->name('settings.receipt.update');
     Route::patch('/settings/payments', [SettingsController::class, 'updatePayments'])->name('settings.payments.update');
     Route::patch('/settings/margins', [SettingsController::class, 'updateMargins'])->name('settings.margins.update');
+    Route::patch('/settings/checkout-defaults', [SettingsController::class, 'updateCheckoutDefaults'])->name('settings.checkout-defaults.update');
     Route::patch('/settings/pwa', [SettingsController::class, 'updatePwa'])->name('settings.pwa.update');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

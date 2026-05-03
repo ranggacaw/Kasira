@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import SelectInput from '@/Components/SelectInput';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function InventoryIndex({
     filters,
@@ -11,8 +11,26 @@ export default function InventoryIndex({
     movements,
     lowStockAlerts,
 }) {
-    const flash = usePage().props.flash || {};
+    const page = usePage();
+    const flash = page.props.flash || {};
+    const currentSection = new URLSearchParams(String(page.url || '').split('?')[1] || '').get('section');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
+
+    useEffect(() => {
+        const targetId = currentSection === 'movements'
+            ? 'movements-section'
+            : currentSection === 'stock'
+              ? 'stock-section'
+              : null;
+
+        if (!targetId) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }, [currentSection]);
 
     const filterForm = useForm({
         outlet: selectedOutletId || '',
@@ -110,12 +128,13 @@ export default function InventoryIndex({
                             <option value="adjustment">Adjustment</option>
                             <option value="sale">Sale</option>
                             <option value="refund">Refund</option>
+                            <option value="void">Void</option>
                         </SelectInput>
                     </div>
                 </div>
 
                 <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-                    <div className="space-y-6">
+                    <div id="stock-section" className="space-y-6">
                         <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
                             <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">
                                 Record movement
@@ -199,7 +218,7 @@ export default function InventoryIndex({
                         </div>
                     </div>
 
-                    <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                    <div id="movements-section" className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
                         <div className="flex items-center justify-between gap-3 mb-4">
                             <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">
                                 Movement history

@@ -13,6 +13,7 @@ class Transaction extends Model
 
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_REFUNDED = 'refunded';
+    public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
         'invoice_number',
@@ -31,6 +32,7 @@ class Transaction extends Model
         'paid_amount',
         'paid_at',
         'refunded_at',
+        'cancelled_at',
     ];
 
     protected function casts(): array
@@ -44,6 +46,7 @@ class Transaction extends Model
             'paid_amount' => 'decimal:2',
             'paid_at' => 'datetime',
             'refunded_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 

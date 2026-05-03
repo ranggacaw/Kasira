@@ -19,6 +19,31 @@ const SidebarItem = ({ icon, label, href, active, hiddenLabelClass = 'hidden lg:
     </Link>
 );
 
+const SidebarGroup = ({ group, hiddenLabelClass, collapsed, onNavigate }) => (
+    <div key={group.key} className="space-y-2">
+        {!collapsed ? (
+            <p className={`${hiddenLabelClass} px-2 text-[11px] font-bold uppercase tracking-[0.24em] text-on-surface-variant`}>
+                {group.label}
+            </p>
+        ) : (
+            <div className="mx-3 border-t border-outline-variant" />
+        )}
+        <div className="space-y-1">
+            {group.items.map((item) => (
+                <SidebarItem
+                    key={item.key}
+                    icon={item.icon}
+                    label={item.name}
+                    href={item.href}
+                    active={item.active}
+                    hiddenLabelClass={hiddenLabelClass}
+                    onClick={onNavigate}
+                />
+            ))}
+        </div>
+    </div>
+);
+
 export default function AppSidebar({
     className = '',
     brandHref,
@@ -80,15 +105,13 @@ export default function AppSidebar({
             </div>
 
             <nav className="touch-scroll min-h-0 flex-1 space-y-2 overflow-y-auto p-4 sm:p-5">
-                {navigation.map((item) => (
-                    <SidebarItem
-                        key={item.key}
-                        icon={item.icon}
-                        label={item.name}
-                        href={item.href}
-                        active={item.active}
+                {navigation.map((group) => (
+                    <SidebarGroup
+                        key={group.key}
+                        group={group}
                         hiddenLabelClass={hiddenLabelClass}
-                        onClick={onNavigate}
+                        collapsed={collapsed}
+                        onNavigate={onNavigate}
                     />
                 ))}
             </nav>

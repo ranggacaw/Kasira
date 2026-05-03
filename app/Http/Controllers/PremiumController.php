@@ -347,7 +347,6 @@ class PremiumController extends Controller
         ]);
 
         $existingShift = CashierShift::query()
-            ->where('user_id', $request->user()->id)
             ->where('outlet_id', $validated['outlet_id'])
             ->where('status', 'open')
             ->first();
@@ -381,8 +380,30 @@ class PremiumController extends Controller
             return back()->with('success', 'Shift already closed.');
         }
 
+        $shift->load('transactions.payments');
+
+        $completedTransactions = $shift->transactions
+            ->where('status', Transaction::STATUS_COMPLETED)
+            ->values();
+        $cashSalesTotal = $completedTransactions
+            ->filter(fn (Transaction $transaction) => $transaction->payments->contains('method', Payment::METHOD_CASH))
+            ->sum(fn (Transaction $transaction) => (float) $transaction->total);
+        $totalSalesAmount = $completedTransactions->sum(fn (Transaction $transaction) => (float) $transaction->total);
+        $expectedCash = round((float) $shift->opening_balance + $cashSalesTotal, 2);
+        $cashDifference = round((float) $validated['closing_balance'] - $expectedCash, 2);
+
         $shift->update([
             'closing_balance' => $validated['closing_balance'],
+            'expected_cash' => $expectedCash,
+            'cash_difference' => $cashDifference,
+            'sales_summary' => [
+                'transaction_count' => $completedTransactions->count(),
+                'total_sales' => round($totalSalesAmount, 2),
+                'cash_sales' => round($cashSalesTotal, 2),
+                'non_cash_sales' => round($totalSalesAmount - $cashSalesTotal, 2),
+                'cancelled_count' => $shift->transactions->where('status', Transaction::STATUS_CANCELLED)->count(),
+                'refunded_count' => $shift->transactions->where('status', Transaction::STATUS_REFUNDED)->count(),
+            ],
             'closed_at' => now(),
             'status' => 'closed',
         ]);

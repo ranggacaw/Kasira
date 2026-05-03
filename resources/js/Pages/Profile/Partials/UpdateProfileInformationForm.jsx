@@ -26,88 +26,78 @@ export default function UpdateProfileInformation({
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-on-surface">
-                    Profile Information
-                </h2>
+            <form onSubmit={submit} className="space-y-3">
+            <div>
+                <InputLabel htmlFor="name" value="Name" />
 
-                <p className="mt-1 text-body-md text-on-surface-variant">
-                    Update your account's profile information and email address.
-                </p>
-            </header>
+                <TextInput
+                    id="name"
+                    className="mt-1 block w-full"
+                    value={data.name}
+                    onChange={(e) => setData('name', e.target.value)}
+                    required
+                    isFocused
+                    autoComplete="name"
+                />
 
-            <form onSubmit={submit} className="mt-6 space-y-6">
+                <InputError className="mt-2" message={errors.name} />
+            </div>
+
+            <div>
+                <InputLabel htmlFor="email" value="Email" />
+
+                <TextInput
+                    id="email"
+                    type="email"
+                    className="mt-1 block w-full"
+                    value={data.email}
+                    onChange={(e) => setData('email', e.target.value)}
+                    required
+                    autoComplete="username"
+                />
+
+                <InputError className="mt-2" message={errors.email} />
+            </div>
+
+            {mustVerifyEmail && user.email_verified_at === null && (
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <p className="text-sm text-on-surface-variant">
+                        Your email address is unverified.
+                        <Link
+                            href={route('verification.send')}
+                            method="post"
+                            as="button"
+                            className="ml-1 text-on-surface-variant underline hover:text-on-surface"
+                        >
+                            Click here to re-send the verification email.
+                        </Link>
+                    </p>
 
-                    <TextInput
-                        id="name"
-                        className="mt-1 block w-full"
-                        value={data.name}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                        isFocused
-                        autoComplete="name"
-                    />
-
-                    <InputError className="mt-2" message={errors.name} />
+                    {status === 'verification-link-sent' && (
+                        <div className="mt-2 text-sm font-medium text-green-600">
+                            A new verification link has been sent to your
+                            email address.
+                        </div>
+                    )}
                 </div>
+            )}
 
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
+            <div className="flex items-center justify-between">
+                <PrimaryButton disabled={processing}>Save</PrimaryButton>
 
-                    <TextInput
-                        id="email"
-                        type="email"
-                        className="mt-1 block w-full"
-                        value={data.email}
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
-                        autoComplete="username"
-                    />
-
-                    <InputError className="mt-2" message={errors.email} />
-                </div>
-
-                {mustVerifyEmail && user.email_verified_at === null && (
-                    <div>
-                        <p className="mt-2 text-sm text-on-surface">
-                            Your email address is unverified.
-                            <Link
-                                href={route('verification.send')}
-                                method="post"
-                                as="button"
-                                className="rounded-md text-body-md text-on-surface-variant underline hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                            >
-                                Click here to re-send the verification email.
-                            </Link>
-                        </p>
-
-                        {status === 'verification-link-sent' && (
-                            <div className="mt-2 text-sm font-medium text-green-600">
-                                A new verification link has been sent to your
-                                email address.
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
-
-                    <Transition
-                        show={recentlySuccessful}
-                        enter="transition ease-in-out"
-                        enterFrom="opacity-0"
-                        leave="transition ease-in-out"
-                        leaveTo="opacity-0"
-                    >
-                        <p className="text-body-md text-on-surface-variant">
-                            Saved.
-                        </p>
-                    </Transition>
-                </div>
-            </form>
+                <Transition
+                    show={recentlySuccessful}
+                    enter="transition ease-in-out"
+                    enterFrom="opacity-0"
+                    leave="transition ease-in-out"
+                    leaveTo="opacity-0"
+                >
+                    <p className="text-sm text-on-surface-variant">
+                        Saved.
+                    </p>
+                </Transition>
+            </div>
+        </form>
         </section>
     );
 }

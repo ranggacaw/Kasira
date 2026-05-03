@@ -16,6 +16,9 @@ class CashierShift extends Model
         'user_id',
         'opening_balance',
         'closing_balance',
+        'expected_cash',
+        'cash_difference',
+        'sales_summary',
         'opened_at',
         'closed_at',
         'status',
@@ -26,6 +29,9 @@ class CashierShift extends Model
         return [
             'opening_balance' => 'decimal:2',
             'closing_balance' => 'decimal:2',
+            'expected_cash' => 'decimal:2',
+            'cash_difference' => 'decimal:2',
+            'sales_summary' => 'array',
             'opened_at' => 'datetime',
             'closed_at' => 'datetime',
         ];

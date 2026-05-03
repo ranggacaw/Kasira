@@ -15,6 +15,7 @@ class StockMovement extends Model
     public const TYPE_ADJUSTMENT = 'adjustment';
     public const TYPE_SALE = 'sale';
     public const TYPE_REFUND = 'refund';
+    public const TYPE_VOID = 'void';
 
     protected $fillable = [
         'product_id',

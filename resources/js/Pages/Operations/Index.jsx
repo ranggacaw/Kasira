@@ -1,8 +1,32 @@
 import InputError from '@/Components/InputError';
 import SelectInput from '@/Components/SelectInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+
+const formatCurrency = (value) =>
+    new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(value || 0);
+
+const formatDateTime = (value) => {
+    if (!value) {
+        return 'No visits yet';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return 'No visits yet';
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(date);
+};
 
 const emptyOutletForm = {
     name: '',
@@ -67,9 +91,26 @@ export default function OperationsIndex({
     const pageErrors = page.props.errors || {};
     const globalError = firstErrorMessage(pageErrors);
     const currentRoleName = page.props.auth?.user?.role?.name;
+    const currentSection = new URLSearchParams(String(page.url || '').split('?')[1] || '').get('section');
     const managesCashiersOnly = currentRoleName === 'Admin';
     const [editingOutletId, setEditingOutletId] = useState(null);
     const [editingUserId, setEditingUserId] = useState(null);
+
+    useEffect(() => {
+        const targetId = currentSection === 'customers'
+            ? 'customers-section'
+            : currentSection === 'operations'
+              ? 'operations-section'
+              : null;
+
+        if (!targetId) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }, [currentSection]);
 
     const outletForm = useForm(emptyOutletForm);
     const userForm = useForm(buildUserForm(roles));
@@ -264,7 +305,7 @@ export default function OperationsIndex({
                     )}
 
                     <div className="grid gap-6 xl:grid-cols-[1.15fr_1fr]">
-                        <div className="space-y-6">
+                        <div id="operations-section" className="space-y-6">
                             {canManageOperations && (
                                 <>
                                     <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
@@ -576,7 +617,7 @@ export default function OperationsIndex({
 
                         <div className="space-y-6">
                             {canManageCustomers && (
-                                <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
+                                <div id="customers-section" className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant">
                                     <h3 className="text-sm font-semibold uppercase tracking-wide text-outline">
                                         Customer directory
                                     </h3>
@@ -682,13 +723,63 @@ export default function OperationsIndex({
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <p className="mt-2 text-sm text-outline">
-                                                    {customer.email || 'No email'}
-                                                    {customer.phone ? ` • ${customer.phone}` : ''}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
+                                                 <p className="mt-2 text-sm text-outline">
+                                                     {customer.email || 'No email'}
+                                                     {customer.phone ? ` • ${customer.phone}` : ''}
+                                                 </p>
+                                                 <div className="mt-4 rounded-xl bg-surface-container p-4">
+                                                     <div className="flex items-center justify-between gap-3">
+                                                         <h4 className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                                                             Recent purchases
+                                                         </h4>
+                                                         <span className="text-xs text-outline">
+                                                             {customer.recent_transactions?.length || 0} records
+                                                         </span>
+                                                     </div>
+
+                                                     {customer.recent_transactions?.length ? (
+                                                         <div className="mt-3 space-y-2">
+                                                             {customer.recent_transactions.map((transaction) => (
+                                                                 <Link
+                                                                     key={transaction.id}
+                                                                     href={route('transactions.show', transaction.id)}
+                                                                     className="flex flex-col gap-2 rounded-xl border border-outline-variant bg-white p-3 transition hover:border-primary hover:bg-surface-container-lowest sm:flex-row sm:items-center sm:justify-between"
+                                                                 >
+                                                                     <div>
+                                                                         <p className="text-sm font-semibold text-on-surface">
+                                                                             {transaction.invoice_number}
+                                                                         </p>
+                                                                         <p className="mt-1 text-xs text-outline">
+                                                                             {formatDateTime(transaction.paid_at)}
+                                                                             {transaction.outlet?.name ? ` • ${transaction.outlet.name}` : ''}
+                                                                         </p>
+                                                                     </div>
+                                                                     <div className="flex items-center gap-3 sm:text-right">
+                                                                         <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                                                                             transaction.status === 'cancelled'
+                                                                                 ? 'bg-secondary-container text-on-secondary-container'
+                                                                                 : transaction.status === 'refunded'
+                                                                                   ? 'bg-error-container text-on-error-container'
+                                                                                   : 'bg-tertiary-fixed-dim text-on-tertiary-fixed'
+                                                                         }`}>
+                                                                             {transaction.status}
+                                                                         </span>
+                                                                         <span className="text-sm font-semibold text-on-surface">
+                                                                             {formatCurrency(transaction.total)}
+                                                                         </span>
+                                                                     </div>
+                                                                 </Link>
+                                                             ))}
+                                                         </div>
+                                                     ) : (
+                                                         <p className="mt-3 text-sm text-on-surface-variant">
+                                                             No transaction history for this customer yet.
+                                                         </p>
+                                                     )}
+                                                 </div>
+                                             </div>
+                                         ))}
+                                     </div>
                                 </div>
                             )}
                         </div>

@@ -4,7 +4,8 @@ import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const { auth, subscription } = usePage().props;
+    const page = usePage();
+    const { auth, subscription } = page.props;
     const user = auth.user;
     const roleName = user?.role?.name ?? 'Unassigned';
     const initials = useMemo(
@@ -17,62 +18,11 @@ export default function AuthenticatedLayout({ header, children }) {
                 .toUpperCase(),
         [user?.name],
     );
-    const navItems = [
-        user?.abilities?.checkout && {
-            label: 'POS',
-            routeName: 'pos.index',
-            matches: ['pos.index', 'pos.success'],
-            icon: 'M4 6h16M4 12h16M4 18h16',
-        },
-        user?.abilities?.dashboard && {
-            label: 'Dashboard',
-            routeName: 'dashboard',
-            matches: ['dashboard'],
-            icon: 'M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zm10-10h8V3h-8v8z',
-        },
-        user?.abilities?.catalog && {
-            label: 'Products',
-            routeName: 'products.index',
-            matches: ['products.index'],
-            icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
-        },
-        user?.abilities?.catalog && {
-            label: 'Categories',
-            routeName: 'categories.index',
-            matches: ['categories.index'],
-            icon: 'M7 7h10M7 12h6m-6 5h10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z',
-        },
-        user?.abilities?.catalog && {
-            label: 'Inventory',
-            routeName: 'inventory.index',
-            matches: ['inventory.index'],
-            icon: 'M4 7h16M4 12h16M4 17h16',
-        },
-        user?.abilities?.transactions && {
-            label: 'Transactions',
-            routeName: 'transactions.index',
-            matches: ['transactions.index', 'transactions.show'],
-            icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-        },
-        (user?.abilities?.operations || user?.abilities?.customers) && {
-            label: 'Operations',
-            routeName: 'operations.index',
-            matches: ['operations.index'],
-            icon: 'M4 6h16M4 12h16M4 18h10',
-        },
-        user?.abilities?.reports && {
-            label: 'Reports',
-            routeName: 'reports.cogs',
-            matches: ['reports.index', 'reports.cogs'],
-            icon: 'M9 17v-6m4 6V7m4 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z',
-        },
-        user?.abilities?.settings && {
-            label: 'Settings',
-            routeName: 'settings.index',
-            matches: ['settings.index'],
-            icon: 'M10.325 4.317a1 1 0 011.35-.936l.566.226a1 1 0 00.758 0l.566-.226a1 1 0 011.35.936l.093.615a1 1 0 00.57.746l.552.276a1 1 0 01.447 1.341l-.248.574a1 1 0 000 .791l.248.574a1 1 0 01-.447 1.341l-.552.276a1 1 0 00-.57.746l-.093.615a1 1 0 01-1.35.936l-.566-.226a1 1 0 00-.758 0l-.566.226a1 1 0 01-1.35-.936l-.093-.615a1 1 0 00-.57-.746l-.552-.276a1 1 0 01-.447-1.341l.248-.574a1 1 0 000-.791l-.248-.574a1 1 0 01.447-1.341l.552-.276a1 1 0 00.57-.746l.093-.615z M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z',
-        },
-    ].filter(Boolean);
+    const currentSection = useMemo(() => {
+        const [, queryString = ''] = String(page.url || '').split('?');
+
+        return new URLSearchParams(queryString).get('section');
+    }, [page.url]);
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -106,21 +56,36 @@ export default function AuthenticatedLayout({ header, children }) {
         };
     }, []);
 
-    const activeRoute = useMemo(
+    const sidebarNavigation = useMemo(
         () =>
-            navItems.find((item) =>
-                item.matches.some((pattern) => route().current(pattern)),
-            )?.label,
-        [navItems],
+            (user?.navigationGroups || []).map((group) => ({
+                key: group.key,
+                label: group.label,
+                items: group.items.map((item) => {
+                    const routeIsActive = item.matches.some((pattern) => route().current(pattern));
+                    const sectionIsActive = item.section
+                        ? currentSection === item.section
+                        : currentSection === null;
+
+                    return {
+                        key: item.key,
+                        name: item.label,
+                        href: route(item.routeName, item.params || {}),
+                        icon: item.icon,
+                        active: routeIsActive && sectionIsActive,
+                    };
+                }),
+            })),
+        [currentSection, user?.navigationGroups],
     );
 
-    const sidebarNavigation = navItems.map((item) => ({
-        key: item.routeName,
-        name: item.label,
-        href: route(item.routeName),
-        icon: item.icon,
-        active: item.matches.some((pattern) => route().current(pattern)),
-    }));
+    const activeRoute = useMemo(
+        () =>
+            sidebarNavigation
+                .flatMap((group) => group.items)
+                .find((item) => item.active)?.name,
+        [sidebarNavigation],
+    );
 
     const sidebarFooterItems = [
         {

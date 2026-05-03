@@ -112,6 +112,7 @@ class CatalogController extends Controller
                 StockMovement::TYPE_ADJUSTMENT,
                 StockMovement::TYPE_SALE,
                 StockMovement::TYPE_REFUND,
+                StockMovement::TYPE_VOID,
             ])],
             'search' => ['nullable', 'string'],
         ]);

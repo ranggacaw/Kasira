@@ -110,6 +110,7 @@ export default function TransactionsIndex({
                     >
                         <option value="">All status</option>
                         <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
                         <option value="refunded">Refunded</option>
                     </SelectInput>
                     {activeFilters && (
@@ -188,7 +189,7 @@ export default function TransactionsIndex({
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">
-                                Completed Transactions
+                                Transaction history
                             </h3>
                             <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
                                 {transactions.length} results
@@ -238,7 +239,9 @@ export default function TransactionsIndex({
                                         </div>
                                         <div className="col-span-1">
                                             <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                                transaction.status === 'refunded'
+                                                transaction.status === 'cancelled'
+                                                    ? 'bg-secondary-container text-on-secondary-container'
+                                                    : transaction.status === 'refunded'
                                                     ? 'bg-error-container text-on-error-container'
                                                     : 'bg-tertiary-fixed-dim text-on-tertiary-fixed'
                                             }`}>

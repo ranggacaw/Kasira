@@ -1,8 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 export default function SettingsIndex({ settings, paymentMethods, subscription, usage }) {
-    const flash = usePage().props.flash || {};
+    const page = usePage();
+    const flash = page.props.flash || {};
+    const currentSection = new URLSearchParams(String(page.url || '').split('?')[1] || '').get('section');
     const businessForm = useForm({
         business_name: settings.business_name || '',
         business_phone: settings.business_phone || '',
@@ -23,12 +26,31 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
     const marginForm = useForm({
         default_minimum_product_margin: settings.default_minimum_product_margin || 20,
     });
+    const checkoutDefaultsForm = useForm({
+        default_checkout_tax_rate: settings.default_checkout_tax_rate || 0,
+    });
     const pwaForm = useForm({
         pwa_name: settings.pwa_name || '',
         pwa_short_name: settings.pwa_short_name || '',
         pwa_theme_color: settings.pwa_theme_color || '#0f172a',
         pwa_description: settings.pwa_description || '',
     });
+
+    useEffect(() => {
+        const targetId = currentSection === 'business'
+            ? 'business-section'
+            : currentSection === 'checkout-defaults'
+              ? 'checkout-defaults-section'
+              : null;
+
+        if (!targetId) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }, [currentSection]);
 
     const togglePaymentMethod = (method) => {
         const next = paymentForm.data.enabled_payment_methods.includes(method)
@@ -75,7 +97,7 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                     ))}
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-2">
+                <div className="grid gap-6 xl:grid-cols-3">
                     <form
                         className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
                         onSubmit={(event) => {
@@ -107,6 +129,38 @@ export default function SettingsIndex({ settings, paymentMethods, subscription, 
                     </form>
 
                     <form
+                        id="checkout-defaults-section"
+                        className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            checkoutDefaultsForm.patch(route('settings.checkout-defaults.update'));
+                        }}
+                    >
+                        <h3 className="text-label-bold uppercase tracking-wide text-on-surface-variant">Checkout defaults</h3>
+                        <div className="mt-5 space-y-4">
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value={checkoutDefaultsForm.data.default_checkout_tax_rate}
+                                onChange={(event) =>
+                                    checkoutDefaultsForm.setData('default_checkout_tax_rate', event.target.value)
+                                }
+                                placeholder="0"
+                                className="w-full rounded-xl border border-outline bg-surface-container-low px-4 py-3 text-body-md text-on-surface"
+                            />
+                            <p className="text-sm text-on-surface-variant">
+                                New POS sales start with this tax percentage, while cashiers can still adjust the rate per sale.
+                            </p>
+                        </div>
+                        <button className="mt-5 w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:opacity-90">
+                            Save checkout defaults
+                        </button>
+                    </form>
+
+                    <form
+                        id="business-section"
                         className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
                         onSubmit={(event) => {
                             event.preventDefault();

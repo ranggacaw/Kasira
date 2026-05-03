@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\Subscription;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -341,6 +343,71 @@ class OperationsAdministrationTest extends TestCase
         $this->assertDatabaseHas('transactions', [
             'customer_id' => $customer->id,
         ]);
+    }
+
+    public function test_customer_workflow_shows_recent_purchase_history_with_transaction_links(): void
+    {
+        $manager = $this->createUserWithRole(Role::MANAGER);
+        $cashier = $this->createUserWithRole(Role::CASHIER);
+        $customer = Customer::query()->create([
+            'name' => 'Maya Customer',
+            'email' => 'maya@example.test',
+            'membership_discount_rate' => 0,
+            'is_active' => true,
+        ]);
+        $product = Product::query()->create([
+            'name' => 'Brownie',
+            'sku' => 'BRN001',
+            'selling_price' => 18000,
+            'cost_price' => 7000,
+            'stock_quantity' => 15,
+            'outlet_id' => $cashier->outlet_id,
+        ]);
+
+        $transaction = Transaction::query()->create([
+            'invoice_number' => Transaction::generateInvoiceNumber(),
+            'cashier_id' => $cashier->id,
+            'outlet_id' => $cashier->outlet_id,
+            'customer_id' => $customer->id,
+            'subtotal' => 18000,
+            'discount_amount' => 0,
+            'tax_amount' => 0,
+            'service_fee_amount' => 0,
+            'total' => 18000,
+            'status' => Transaction::STATUS_COMPLETED,
+            'paid_amount' => 18000,
+            'paid_at' => now(),
+        ]);
+
+        $transaction->items()->create([
+            'product_id' => $product->id,
+            'product_name_snapshot' => $product->name,
+            'quantity' => 1,
+            'unit_price' => 18000,
+            'unit_cost' => 7000,
+            'subtotal' => 18000,
+            'selling_price_snapshot' => 18000,
+            'cost_price_snapshot' => 7000,
+            'subtotal_revenue_snapshot' => 18000,
+            'subtotal_cost_snapshot' => 7000,
+            'gross_profit_snapshot' => 11000,
+            'gross_margin_snapshot' => 61.11,
+        ]);
+
+        $transaction->payments()->create([
+            'method' => Payment::METHOD_CASH,
+            'amount' => 18000,
+        ]);
+
+        $this->actingAs($manager)
+            ->get('/operations?section=customers')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Operations/Index')
+                ->where('customers.0.name', 'Maya Customer')
+                ->where('customers.0.recent_transactions.0.id', $transaction->id)
+                ->where('customers.0.recent_transactions.0.invoice_number', $transaction->invoice_number)
+                ->where('customers.0.recent_transactions.0.status', Transaction::STATUS_COMPLETED));
     }
 
     private function createUserWithRole(string $roleName): User

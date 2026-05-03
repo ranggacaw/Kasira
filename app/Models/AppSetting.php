@@ -22,6 +22,7 @@ class AppSetting extends Model
         'show_tax_breakdown_on_receipt',
         'enabled_payment_methods',
         'default_minimum_product_margin',
+        'default_checkout_tax_rate',
         'pwa_name',
         'pwa_short_name',
         'pwa_theme_color',
@@ -35,6 +36,7 @@ class AppSetting extends Model
             'show_tax_breakdown_on_receipt' => 'boolean',
             'enabled_payment_methods' => 'array',
             'default_minimum_product_margin' => 'decimal:2',
+            'default_checkout_tax_rate' => 'decimal:2',
         ];
     }
 
@@ -53,6 +55,7 @@ class AppSetting extends Model
                 Payment::METHOD_E_WALLET,
             ],
             'default_minimum_product_margin' => 20,
+            'default_checkout_tax_rate' => 0,
             'pwa_name' => 'Kasira POS',
             'pwa_short_name' => 'Kasira',
             'pwa_theme_color' => '#0f172a',

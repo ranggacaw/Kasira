@@ -100,6 +100,19 @@ class SettingsController extends Controller
         return back()->with('success', 'Default product margin updated.');
     }
 
+    public function updateCheckoutDefaults(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->canManageSettings(), 403);
+
+        $validated = $request->validate([
+            'default_checkout_tax_rate' => ['required', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        AppSetting::current()->update($validated);
+
+        return back()->with('success', 'Checkout defaults updated.');
+    }
+
     public function updatePwa(Request $request): RedirectResponse
     {
         abort_unless($request->user()->canManageSettings(), 403);

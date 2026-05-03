@@ -395,13 +395,14 @@ export default function Checkout({
     features,
     currentShift,
     draftOrders,
+    defaultTaxRate,
 }) {
     const [activeCategoryId, setActiveCategoryId] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState([]);
     const [discountType, setDiscountType] = useState('percentage');
     const [discountValue, setDiscountValue] = useState(0);
-    const [taxRate, setTaxRate] = useState(0);
+    const [taxRate, setTaxRate] = useState(Number(defaultTaxRate || 0));
     const [serviceFeeRate, setServiceFeeRate] = useState(0);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(paymentMethods[0] || 'Cash');
     const [selectedOutlet, setSelectedOutlet] = useState(selectedOutletId || outlets[0]?.id || '');
@@ -411,21 +412,23 @@ export default function Checkout({
     const [paidAmount, setPaidAmount] = useState('');
     const [activeDraftId, setActiveDraftId] = useState(null);
 
-    const filteredProducts = useMemo(
-        () =>
-            products.filter((product) => {
+    const filteredProducts = useMemo(() => {
+        const normalizedQuery = searchQuery.trim().toLowerCase();
+
+        return products.filter((product) => {
                 const matchesCategory =
                     activeCategoryId === 'all'
                         ? true
                         : product.category?.id === activeCategoryId;
-                const matchesSearch = searchQuery
-                    ? product.name.toLowerCase().includes(searchQuery.toLowerCase())
+                const matchesSearch = normalizedQuery
+                    ? [product.name, product.sku, product.barcode]
+                        .filter(Boolean)
+                        .some((value) => value.toLowerCase().includes(normalizedQuery))
                     : true;
 
                 return matchesCategory && matchesSearch;
-            }),
-        [activeCategoryId, products, searchQuery],
-    );
+            });
+    }, [activeCategoryId, products, searchQuery]);
 
     const subtotal = useMemo(
         () => cart.reduce((sum, item) => sum + item.subtotal, 0),
@@ -548,7 +551,7 @@ export default function Checkout({
         setVoucherCode('');
         setDiscountType('percentage');
         setDiscountValue(0);
-        setTaxRate(0);
+        setTaxRate(Number(defaultTaxRate || 0));
         setServiceFeeRate(0);
         setPaidAmount('');
         setActiveDraftId(null);
@@ -596,6 +599,52 @@ export default function Checkout({
     const handleOutletChange = (outletId) => {
         setSelectedOutlet(outletId);
         router.get(route('pos.index'), { outlet: outletId }, { preserveState: true });
+    };
+
+    const promptShiftAmount = (label, fallbackValue = 0) => {
+        const response = window.prompt(label, String(fallbackValue ?? 0));
+
+        if (response === null) {
+            return null;
+        }
+
+        const amount = Number(response);
+
+        if (!Number.isFinite(amount) || amount < 0) {
+            window.alert('Enter a valid non-negative amount.');
+
+            return null;
+        }
+
+        return amount;
+    };
+
+    const openShift = () => {
+        const openingBalance = promptShiftAmount('Opening cash amount', currentShift?.opening_balance || 0);
+
+        if (openingBalance === null) {
+            return;
+        }
+
+        router.post(route('premium.shifts.open'), {
+            outlet_id: selectedOutlet,
+            opening_balance: openingBalance,
+        });
+    };
+
+    const closeShift = () => {
+        const closingBalance = promptShiftAmount(
+            'Counted closing cash amount',
+            currentShift?.expected_cash || currentShift?.opening_balance || 0,
+        );
+
+        if (closingBalance === null) {
+            return;
+        }
+
+        router.patch(route('premium.shifts.close', currentShift.id), {
+            closing_balance: closingBalance,
+        });
     };
 
     const cartPanel = (
@@ -649,26 +698,22 @@ export default function Checkout({
                 <div className="flex flex-wrap items-center gap-3">
                     {features.cashierShifts && (
                         currentShift ? (
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    router.patch(route('premium.shifts.close', currentShift.id), {
-                                        closing_balance: total,
-                                    })
-                                }
-                                className="rounded-lg border border-outline-variant bg-white px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container transition"
-                            >
-                                Close shift
-                            </button>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="rounded-lg border border-outline-variant bg-white px-4 py-2 text-sm text-on-surface-variant">
+                                    Shift open • Opening cash {formatCurrency(currentShift.opening_balance)}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={closeShift}
+                                    className="rounded-lg border border-outline-variant bg-white px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container transition"
+                                >
+                                    Close shift
+                                </button>
+                            </div>
                         ) : (
                             <button
                                 type="button"
-                                onClick={() =>
-                                    router.post(route('premium.shifts.open'), {
-                                        outlet_id: selectedOutlet,
-                                        opening_balance: 0,
-                                    })
-                                }
+                                onClick={openShift}
                                 className="rounded-lg border border-outline-variant bg-white px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container transition"
                             >
                                 Open shift
@@ -761,7 +806,7 @@ export default function Checkout({
                             type="text"
                             value={searchQuery}
                             onChange={(event) => setSearchQuery(event.target.value)}
-                            placeholder="Search menu by name"
+                            placeholder="Search by name, SKU, or barcode"
                             className="w-full rounded-xl border border-outline-variant bg-white py-3 pl-10 pr-10 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
                         {searchQuery && (
@@ -832,7 +877,7 @@ export default function Checkout({
                                                 {product.name}
                                             </p>
                                             <p className="mt-0.5 text-xs text-on-surface-variant">
-                                                {product.category?.name || 'Uncategorized'}
+                                                {[product.category?.name || 'Uncategorized', product.sku || product.barcode].filter(Boolean).join(' • ')}
                                             </p>
                                         </div>
                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${

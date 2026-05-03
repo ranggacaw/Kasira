@@ -8,30 +8,30 @@ export default function Edit({ mustVerifyEmail, status }) {
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-headline-md text-on-surface">
+                <h2 className="text-xl font-semibold text-on-surface">
                     Profile
                 </h2>
             }
         >
             <Head title="Profile" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-surface-container-lowest p-4 shadow-sm ring-1 ring-outline-variant sm:rounded-xl sm:p-8">
+            <div className="mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-surface-container-lowest p-4 shadow-sm ring-1 ring-outline-variant sm:rounded-lg sm:p-4">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
-                            className="max-w-xl"
+                            className=""
                         />
                     </div>
 
-                    <div className="bg-surface-container-lowest p-4 shadow-sm ring-1 ring-outline-variant sm:rounded-xl sm:p-8">
-                        <UpdatePasswordForm className="max-w-xl" />
+                    <div className="bg-surface-container-lowest p-4 shadow-sm ring-1 ring-outline-variant sm:rounded-lg sm:p-4">
+                        <UpdatePasswordForm className="" />
                     </div>
+                </div>
 
-                    <div className="bg-surface-container-lowest p-4 shadow-sm ring-1 ring-outline-variant sm:rounded-xl sm:p-8">
-                        <DeleteUserForm className="max-w-xl" />
-                    </div>
+                <div className="bg-surface-container-lowest p-4 shadow-sm ring-1 ring-outline-variant sm:rounded-lg sm:p-4">
+                    <DeleteUserForm className="" />
                 </div>
             </div>
         </AuthenticatedLayout>
