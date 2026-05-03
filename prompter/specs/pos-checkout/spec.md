@@ -48,7 +48,7 @@ Kasira SHALL persist completed sales as transactions with their sold items and f
 - **THEN** the application rejects the sale and does not create partial transaction records
 
 ### Requirement: Mobile and Tablet POS Layout
-Kasira SHALL render POS using a full-screen touch layout with product browsing and cart access optimized for mobile phones and tablets.
+Kasira SHALL render POS as a full-screen touch-first workspace for mobile phones and tablets without using the back-office sidebar, using a floating or drawer cart on phone-sized viewports and a persistent split cart panel on tablet-sized viewports.
 
 #### Scenario: Cashier uses POS on mobile
 - **WHEN** a cashier opens the POS workspace on a phone-sized viewport
@@ -57,6 +57,10 @@ Kasira SHALL render POS using a full-screen touch layout with product browsing a
 #### Scenario: Cashier uses POS on tablet
 - **WHEN** a cashier opens the POS workspace on a tablet-sized viewport
 - **THEN** the application shows a split layout with product browsing on one side and the cart summary on the other side
+
+#### Scenario: Cashier uses POS in standalone mode
+- **WHEN** a cashier launches the installed PWA into the POS workspace on a phone or tablet
+- **THEN** the header, cart controls, and checkout actions respect standalone safe areas and remain reachable without relying on the back-office shell
 
 ### Requirement: Draft Order Handling
 Kasira SHALL allow staff to hold an in-progress cart as a draft order and resume it later before payment.

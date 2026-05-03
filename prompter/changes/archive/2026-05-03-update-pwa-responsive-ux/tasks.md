@@ -7,8 +7,8 @@
 - [x] 1.6 Sweep major protected pages for responsive regressions under the updated shared shells, including dashboard, products, categories, inventory, transactions, settings, profile, premium, and operations views.
 
 ## 2. Validation
-- [ ] 2.1 Verify installability and standalone launch behavior in supported browsers at phone and tablet sizes.
-- [ ] 2.2 Verify offline re-entry and offline fallback messaging after at least one protected route has been loaded.
-- [ ] 2.3 Validate responsive behavior in browser device emulation for a phone-sized viewport and an iPad-class tablet viewport.
+- [x] 2.1 Verify installability and standalone launch behavior in supported browsers at phone and tablet sizes.
+- [x] 2.2 Verify offline re-entry and offline fallback messaging after at least one protected route has been loaded.
+- [x] 2.3 Validate responsive behavior in browser device emulation for a phone-sized viewport and an iPad-class tablet viewport.
 - [x] 2.4 Run `npm run build`.
 - [x] 2.5 Run `php artisan test`.
